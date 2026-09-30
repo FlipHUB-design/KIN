@@ -157,6 +157,7 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
     task({ title: "Reply to council tax letter", category: "Administration", assignee: U.sarah, due_date: D(10), private: true, description: "Single person discount review. Reply by the date on the letter." }),
     task({ title: "Cleaning visit", category: "Household", assignee: U.helen, due_date: D(2), due_time: "10:00", recurrence: "weekly", description: "Kitchen, bathroom and change the bed." }),
     task({ title: "Put the bins out", category: "Household", assignee: U.mary, due_date: D(5), due_time: "19:00", recurrence: "weekly" }),
+    task({ title: "Evening visit", category: "Visit", assignee: U.anthony, due_date: D(0), due_time: "17:30", description: "Dropping round after work." }),
     task({ title: "Call Gran after school", category: "Visit", assignee: U.lucy, due_date: D(1), due_time: "16:30" }),
     task({ title: "Change bulb in hall light", category: "Household", due_date: D(4) }),
     task({ title: "Pick up library books", category: "Shopping", assignee: U.anthony, due_date: D(-3), status: "done", completed_at: ts(-3, "15:20"), completed_by: U.anthony }),

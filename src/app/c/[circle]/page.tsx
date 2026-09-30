@@ -125,7 +125,7 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
         <Rows rows={upcoming} empty="Nothing booked yet." />
       </section>
 
-      {fam.length > 1 && (
+      {canEdit(role) && fam.length > 1 && (
         <section className="stack">
           <h2>This week&apos;s load</h2>
           <div className="card work">
@@ -222,7 +222,7 @@ async function SupportedHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string>
           <form action={wellbeing} className="form">
             <Hidden circle={circle.id} />
             <fieldset className="choice" style={{ border: 0, padding: 0, margin: 0 }}>
-              <legend className="label" style={{ position: "absolute", left: -9999 }}>How are you?</legend>
+              <legend className="sr-only">How are you?</legend>
               {["Good", "OK", "Not great"].map((m) => <label key={m}><input type="radio" name="mood" value={m} required /><span>{m}</span></label>)}
             </fieldset>
             <label className="fl" style={{ fontSize: 17 }}>Anything you&apos;d like your family to know?<textarea name="note" /></label>

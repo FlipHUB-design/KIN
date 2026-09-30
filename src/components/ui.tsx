@@ -57,11 +57,17 @@ export function taskRow(t: Task, base: string, nameOf: (id: string | null) => st
   if (t.recurrence !== "none") bits.push(<span key="r">{RECURRENCE_LABEL[t.recurrence]}</span>);
   return {
     kind: kindOf(t),
-    when: opts.when === "time" ? hm(t.due_time) : dayLabel(t.due_date).split(" ")[0],
+    when: opts.when === "time" ? hm(t.due_time) : shortDay(t.due_date),
     title: t.title,
     href: `${base}/tasks/${t.id}`,
     sub: <>{bits.map((b, i) => <span key={i}>{i > 0 && " · "}{b}</span>)}</>,
   };
+}
+
+function shortDay(d: string | null) {
+  const l = dayLabel(d);
+  if (!d || ["Today", "Tomorrow", "Yesterday", "No date"].includes(l)) return l;
+  return new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
 export function Disclaimer() {
