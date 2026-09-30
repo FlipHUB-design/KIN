@@ -18,6 +18,7 @@ export default async function Landing() {
           <Link href="/signup" className="btn primary">Start a Care Circle</Link>
           <Link href="/login" className="btn">Sign in</Link>
         </div>
+        <Link href="/demo" className="link">Try the demo with an example family ›</Link>
       </section>
       <section className="card pad">
         <h2>How it works</h2>

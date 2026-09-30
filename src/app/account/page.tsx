@@ -22,6 +22,7 @@ async function deleteAccount(formData: FormData) {
   if (String(formData.get("confirm")).trim().toUpperCase() !== "DELETE") {
     redirect("/account?error=" + encodeURIComponent("Type DELETE to confirm."));
   }
+  if (user.email?.endsWith("@kin-demo.example.com")) redirect("/account?error=" + encodeURIComponent("Demo accounts can't be deleted."));
   const admin = createAdminClient();
   if (!admin) redirect("/account?error=" + encodeURIComponent("Account deletion isn't set up on this server yet. Contact the KIN team."));
   // Circles where this user is the only administrator
