@@ -2,6 +2,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCircle } from "@/lib/data";
+import { letterReadingOn, readLetter, sampleLetterLines, sampleResult, SAMPLE_LETTER_NAME, type LetterResult } from "@/lib/letters";
+import { makePdf } from "@/lib/pdf";
+import { playbook } from "@/lib/playbooks";
+import { addDays } from "@/lib/kin";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const n = (f: FormData, k: string) => s(f, k) || null;
@@ -321,3 +325,149 @@ export async function deleteDocument(f: FormData) {
   back(c.circleId, "/more/documents", "Deleted");
 }
 
+
+// ---------------------------------------------------------------- letters
+
+async function saveScan(c: Awaited<ReturnType<typeof ctx>>, documentId: string | null, result: LetterResult, source: "ai" | "sample") {
+  const { data, error } = await c.supabase.from("letter_scans").insert({
+    circle_id: c.circleId, document_id: documentId, result, source, created_by: c.user.id,
+  }).select("id").single();
+  if (error || !data) fail(c.circleId, "/letters", "Couldn't save what KIN found.");
+  if (documentId) await c.supabase.from("documents").update({ category: result.doc_category, name: `${result.organisation}: ${result.document_type}`.slice(0, 200) }).eq("id", documentId);
+  await activity(c, "read a letter from", result.organisation);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, `/letters/${data!.id}`);
+}
+
+/** The browser has already uploaded the file to private storage. */
+export async function scanLetter(f: FormData) {
+  const c = await ctx(f);
+  const path = s(f, "path");
+  if (!path.startsWith(`${c.circleId}/`) || path.includes("..")) fail(c.circleId, "/letters", "Upload failed. Please try again.");
+  const type = s(f, "type");
+  const { data: doc, error } = await c.supabase.from("documents").insert({
+    circle_id: c.circleId, name: s(f, "name") || "Letter", category: "Other", storage_path: path, access: "family",
+    notes: "Read by KIN", uploaded_by: c.user.id,
+  }).select("id").single();
+  if (error || !doc) { await c.supabase.storage.from("documents").remove([path]); fail(c.circleId, "/letters", "Only family members can add letters."); }
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "document.upload", detail: { name: s(f, "name") || "Letter" } });
+  if (!letterReadingOn()) back(c.circleId, "/letters", "Letter saved to Documents. Automatic reading isn't switched on yet.");
+  const file = await c.supabase.storage.from("documents").download(path);
+  if (file.error || !file.data) fail(c.circleId, "/letters", "Couldn't open the letter.");
+  let result: LetterResult;
+  try {
+    result = await readLetter(await file.data!.arrayBuffer(), type || file.data!.type);
+  } catch (e) {
+    console.error("letter read failed", e);
+    return fail(c.circleId, "/letters", "KIN couldn't read that letter. It's saved in Documents. Try a clearer, flatter photo.");
+  }
+  await saveScan(c, doc!.id, result, "ai");
+}
+
+export async function scanSampleLetter(f: FormData) {
+  const c = await ctx(f);
+  const lines = sampleLetterLines(c.circle.person_name);
+  const path = `${c.circleId}/${crypto.randomUUID()}-sample-letter.pdf`;
+  const up = await c.supabase.storage.from("documents").upload(path, makePdf("Nenebridge District Council", lines), { contentType: "application/pdf" });
+  if (up.error) fail(c.circleId, "/letters", "Only family members can add letters.");
+  const { data: doc } = await c.supabase.from("documents").insert({
+    circle_id: c.circleId, name: SAMPLE_LETTER_NAME, category: "Property", storage_path: path, access: "family", notes: "Example letter", uploaded_by: c.user.id,
+  }).select("id").single();
+  let result: LetterResult = sampleResult(c.circle.preferred_name);
+  let source: "ai" | "sample" = "sample";
+  if (letterReadingOn()) {
+    try {
+      const bytes = await makePdf("Nenebridge District Council", lines).arrayBuffer();
+      result = await readLetter(bytes, "application/pdf");
+      source = "ai";
+    } catch (e) { console.error("sample read failed", e); }
+  }
+  await saveScan(c, doc?.id || null, result, source);
+}
+
+async function updateSuggestion(f: FormData, fn: (r: LetterResult, i: number, c: Awaited<ReturnType<typeof ctx>>) => Promise<string>) {
+  const c = await ctx(f);
+  const id = s(f, "id");
+  const i = Number(s(f, "i"));
+  const { data: scan } = await c.supabase.from("letter_scans").select("*").eq("id", id).eq("circle_id", c.circleId).single();
+  if (!scan) fail(c.circleId, "/letters", "Letter not found.");
+  const result = scan.result as LetterResult;
+  if (!result.suggestions[i]) fail(c.circleId, `/letters/${id}`, "Suggestion not found.");
+  const msg = await fn(result, i, c);
+  await c.supabase.from("letter_scans").update({ result }).eq("id", id);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, `/letters/${id}`, msg);
+}
+export async function createFromLetter(f: FormData) {
+  return updateSuggestion(f, async (r, i, c) => {
+    const sg = r.suggestions[i];
+    if (sg.task_id) return "Already added";
+    const { data: t, error } = await c.supabase.from("tasks").insert({
+      circle_id: c.circleId, title: s(f, "title") || sg.title, category: sg.category, due_date: n(f, "due_date"),
+      description: `${sg.detail}\n\nFrom a letter: ${r.organisation}, ${r.document_type}.`, status: n(f, "assignee") ? "accepted" : "open",
+      assignee: n(f, "assignee"), private: f.get("private") === "on", source: `letter:${s(f, "id")}`, created_by: c.user.id,
+    }).select("id").single();
+    if (error || !t) fail(c.circleId, `/letters/${s(f, "id")}`, "Couldn't add the task.");
+    sg.task_id = t!.id;
+    await activity(c, "created a task from a letter:", sg.title);
+    return "Task added";
+  });
+}
+export async function dismissSuggestion(f: FormData) {
+  return updateSuggestion(f, async (r, i) => { r.suggestions[i].dismissed = true; return "Ignored"; });
+}
+
+// ---------------------------------------------------------------- playbooks
+export async function startPlaybook(f: FormData) {
+  const c = await ctx(f);
+  const pb = playbook(s(f, "slug"));
+  if (!pb) fail(c.circleId, "/playbooks", "Playbook not found.");
+  const start = s(f, "start") || new Date().toISOString().slice(0, 10);
+  const assignee = n(f, "assignee");
+  const chosen = f.getAll("step").map(Number);
+  const rows = pb!.steps.map((st, i) => ({ st, i })).filter(({ i }) => chosen.includes(i)).map(({ st }) => ({
+    circle_id: c.circleId, title: st.title, description: st.detail, category: st.category, due_date: addDays(start, st.offset),
+    assignee, status: assignee ? "accepted" : "open", private: !!st.private, source: `playbook:${pb!.slug}`, link_url: st.link || pb!.link, created_by: c.user.id,
+  }));
+  if (!rows.length) fail(c.circleId, `/playbooks/${pb!.slug}`, "Choose at least one step.");
+  const { error } = await c.supabase.from("tasks").insert(rows);
+  if (error) fail(c.circleId, `/playbooks/${pb!.slug}`, "Only family members can start a playbook.");
+  await activity(c, `started the playbook "${pb!.title}" with ${rows.length} tasks`);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/tasks", `${rows.length} tasks added from "${pb!.title}"`);
+}
+
+// ---------------------------------------------------------------- shared costs
+const pence = (v: string) => Math.round(parseFloat(v.replace(/[£,\s]/g, "")) * 100);
+export async function addExpense(f: FormData) {
+  const c = await ctx(f);
+  const amount = pence(s(f, "amount"));
+  const split = f.getAll("split").map(String);
+  if (!(amount > 0)) fail(c.circleId, "/costs", "Enter an amount, like 12.50.");
+  if (!split.length) fail(c.circleId, "/costs", "Choose who to split it between.");
+  const { error } = await c.supabase.from("expenses").insert({
+    circle_id: c.circleId, description: s(f, "description"), category: s(f, "category") || "Other", amount_pence: amount,
+    paid_by: s(f, "paid_by") || c.user.id, split_between: split, spent_on: s(f, "spent_on") || undefined, created_by: c.user.id,
+  });
+  if (error) fail(c.circleId, "/costs", "Only family members can add shared costs.");
+  await activity(c, "added a shared cost:", s(f, "description"));
+  back(c.circleId, "/costs", "Cost added");
+}
+export async function addSettlement(f: FormData) {
+  const c = await ctx(f);
+  const amount = pence(s(f, "amount"));
+  if (!(amount > 0)) fail(c.circleId, "/costs", "Enter an amount, like 12.50.");
+  const { error } = await c.supabase.from("settlements").insert({
+    circle_id: c.circleId, from_user: s(f, "from_user"), to_user: s(f, "to_user"), amount_pence: amount, note: n(f, "note"), created_by: c.user.id,
+  });
+  if (error) fail(c.circleId, "/costs", "Couldn't record that payment. Check the two people are different.");
+  await activity(c, `recorded a payment from ${c.nameOf(s(f, "from_user"))} to`, c.nameOf(s(f, "to_user")));
+  back(c.circleId, "/costs", "Payment recorded");
+}
+export async function deleteCost(f: FormData) {
+  const c = await ctx(f);
+  const table = s(f, "kind") === "settlement" ? "settlements" : "expenses";
+  const { data } = await c.supabase.from(table).delete().eq("id", s(f, "id")).select("id");
+  if (!data?.length) fail(c.circleId, "/costs", "You can only remove entries you added.");
+  back(c.circleId, "/costs", "Removed");
+}

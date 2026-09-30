@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
 import {
-  addDays, canEdit, circleStatus, dateOf, dayLabel, hm, isOverdue, longDate, missedCheckin, timeOf, today, when,
-  type Activity, type Appointment, type Checkin, type Task,
+  addDays, balances, canEdit, circleStatus, dateOf, dayLabel, hm, isOverdue, longDate, missedCheckin, money, timeOf, today, when,
+  type Activity, type Appointment, type Checkin, type Expense, type Settlement, type Task,
 } from "@/lib/kin";
 import { Disclaimer, Header, Hidden, Notice, Rows, taskRow, type Row } from "@/components/ui";
 import { askFamily, checkOut, dismissMissed, needHelp, wellbeing } from "./actions";
@@ -28,7 +28,17 @@ async function load(ctx: Ctx) {
     supabase.from("activity").select("*").eq("circle_id", circle.id).order("created_at", { ascending: false }).limit(6),
     supabase.from("memberships").select("care_circles(id, preferred_name)").eq("user_id", ctx.user.id).eq("status", "active"),
   ]);
+  let owed = "";
+  if (canEdit(ctx.role)) {
+    const [{ data: ex }, { data: st }] = await Promise.all([
+      supabase.from("expenses").select("*").eq("circle_id", circle.id),
+      supabase.from("settlements").select("*").eq("circle_id", circle.id),
+    ]);
+    const v = balances((ex || []) as Expense[], (st || []) as Settlement[])[ctx.user.id] || 0;
+    owed = v > 0 ? `you're owed ${money(v)}` : v < 0 ? `you owe ${money(-v)}` : "";
+  }
   return {
+    owed,
     tasks: (tasks.data || []) as Task[], appts: (appts.data || []) as Appointment[], checkins: (checkins.data || []) as Checkin[],
     activity: (activity.data || []) as Activity[],
     circles: (circles.data || []).map((r) => r.care_circles as unknown as { id: string; preferred_name: string }),
@@ -109,6 +119,14 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
           </>
         )}
       </section>
+
+      {canEdit(role) && (
+        <nav className="chips" aria-label="Quick actions">
+          <Link href={`${base}/letters`} className="chip">Read a letter</Link>
+          <Link href={`${base}/playbooks`} className="chip">Playbooks</Link>
+          <Link href={`${base}/costs`} className="chip">Shared costs{d.owed ? ` · ${d.owed}` : ""}</Link>
+        </nav>
+      )}
 
       <section className="stack">
         <div className="row between"><h2>Today</h2><Link href={`${base}/calendar`} className="link">Calendar</Link></div>

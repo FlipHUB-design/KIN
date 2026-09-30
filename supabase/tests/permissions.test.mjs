@@ -15,7 +15,9 @@ alter table storage.objects enable row level security;
 create function storage.foldername(name text) returns text[] language sql as $$ select string_to_array(name,'/') $$;
 `;
 await db.exec(stub);
-try { await db.exec(fs.readFileSync(new URL("../migrations/0001_kin_schema.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION ERROR:", e.message, e.position); process.exit(1); }
+try {
+  for (const f of ["0001_kin_schema.sql", "0002_letters_playbooks_costs.sql"]) await db.exec(fs.readFileSync(new URL("../migrations/" + f, import.meta.url), "utf8"));
+} catch (e) { console.log("MIGRATION ERROR:", e.message); process.exit(1); }
 await db.exec(`grant usage on schema public, auth, storage to authenticated, anon;
 grant all on all tables in schema public to authenticated; grant all on all sequences in schema public to authenticated;
 grant all on storage.objects to authenticated; grant execute on all functions in schema auth to authenticated, anon;`);
@@ -81,3 +83,16 @@ let up=true; try { await as(U.helen, `insert into storage.objects (bucket_id,nam
 ok(!up, "helper cannot upload documents");
 let logf=true; try { await as(U.eve, `select log_activity($1,'x',null)`, [circle]) } catch { logf=false }
 ok(!logf, "log_activity can't be called directly");
+
+// shared costs and letters
+await as(U.sarah, `insert into expenses (circle_id,description,amount_pence,paid_by,split_between,created_by) values ($1,'Shopping',6400,$2,$3,$2)`, [circle, U.sarah, [U.sarah, U.anthony]]);
+ok((await as(U.anthony, `select * from expenses`)).rows.length===1, "family sees shared costs");
+ok((await as(U.lucy, `select * from expenses`)).rows.length===0, "contributor cannot see shared costs");
+ok((await as(U.helen, `select * from expenses`)).rows.length===0, "helper cannot see shared costs");
+let outsiderSplit=true; try { await as(U.sarah, `insert into expenses (circle_id,description,amount_pence,paid_by,split_between,created_by) values ($1,'x',100,$2,$3,$2)`, [circle, U.sarah, [U.eve]]) } catch { outsiderSplit=false }
+ok(!outsiderSplit, "can't split a cost with someone outside the family");
+let lucyExp=true; try { await as(U.lucy, `insert into expenses (circle_id,description,amount_pence,paid_by,split_between,created_by) values ($1,'x',100,$2,$3,$2)`, [circle, U.lucy, [U.lucy]]) } catch { lucyExp=false }
+ok(!lucyExp, "contributor cannot add shared costs");
+await as(U.sarah, `insert into letter_scans (circle_id,result,created_by) values ($1,'{}',$2)`, [circle, U.sarah]);
+ok((await as(U.helen, `select * from letter_scans`)).rows.length===0, "helper cannot see scanned letters");
+ok((await as(U.anthony, `select * from letter_scans`)).rows.length===1, "family sees scanned letters");

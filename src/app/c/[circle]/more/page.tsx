@@ -7,6 +7,9 @@ export default async function More({ params }: { params: Promise<{ circle: strin
   const { circle: id } = await params;
   const { circle, role, me } = await getCircle(id);
   const items: [string, string, string, boolean][] = [
+    ["../letters", "Letters", "Photograph a letter and KIN suggests the tasks", canEdit(role)],
+    ["../playbooks", "Playbooks", "Step-by-step plans: Attendance Allowance, hospital discharge and more", true],
+    ["../costs", "Shared costs", "Who paid for what, and who owes whom", canEdit(role)],
     ["emergency", "Emergency information", "999, NHS 111 and details for responders", true],
     ["contacts", "Important contacts", "GP, pharmacy, neighbours and trades", true],
     ["home", "Home and maintenance", "Boiler, insurance, appliances and service dates", isInner(role)],
@@ -20,7 +23,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
       <Header title="More" sub={circle.person_name} initial={(me.profiles?.display_name || "?")[0]} />
       <div className="card list">
         {items.filter((i) => i[3]).map(([k, l, s]) => (
-          <Link key={k} href={`/c/${id}/more/${k}`} className="item"><span className="main"><span className="t">{l}</span><span className="s">{s}</span></span><span className="muted">›</span></Link>
+          <Link key={k} href={k.startsWith("../") ? `/c/${id}/${k.slice(3)}` : `/c/${id}/more/${k}`} className="item"><span className="main"><span className="t">{l}</span><span className="s">{s}</span></span><span className="muted">›</span></Link>
         ))}
         <Link href="/circles" className="item"><span className="main"><span className="t">People I help</span><span className="s">Switch Care Circle or start a new one</span></span><span className="muted">›</span></Link>
         <Link href="/account" className="item"><span className="main"><span className="t">Your account</span><span className="s">Name, phone, password, your data</span></span><span className="muted">›</span></Link>

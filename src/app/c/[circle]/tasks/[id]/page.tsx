@@ -43,6 +43,9 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
         {isOverdue(t) && <> · <span className="tag over">Overdue</span></>}
       </p>
       {t.description && <p style={{ whiteSpace: "pre-line" }}>{t.description}</p>}
+      {t.link_url && <a href={t.link_url} target="_blank" rel="noopener" className="link">Official guidance ↗</a>}
+      {t.source?.startsWith("letter:") && canEdit(role) && <Link href={`/c/${cid}/letters/${t.source.slice(7)}`} className="link">From a letter KIN read</Link>}
+      {t.source?.startsWith("playbook:") && <Link href={`/c/${cid}/playbooks/${t.source.slice(9)}`} className="link">Part of a playbook</Link>}
 
       {t.status === "done" ? (
         <div className="callout">Done by {nameOf(t.completed_by)} {t.completed_at ? when(t.completed_at).toLowerCase() : ""}</div>

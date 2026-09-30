@@ -38,6 +38,8 @@ export type Task = {
   completed_at: string | null;
   completed_by: string | null;
   created_by: string;
+  source?: string | null;
+  link_url?: string | null;
 };
 export type Appointment = {
   id: string;
@@ -155,3 +157,40 @@ export function missedCheckin(circle: Circle, checkins: Checkin[]) {
 }
 
 export const firstName = (m: Member | undefined | null) => (m?.profiles?.display_name || "Someone").split(" ")[0];
+
+// ---- shared costs
+export type Expense = { id: string; description: string; category: string; amount_pence: number; paid_by: string; split_between: string[]; spent_on: string; created_by: string | null };
+export type Settlement = { id: string; from_user: string; to_user: string; amount_pence: number; paid_on: string; note: string | null; created_by: string | null };
+export const EXPENSE_CATEGORIES = ["Shopping", "Travel", "Household", "Bills", "Care and support", "Gifts", "Other"];
+export const money = (p: number) => (p < 0 ? "-" : "") + "£" + (Math.abs(p) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Net position per person in pence: positive = owed money, negative = owes. */
+export function balances(expenses: Expense[], settlements: Settlement[]) {
+  const net: Record<string, number> = {};
+  const add = (id: string, v: number) => (net[id] = (net[id] || 0) + v);
+  for (const e of expenses) {
+    add(e.paid_by, e.amount_pence);
+    const n = e.split_between.length;
+    const share = Math.floor(e.amount_pence / n);
+    let rem = e.amount_pence - share * n;
+    for (const id of e.split_between) { add(id, -(share + (rem > 0 ? 1 : 0))); rem--; }
+  }
+  for (const s of settlements) { add(s.from_user, s.amount_pence); add(s.to_user, -s.amount_pence); }
+  return net;
+}
+
+/** Fewest payments to settle up. */
+export function settleUp(net: Record<string, number>) {
+  const cred = Object.entries(net).filter(([, v]) => v > 0).map(([id, v]) => ({ id, v })).sort((a, b) => b.v - a.v);
+  const debt = Object.entries(net).filter(([, v]) => v < 0).map(([id, v]) => ({ id, v: -v })).sort((a, b) => b.v - a.v);
+  const out: { from: string; to: string; amount: number }[] = [];
+  let i = 0, j = 0;
+  while (i < debt.length && j < cred.length) {
+    const amt = Math.min(debt[i].v, cred[j].v);
+    if (amt > 0) out.push({ from: debt[i].id, to: cred[j].id, amount: amt });
+    debt[i].v -= amt; cred[j].v -= amt;
+    if (debt[i].v === 0) i++;
+    if (cred[j].v === 0) j++;
+  }
+  return out;
+}

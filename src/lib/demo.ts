@@ -1,6 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, today, TZ } from "@/lib/kin";
+import { makePdf } from "@/lib/pdf";
+import { sampleLetterLines, sampleResult } from "@/lib/letters";
+import { playbook } from "@/lib/playbooks";
 
 /**
  * Demo mode: a shared, clearly fictional Care Circle for trying KIN.
@@ -33,26 +36,6 @@ function londonISO(date: string, time: string) {
   const g = (t: string) => Number(parts.find((p) => p.type === t)!.value);
   const wall = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour") % 24, g("minute"));
   return new Date(guess.getTime() - (wall - guess.getTime())).toISOString();
-}
-
-/** A tiny one-page PDF so demo documents open. */
-function makePdf(title: string, lines: string[]) {
-  const esc = (s: string) => s.replace(/[\\()]/g, (c) => "\\" + c);
-  const text = [`BT /F1 18 Tf 60 780 Td (${esc(title)}) Tj ET`, ...lines.map((l, i) => `BT /F1 11 Tf 60 ${740 - i * 18} Td (${esc(l)}) Tj ET`)].join("\n");
-  const objs = [
-    "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-    `<< /Length ${text.length} >>\nstream\n${text}\nendstream`,
-    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-  ];
-  let out = "%PDF-1.4\n";
-  const offs: number[] = [];
-  objs.forEach((o, i) => { offs.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
-  const xref = out.length;
-  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offs.map((o) => String(o).padStart(10, "0") + " 00000 n \n").join("")}`;
-  out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  return new Blob([out], { type: "application/pdf" });
 }
 
 async function ensureUsers(admin: Admin) {
@@ -214,6 +197,40 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
     { circle_id: M, actor: U.sarah, action: "invitation.create", detail: { role: "helper" }, created_at: ts(-20, "18:00") },
     { circle_id: M, actor: U.lucy, action: "document.upload", detail: { name: "Home insurance schedule" }, created_at: ts(-4, "14:00") },
   ]);
+
+  // Shared costs
+  const fam = [U.sarah, U.anthony, U.david];
+  await ins("expenses", [
+    { circle_id: M, description: "Weekly shopping", category: "Shopping", amount_pence: 6420, paid_by: U.anthony, split_between: fam, spent_on: D(-4), created_by: U.anthony },
+    { circle_id: M, description: "Taxi to eye clinic and back", category: "Travel", amount_pence: 2800, paid_by: U.sarah, split_between: fam, spent_on: D(-9), created_by: U.sarah },
+    { circle_id: M, description: "New kettle (old one leaking)", category: "Household", amount_pence: 3499, paid_by: U.sarah, split_between: fam, spent_on: D(-12), created_by: U.sarah },
+    { circle_id: M, description: "Weekly shopping", category: "Shopping", amount_pence: 5875, paid_by: U.anthony, split_between: fam, spent_on: D(-11), created_by: U.anthony },
+    { circle_id: M, description: "Boiler call-out", category: "Bills", amount_pence: 9500, paid_by: U.sarah, split_between: fam, spent_on: D(-20), created_by: U.sarah },
+    { circle_id: M, description: "Flowers for Mum's birthday", category: "Gifts", amount_pence: 2500, paid_by: U.david, split_between: fam, spent_on: D(-25), created_by: U.david },
+  ]);
+  await ins("settlements", { circle_id: M, from_user: U.david, to_user: U.sarah, amount_pence: 4000, paid_on: D(-15), note: "Bank transfer", created_by: U.david });
+
+  // A letter KIN has read, with one suggestion already turned into a task
+  const lpath = `${M}/${crypto.randomUUID()}-sample-letter.pdf`;
+  await admin.storage.from("documents").upload(lpath, makePdf("Nenebridge District Council", sampleLetterLines("Margaret Hale")), { contentType: "application/pdf" });
+  const [ldoc] = await ins("documents", { circle_id: M, name: "Nenebridge District Council: Council tax Single Person Discount review", category: "Property", access: "family", storage_path: lpath, uploaded_by: U.sarah, notes: "Example letter", created_at: ts(-1, "08:40") });
+  const result = sampleResult("Margaret");
+  const [scan] = await ins("letter_scans", { circle_id: M, document_id: ldoc.id, result, source: "sample", created_by: U.sarah, created_at: ts(-1, "08:41") });
+  const [lt] = await ins("tasks", { circle_id: M, title: result.suggestions[0].title, category: "Administration", due_date: result.suggestions[0].due_date, assignee: U.sarah, status: "accepted", private: true, recurrence: "none", priority: "normal",
+    description: result.suggestions[0].detail + "\n\nFrom a letter: Nenebridge District Council.", source: `letter:${scan.id}`, created_by: U.sarah });
+  result.suggestions[0].task_id = lt.id;
+  await admin.from("letter_scans").update({ result }).eq("id", scan.id);
+  await ins("activity", { circle_id: M, actor: U.sarah, verb: "read a letter from", subject: "Nenebridge District Council", created_at: ts(-1, "08:41") }, "id");
+
+  // Attendance Allowance playbook, started last week
+  const aa = playbook("attendance-allowance")!;
+  const startAA = D(-6);
+  await ins("tasks", aa.steps.map((st, i) => ({
+    circle_id: M, title: st.title, description: st.detail, category: st.category, due_date: addDays(startAA, st.offset),
+    assignee: i === 2 ? U.anthony : U.sarah, status: i < 2 ? "done" : "accepted", completed_at: i < 2 ? ts(-5 + i, "20:00") : null, completed_by: i < 2 ? U.sarah : null,
+    private: !!st.private, recurrence: "none", priority: "normal", source: "playbook:attendance-allowance", link_url: st.link || aa.link, created_by: U.sarah,
+  })));
+  await ins("activity", { circle_id: M, actor: U.sarah, verb: 'started the playbook "Claim Attendance Allowance" with 6 tasks', created_at: ts(-6, "19:30") }, "id");
 
   // ---------------------------------------------------------------- John (second circle for Sarah and Anthony)
   const [{ id: J }] = await ins("care_circles", { person_name: "John Hale", preferred_name: "Dad", created_by: U.sarah });
