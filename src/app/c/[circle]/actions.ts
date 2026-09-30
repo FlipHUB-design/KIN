@@ -1,0 +1,323 @@
+"use server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getCircle } from "@/lib/data";
+
+const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+const n = (f: FormData, k: string) => s(f, k) || null;
+const back: (c: string, path?: string, msg?: string) => never = (c, path = "", msg) =>
+  redirect(`/c/${c}${path}${msg ? (path.includes("?") ? "&" : "?") + "notice=" + encodeURIComponent(msg) : ""}`);
+const fail: (c: string, path: string, msg: string) => never = (c, path, msg) =>
+  redirect(`/c/${c}${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
+
+async function ctx(f: FormData) {
+  const circleId = s(f, "circle");
+  const c = await getCircle(circleId);
+  return { ...c, circleId };
+}
+async function activity(c: Awaited<ReturnType<typeof ctx>>, verb: string, subject: string | null = null) {
+  await c.supabase.rpc("record_activity", { p_circle: c.circleId, p_verb: verb, p_subject: subject });
+}
+
+// ---------------------------------------------------------------- tasks
+export async function createTask(f: FormData) {
+  const c = await ctx(f);
+  const assignee = n(f, "assignee");
+  const row = {
+    circle_id: c.circleId,
+    title: s(f, "title"),
+    description: n(f, "description"),
+    category: s(f, "category") || "Other",
+    assignee,
+    due_date: n(f, "due_date"),
+    due_time: n(f, "due_time"),
+    recurrence: s(f, "recurrence") || "none",
+    priority: s(f, "priority") || "normal",
+    status: assignee ? "accepted" : "open",
+    private: f.get("private") === "on",
+    created_by: c.user.id,
+  };
+  if (!row.title) fail(c.circleId, "/tasks/new", "Give the task a title.");
+  const { error } = await c.supabase.from("tasks").insert(row);
+  if (error) fail(c.circleId, "/tasks/new", "You can't add that task. Contributors can only add shared tasks for themselves or anyone.");
+  await activity(c, assignee && assignee !== c.user.id ? `created a task for ${c.nameOf(assignee)}:` : "created", row.title);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/tasks", assignee ? "Task added" : "Task added. The family can see it needs someone.");
+}
+
+export async function updateTask(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id");
+  const { error } = await c.supabase.from("tasks").update({
+    title: s(f, "title"), description: n(f, "description"), category: s(f, "category"),
+    due_date: n(f, "due_date"), due_time: n(f, "due_time"), recurrence: s(f, "recurrence"),
+    private: f.get("private") === "on", assignee: n(f, "assignee"),
+    status: n(f, "assignee") ? "accepted" : "open",
+  }).eq("id", id);
+  if (error) fail(c.circleId, `/tasks/${id}`, "Only family members can edit tasks.");
+  await activity(c, "edited", s(f, "title"));
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, `/tasks/${id}`, "Saved");
+}
+
+async function taskRpc(f: FormData, fn: string, msg: string) {
+  const c = await ctx(f);
+  const id = s(f, "id");
+  const { error } = await c.supabase.rpc(fn, { p_task: id });
+  if (error) fail(c.circleId, `/tasks/${id}`, error.message);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, s(f, "return") || `/tasks/${id}`, msg);
+}
+export async function claimTask(f: FormData) { return taskRpc(f, "claim_task", "You're responsible. The family can see it."); }
+export async function declineTask(f: FormData) { return taskRpc(f, "decline_task", "Handed back to the family"); }
+export async function completeTask(f: FormData) { return taskRpc(f, "complete_task", "Marked done"); }
+
+export async function cancelTask(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id");
+  const { data: t } = await c.supabase.from("tasks").update({ status: "cancelled" }).eq("id", id).select("title").single();
+  if (t) await activity(c, "cancelled", t.title);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/tasks", "Task cancelled");
+}
+
+export async function addComment(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id");
+  const body = s(f, "body");
+  if (!body) back(c.circleId, `/tasks/${id}`);
+  const { data: t } = await c.supabase.from("tasks").select("title").eq("id", id).single();
+  const { error } = await c.supabase.from("task_comments").insert({ task_id: id, circle_id: c.circleId, author: c.user.id, body });
+  if (error) fail(c.circleId, `/tasks/${id}`, "You can't comment on this task.");
+  await activity(c, "commented on", t?.title || "a task");
+  revalidatePath(`/c/${c.circleId}/tasks/${id}`);
+  back(c.circleId, `/tasks/${id}#comments`);
+}
+
+// ---------------------------------------------------------------- appointments
+export async function createAppointment(f: FormData) {
+  const c = await ctx(f);
+  const transport = f.get("needs_transport") === "yes";
+  const { data: a, error } = await c.supabase.from("appointments").insert({
+    circle_id: c.circleId, title: s(f, "title"), date: s(f, "date"), time: n(f, "time"),
+    location: n(f, "location"), attending: n(f, "attending"), needs_transport: transport,
+    notes: n(f, "notes"), created_by: c.user.id,
+  }).select().single();
+  if (error || !a) fail(c.circleId, "/appointments/new", "Only family members can add appointments.");
+  if (transport) {
+    let t: string | null = null;
+    if (a.time) {
+      const [h, m] = a.time.split(":").map(Number);
+      const mins = Math.max(0, h * 60 + m - 45);
+      t = `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+    }
+    await c.supabase.from("tasks").insert({
+      circle_id: c.circleId, title: `Drive ${c.circle.preferred_name} to ${a.title}`, category: "Transport",
+      description: [a.title, a.time?.slice(0, 5), a.location].filter(Boolean).join(", "),
+      due_date: a.date, due_time: t, priority: "high", status: "open", appointment_id: a.id, created_by: c.user.id,
+    });
+  }
+  await activity(c, transport ? "added an appointment and asked for a driver:" : "added an appointment:", a.title);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, `/appointments/${a.id}`, transport ? `Added. The family has been asked who can drive ${c.circle.preferred_name}.` : "Appointment added");
+}
+
+export async function deleteAppointment(f: FormData) {
+  const c = await ctx(f);
+  const { data: a } = await c.supabase.from("appointments").delete().eq("id", s(f, "id")).select("title").single();
+  if (a) await activity(c, "removed an appointment:", a.title);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/calendar", "Appointment removed");
+}
+
+// ---------------------------------------------------------------- check-ins
+export async function checkIn(f: FormData) {
+  const c = await ctx(f);
+  const mood = n(f, "mood");
+  const { error } = await c.supabase.from("checkins").insert({ circle_id: c.circleId, user_id: c.user.id, mood, note: n(f, "note") });
+  if (error) fail(c.circleId, "/checkin", "Couldn't record your check-in. Please try again.");
+  await activity(c, mood === "Needs attention" ? "checked in and flagged that something needs attention" : "checked in", null);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "", "Checked in. The family can see it.");
+}
+
+export async function checkOut(f: FormData) {
+  const c = await ctx(f);
+  const { data: open } = await c.supabase.from("checkins").select("*").eq("circle_id", c.circleId).eq("user_id", c.user.id)
+    .is("checked_out_at", null).order("checked_in_at", { ascending: false }).limit(1).maybeSingle();
+  if (open) {
+    const now = new Date();
+    await c.supabase.from("checkins").update({ checked_out_at: now.toISOString() }).eq("id", open.id);
+    const mins = Math.max(1, Math.round((now.getTime() - new Date(open.checked_in_at).getTime()) / 60000));
+    await activity(c, `checked out after ${mins >= 60 ? `${Math.floor(mins / 60)} hr ${mins % 60} min` : `${mins} min`}`);
+  }
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "", "Checked out");
+}
+
+export async function dismissMissed(f: FormData) {
+  const c = await ctx(f);
+  await c.supabase.rpc("dismiss_missed_checkin", { p_circle: c.circleId });
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId);
+}
+
+export async function askFamily(f: FormData) {
+  const c = await ctx(f);
+  await activity(c, `asked the family to check on ${c.circle.preferred_name}`);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "", "Added to the family's activity");
+}
+
+// Supported person's own actions
+export async function wellbeing(f: FormData) {
+  const c = await ctx(f);
+  await activity(c, `said they're feeling ${s(f, "mood").toLowerCase()} today`, n(f, "note"));
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "", "Thank you. Your family can see this.");
+}
+export async function needHelp(f: FormData) {
+  const c = await ctx(f);
+  await activity(c, 'pressed "I need help"');
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/help");
+}
+
+// ---------------------------------------------------------------- circle & people
+export async function invite(f: FormData) {
+  const c = await ctx(f);
+  const { data, error } = await c.supabase.from("invitations").insert({
+    circle_id: c.circleId, name: s(f, "name"), email: n(f, "email"), role: s(f, "role"),
+    relationship: s(f, "relationship"), invited_by: c.user.id,
+  }).select("id").single();
+  if (error || !data) fail(c.circleId, "/people/invite", "Only administrators can invite people.");
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "invitation.create", detail: { role: s(f, "role") } });
+  await activity(c, "invited", s(f, "name"));
+  back(c.circleId, `/people/invite?sent=${data.id}`);
+}
+
+export async function revokeInvite(f: FormData) {
+  const c = await ctx(f);
+  await c.supabase.from("invitations").update({ revoked: true }).eq("id", s(f, "id"));
+  back(c.circleId, "/people", "Invitation cancelled");
+}
+
+export async function changeMember(f: FormData) {
+  const c = await ctx(f);
+  const uid = s(f, "user");
+  const op = s(f, "op");
+  const who = c.nameOf(uid);
+  let error;
+  if (op === "role") {
+    ({ error } = await c.supabase.from("memberships").update({ role: s(f, "role") }).eq("circle_id", c.circleId).eq("user_id", uid));
+    if (!error) await activity(c, `changed ${who}'s access to`, s(f, "role"));
+  } else if (op === "pause" || op === "restore") {
+    ({ error } = await c.supabase.from("memberships").update({ status: op === "pause" ? "paused" : "active" }).eq("circle_id", c.circleId).eq("user_id", uid));
+    if (!error) await activity(c, `${op === "pause" ? "paused" : "restored"} access for`, who);
+  } else if (op === "remove") {
+    ({ error } = await c.supabase.from("memberships").delete().eq("circle_id", c.circleId).eq("user_id", uid));
+    if (!error) await activity(c, "removed from the circle:", who);
+  }
+  if (error) fail(c.circleId, "/people", "Only administrators can change access.");
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: `member.${op}`, detail: { user: uid, role: s(f, "role") || null } });
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/people", "Access updated");
+}
+
+export async function saveSettings(f: FormData) {
+  const c = await ctx(f);
+  const r1 = await c.supabase.from("care_circles").update({
+    person_name: s(f, "person_name"), preferred_name: s(f, "preferred_name"),
+    checkin_by: n(f, "checkin_by"), checkin_note: n(f, "checkin_note"),
+  }).eq("id", c.circleId);
+  const r2 = await c.supabase.from("person_profiles").update({
+    date_of_birth: n(f, "date_of_birth"), phone: n(f, "phone"), email: n(f, "email"),
+    preferred_contact: n(f, "preferred_contact"), important_notes: n(f, "important_notes"),
+    accessibility_notes: n(f, "accessibility_notes"), updated_at: new Date().toISOString(),
+  }).eq("circle_id", c.circleId);
+  const r3 = await c.supabase.from("visit_info").update({
+    address: n(f, "address"), access_instructions: n(f, "access_instructions"), key_contact_user: n(f, "key_contact_user"),
+    updated_at: new Date().toISOString(),
+  }).eq("circle_id", c.circleId);
+  if (r1.error || r2.error || r3.error) fail(c.circleId, "/more/settings", "Only administrators can change these details.");
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "profile.update" });
+  await activity(c, "updated", `${c.circle.preferred_name}'s details`);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/more/settings", "Saved");
+}
+
+export async function saveEmergency(f: FormData) {
+  const c = await ctx(f);
+  const { error } = await c.supabase.from("emergency_info").update({
+    allergies: n(f, "allergies"), important_info: n(f, "important_info"), preferred_hospital: n(f, "preferred_hospital"),
+    power_of_attorney: n(f, "power_of_attorney"), other_notes: n(f, "other_notes"), updated_by: c.user.id, updated_at: new Date().toISOString(),
+  }).eq("circle_id", c.circleId);
+  if (error) fail(c.circleId, "/more/emergency?edit=1", "Only family members can change emergency information.");
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "emergency.update" });
+  await activity(c, "updated the emergency information");
+  back(c.circleId, "/more/emergency", "Saved");
+}
+
+export async function saveContact(f: FormData) {
+  const c = await ctx(f);
+  const row = { circle_id: c.circleId, name: s(f, "name"), organisation: n(f, "organisation"), category: s(f, "category"),
+    phone: n(f, "phone"), email: n(f, "email"), notes: n(f, "notes"), visibility: s(f, "visibility") || "family" };
+  const id = n(f, "id");
+  const { error } = id ? await c.supabase.from("contacts").update(row).eq("id", id) : await c.supabase.from("contacts").insert(row);
+  if (error) fail(c.circleId, "/more/contacts", "Only family members can change contacts.");
+  if (!id) await activity(c, "added a contact:", row.name);
+  back(c.circleId, "/more/contacts", "Saved");
+}
+export async function deleteContact(f: FormData) {
+  const c = await ctx(f);
+  await c.supabase.from("contacts").delete().eq("id", s(f, "id"));
+  back(c.circleId, "/more/contacts", "Contact removed");
+}
+
+export async function saveAsset(f: FormData) {
+  const c = await ctx(f);
+  const row = { circle_id: c.circleId, name: s(f, "name"), details: n(f, "details"), last_service: n(f, "last_service"),
+    next_service: n(f, "next_service"), warranty_expiry: n(f, "warranty_expiry"), supplier: n(f, "supplier"), notes: n(f, "notes") };
+  const id = n(f, "id");
+  const { error } = id ? await c.supabase.from("home_assets").update(row).eq("id", id) : await c.supabase.from("home_assets").insert(row);
+  if (error) fail(c.circleId, "/more/home", "Only family members can change home details.");
+  if (!id) await activity(c, "added to the home record:", row.name);
+  if (f.get("make_task") === "on" && row.next_service) {
+    await c.supabase.from("tasks").insert({ circle_id: c.circleId, title: `${row.name} service`, category: "Maintenance",
+      due_date: row.next_service, recurrence: "annually", status: "open", created_by: c.user.id });
+  }
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/more/home", "Saved");
+}
+export async function deleteAsset(f: FormData) {
+  const c = await ctx(f);
+  await c.supabase.from("home_assets").delete().eq("id", s(f, "id"));
+  back(c.circleId, "/more/home", "Removed");
+}
+
+export async function registerDocument(f: FormData) {
+  const c = await ctx(f);
+  const path = s(f, "path");
+  if (!path.startsWith(`${c.circleId}/`) || path.includes("..")) fail(c.circleId, "/more/documents", "Upload failed. Please try again.");
+  const name = s(f, "name").slice(0, 200);
+  const { error } = await c.supabase.from("documents").insert({
+    circle_id: c.circleId, name, category: s(f, "category") || "Other", storage_path: path,
+    expiry_date: n(f, "expiry_date"), access: c.role === "admin" ? (s(f, "access") || "family") : "family", notes: n(f, "notes"), uploaded_by: c.user.id,
+  });
+  if (error) { await c.supabase.storage.from("documents").remove([path]); fail(c.circleId, "/more/documents", "Couldn't save the document."); }
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "document.upload", detail: { name } });
+  await activity(c, "uploaded", name);
+  back(c.circleId, "/more/documents", "Uploaded");
+}
+
+export async function deleteDocument(f: FormData) {
+  const c = await ctx(f);
+  const { data: d } = await c.supabase.from("documents").select("*").eq("id", s(f, "id")).single();
+  if (!d) fail(c.circleId, "/more/documents", "Document not found.");
+  const { error } = await c.supabase.from("documents").delete().eq("id", d.id);
+  if (error) fail(c.circleId, "/more/documents", "Only administrators or the uploader can delete this.");
+  await c.supabase.storage.from("documents").remove([d.storage_path]);
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "document.delete", detail: { name: d.name } });
+  back(c.circleId, "/more/documents", "Deleted");
+}
+
