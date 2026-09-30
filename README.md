@@ -19,11 +19,19 @@ KIN is not a medical app. It doesn't diagnose, monitor health or contact emergen
 - Simplified large-text screen for the supported person, with "How are you today?" and "I need help"
 - Restricted screen for helpers: only their visits, the address, how to get in and one contact
 
-Permissions are enforced by the database (Supabase row-level security), not just hidden on screen. `npm run test:db` runs 25 checks, for example that a cleaner can't see appointments, a contributor can't see family-only tasks, and an outsider can't see anything by changing a link.
+Permissions are enforced by the database (Supabase row-level security), not just hidden on screen. `npm run test:db` runs 32 checks, for example that a cleaner can't see appointments, a contributor can't see family-only tasks, and an outsider can't see anything by changing a link.
+
+### Letter reading, playbooks and shared costs
+
+- **Letters:** photograph a letter and KIN suggests tasks with deadlines. Nothing is added until someone confirms. To switch on automatic reading, create an API key at [console.anthropic.com](https://console.anthropic.com) and add it in Vercel as `ANTHROPIC_API_KEY`, then redeploy. Without it, letters are still saved to Documents and the sample letter still works.
+- **Playbooks:** Attendance Allowance, coming home from hospital, Blue Badge, lasting power of attorney, council tax discounts, and after a death. Each step links to GOV.UK or NHS.uk. Review them every few months, because rules change. They live in `src/lib/playbooks.ts`.
+- **Shared costs:** who paid for what and the fewest payments to settle up. Visible to administrators and family only.
+
+The database changes for these are in `supabase/migrations/0002_letters_playbooks_costs.sql`, which runs after 0001.
 
 ### Not built yet
 
-Email and push notifications, the missed check-in escalation chain (notify Sarah, then Anthony), medication reminders, shopping lists, meals, the AI assistant, document reading, two-factor sign-in. The database is ready to grow into these.
+Email and push notifications, the missed check-in escalation chain (notify Sarah, then Anthony), medication reminders, shopping lists, meals, the AI assistant, two-factor sign-in. The database is ready to grow into these.
 
 ---
 

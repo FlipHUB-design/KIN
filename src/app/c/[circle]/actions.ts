@@ -5,7 +5,7 @@ import { getCircle } from "@/lib/data";
 import { letterReadingOn, readLetter, sampleLetterLines, sampleResult, SAMPLE_LETTER_NAME, type LetterResult } from "@/lib/letters";
 import { makePdf } from "@/lib/pdf";
 import { playbook } from "@/lib/playbooks";
-import { addDays } from "@/lib/kin";
+import { addDays, today } from "@/lib/kin";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const n = (f: FormData, k: string) => s(f, k) || null;
@@ -426,7 +426,7 @@ export async function startPlaybook(f: FormData) {
   const assignee = n(f, "assignee");
   const chosen = f.getAll("step").map(Number);
   const rows = pb!.steps.map((st, i) => ({ st, i })).filter(({ i }) => chosen.includes(i)).map(({ st }) => ({
-    circle_id: c.circleId, title: st.title, description: st.detail, category: st.category, due_date: addDays(start, st.offset),
+    circle_id: c.circleId, title: st.title, description: st.detail, category: st.category, due_date: addDays(start, st.offset) < today() ? today() : addDays(start, st.offset),
     assignee, status: assignee ? "accepted" : "open", private: !!st.private, source: `playbook:${pb!.slug}`, link_url: st.link || pb!.link, created_by: c.user.id,
   }));
   if (!rows.length) fail(c.circleId, `/playbooks/${pb!.slug}`, "Choose at least one step.");

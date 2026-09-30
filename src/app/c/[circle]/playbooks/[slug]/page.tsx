@@ -29,7 +29,7 @@ export default async function PlaybookPage({ params, searchParams }: { params: P
               <input type="checkbox" name="step" value={i} defaultChecked style={{ marginTop: 4 }} disabled={!canEdit(role)} />
               <span className="main"><span className="t">{st.title}</span><span className="s">{st.detail}</span>
                 <span className="s">{st.offset === 0 ? "On the day" : st.offset < 0 ? `${-st.offset} day${st.offset === -1 ? "" : "s"} before` : `${st.offset} day${st.offset === 1 ? "" : "s"} after`}
-                  {" · "}{dayLabel(addDays(start, st.offset))} if you start today{st.private ? " · Family only" : ""}</span>
+                  {" · "}{dayLabel(addDays(start, st.offset))} if the {pb.startLabel.toLowerCase()} is today{st.private ? " · Family only" : ""}</span>
                 {st.link && <a href={st.link} target="_blank" rel="noopener" className="s" style={{ color: "var(--accent)" }}>Official guidance ↗</a>}</span>
             </label>
           ))}
@@ -44,7 +44,7 @@ export default async function PlaybookPage({ params, searchParams }: { params: P
               </select></label>
             </div>
             <button className="btn primary block">Add the ticked steps as tasks</button>
-            <p className="note">You can reassign or change any task afterwards.</p>
+            <p className="note">Steps that would fall in the past are set for today. You can reassign or change any task afterwards.</p>
           </>
         ) : <p className="note">Family members can start playbooks.</p>}
       </form>
