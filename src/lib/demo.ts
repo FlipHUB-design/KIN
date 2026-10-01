@@ -176,7 +176,7 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
     { circle_id: M, actor: U.sarah, verb: "checked in", created_at: ts(-1, "10:32") },
     { circle_id: M, actor: U.sarah, verb: "checked out after 1 hr 8 min", created_at: ts(-1, "11:40") },
   ], "id");
-  await ins("notifications", [
+  await admin.from("notifications").insert([
     { circle_id: M, user_id: U.sarah, level: "update", title: "Anthony commented on \"Weekly shopping\"", body: "Noted. I'll grab her lemon curd too.", link: "/tasks", email_status: "demo", sms_status: "off", created_at: ts(-2, "19:30") },
     { circle_id: M, user_id: U.anthony, level: "update", title: "Sarah commented on \"Drive Margaret to Outpatient appointment\"", body: "I'm going in with her, but can't drive that day. Can anyone take her?", link: "/tasks", email_status: "demo", sms_status: "off", created_at: ts(-1, "09:20") },
   ]);
@@ -473,7 +473,7 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
     { user_id: U.dan, channels: { answer: { email: true, sms: false }, update: { email: true, sms: false }, urgent: { email: true, sms: true } } },
   ]);
   const read = ts(0, "07:00");
-  await ins("notifications", [
+  await admin.from("notifications").insert([
     { circle_id: K, user_id: U.leah, level: "answer", title: "Dan asked to change the schedule", body: `${new Date(addDays(monday, 11) + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })} to ${new Date(addDays(monday, 13) + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })} at Mum's. "I'm at a work conference in Manchester that weekend, back Sunday night."`, link: "/schedule", email_status: "demo", sms_status: "demo", created_at: ts(-1, "21:10") },
     { circle_id: K, user_id: U.leah, level: "answer", title: "Ruby asked: Can I go to Maya's on Saturday afternoon?", link: "", email_status: "demo", sms_status: "demo", created_at: ts(-1, "19:02"), read_at: read },
     { circle_id: K, user_id: U.leah, level: "answer", title: "Dan proposed an agreement", body: "Christmas: Christmas Eve and Christmas morning at Mum's, then Dad's from 2pm Christmas Day to 29 December", link: "/agreements", email_status: "demo", sms_status: "quiet", created_at: ts(-2, "20:45"), read_at: read },
