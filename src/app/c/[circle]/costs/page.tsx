@@ -194,7 +194,7 @@ export default async function Costs({ params, searchParams }: { params: Promise<
           <a href="https://www.gov.uk/making-child-maintenance-arrangement" target="_blank" rel="noopener" className="link">Child maintenance on GOV.UK ↗</a>
         </section>
       )}
-      <p className="note">Only parents and family members with full access can see money. KIN keeps a record; it doesn&apos;t move any money.{kidsMode ? ` Approvals are dated and kept in Records.` : ""}</p>
+      <p className="note">{kidsMode ? "Only parents can see money." : "Only administrators and family members can see money."} KIN keeps a record; it doesn&apos;t move any money.{kidsMode ? ` Approvals are dated and kept in Records.` : ""}</p>
     </main>
   );
 }
