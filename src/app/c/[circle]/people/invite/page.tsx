@@ -20,6 +20,7 @@ export default async function Invite({ params, searchParams }: { params: Promise
         <main className="page">
           <Link href={`/c/${id}/people`} className="link">‹ Care Circle</Link>
           <h1>Send {inv.name.split(" ")[0]} this link</h1>
+          {sp.emailed ? <p className="ok">We&apos;ve emailed the link to {inv.email}. You can also send it yourself.</p> : null}
           <p className="muted">Share it by text, WhatsApp or email. It works once and expires in 14 days.</p>
           <div className="card pad">
             <div className="copybox">{msg}</div>

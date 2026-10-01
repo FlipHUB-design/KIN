@@ -6,6 +6,8 @@ import { letterReadingOn, readLetter, sampleLetterLines, sampleResult, sampleSch
 import { makePdf } from "@/lib/pdf";
 import { playbook } from "@/lib/playbooks";
 import { addDays, today } from "@/lib/kin";
+import { after } from "next/server";
+import { emailHtml, isDemoEmail, notify, sendEmail, site, type Level } from "@/lib/notify";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const n = (f: FormData, k: string) => s(f, k) || null;
@@ -23,6 +25,19 @@ async function ctx(f: FormData) {
 }
 async function activity(c: Awaited<ReturnType<typeof ctx>>, verb: string, subject: string | null = null) {
   await c.supabase.rpc("record_activity", { p_circle: c.circleId, p_verb: verb, p_subject: subject });
+}
+
+// ---------------------------------------------------------------- alerts
+type C = Awaited<ReturnType<typeof ctx>>;
+const myName = (c: C) => (c.me.profiles?.display_name || "Someone").split(" ")[0];
+const parents = (c: C) => c.members.filter((m) => m.status === "active" && (m.role === "admin" || m.role === "family")).map((m) => m.user_id);
+const circleName = (c: C) => (c.circle.kind === "children" ? c.circle.person_name : `${c.circle.preferred_name}'s Care Circle`);
+const day = (d: string) => new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const range = (a: string, b: string) => (a === b ? day(a) : `${day(a)} to ${day(b)}`);
+const money = (p: number) => "£" + (p / 100).toFixed(2);
+/** Sends the alert after the page has responded, so nobody waits for email or text. */
+function alert(c: C, level: Level, to: (string | null | undefined)[], title: string, body: string | null, path: string) {
+  after(() => notify({ circleId: c.circleId, circleName: circleName(c), actor: c.user.id, to, level, title, body, path }));
 }
 
 // ---------------------------------------------------------------- tasks
@@ -48,6 +63,8 @@ export async function createTask(f: FormData) {
   const { error } = await c.supabase.from("tasks").insert(row);
   if (error) fail(c.circleId, "/tasks/new", "You can't add that task. Contributors can only add shared tasks for themselves or anyone.");
   await activity(c, assignee && assignee !== c.user.id ? `created a task for ${c.nameOf(assignee)}:` : "created", row.title);
+  if (assignee && assignee !== c.user.id) alert(c, "update", [assignee], `${myName(c)} asked you to: ${row.title}`,
+    row.due_date ? `Due ${day(row.due_date)}${row.due_time ? " at " + row.due_time.slice(0, 5) : ""}.` : null, "/tasks");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "/tasks", assignee ? "Task added" : "Task added. The family can see it needs someone.");
 }
@@ -55,6 +72,7 @@ export async function createTask(f: FormData) {
 export async function updateTask(f: FormData) {
   const c = await ctx(f);
   const id = s(f, "id");
+  const { data: prev } = await c.supabase.from("tasks").select("assignee").eq("id", id).maybeSingle();
   const { error } = await c.supabase.from("tasks").update({
     title: s(f, "title"), description: n(f, "description"), category: s(f, "category"),
     due_date: n(f, "due_date"), due_time: n(f, "due_time"), recurrence: s(f, "recurrence"),
@@ -63,6 +81,9 @@ export async function updateTask(f: FormData) {
   }).eq("id", id);
   if (error) fail(c.circleId, `/tasks/${id}`, "Only family members can edit tasks.");
   await activity(c, "edited", s(f, "title"));
+  const newAssignee = n(f, "assignee");
+  if (newAssignee && newAssignee !== prev?.assignee && newAssignee !== c.user.id)
+    alert(c, "update", [newAssignee], `${myName(c)} asked you to: ${s(f, "title")}`, n(f, "due_date") ? `Due ${day(s(f, "due_date"))}.` : null, `/tasks/${id}`);
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, `/tasks/${id}`, "Saved");
 }
@@ -93,10 +114,11 @@ export async function addComment(f: FormData) {
   const id = s(f, "id");
   const body = s(f, "body");
   if (!body) back(c.circleId, `/tasks/${id}`);
-  const { data: t } = await c.supabase.from("tasks").select("title").eq("id", id).single();
+  const { data: t } = await c.supabase.from("tasks").select("title, assignee, created_by").eq("id", id).single();
   const { error } = await c.supabase.from("task_comments").insert({ task_id: id, circle_id: c.circleId, author: c.user.id, body });
   if (error) fail(c.circleId, `/tasks/${id}`, "You can't comment on this task.");
   await activity(c, "commented on", t?.title || "a task");
+  if (t) alert(c, "update", [t.assignee, t.created_by], `${myName(c)} commented on "${t.title}"`, body.slice(0, 200), `/tasks/${id}#comments`);
   revalidatePath(`/c/${c.circleId}/tasks/${id}`);
   back(c.circleId, `/tasks/${id}#comments`);
 }
@@ -196,6 +218,8 @@ export async function wellbeing(f: FormData) {
 export async function needHelp(f: FormData) {
   const c = await ctx(f);
   await activity(c, 'pressed "I need help"');
+  alert(c, "urgent", parents(c), `${myName(c)} pressed "I need help" in KIN`,
+    `Please call or go to ${myName(c)} now. KIN does not contact emergency services. In an emergency, call 999.`, "");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "/help");
 }
@@ -206,11 +230,21 @@ export async function invite(f: FormData) {
   const { data, error } = await c.supabase.from("invitations").insert({
     circle_id: c.circleId, name: s(f, "name"), email: n(f, "email"), role: s(f, "role"),
     relationship: s(f, "relationship"), invited_by: c.user.id,
-  }).select("id").single();
+  }).select("id, token").single();
   if (error || !data) fail(c.circleId, "/people/invite", "Only administrators can invite people.");
+  const to = n(f, "email");
+  let emailed = false;
+  if (to && !isDemoEmail(c.user.email)) {
+    const url = `${site()}/invite/${data.token}`;
+    const what = c.circle.kind === "children" ? "organise things for the children" : `coordinate things for ${c.circle.preferred_name}`;
+    emailed = await sendEmail(to, `${myName(c)} invited you to KIN`,
+      emailHtml({ heading: `${myName(c)} invited you to KIN`, lines: [`${myName(c)} is using KIN to ${what}, and would like you to join.`, "The link works once and expires in 14 days."],
+        button: { label: "Join on KIN", href: url }, footer: "If you weren't expecting this, you can ignore this email." }),
+      `${myName(c)} invited you to KIN to ${what}. Join here: ${url}\n\nThe link works once and expires in 14 days.`);
+  }
   await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "invitation.create", detail: { role: s(f, "role") } });
   await activity(c, "invited", s(f, "name"));
-  back(c.circleId, `/people/invite?sent=${data.id}`);
+  back(c.circleId, `/people/invite?sent=${data.id}${emailed ? "&emailed=1" : ""}`);
 }
 
 export async function revokeInvite(f: FormData) {
@@ -477,6 +511,8 @@ export async function addExpense(f: FormData) {
   });
   if (error) fail(c.circleId, "/costs", "Only family members can add shared costs.");
   await activity(c, needsOk ? "asked the other parent to approve a cost:" : "added a shared cost:", s(f, "description"));
+  if (needsOk) alert(c, "answer", [...split, paidBy].filter((x) => parents(c).includes(x)), `${myName(c)} added a cost to approve: ${s(f, "description")}`,
+    `${money(amount)}, paid by ${paidBy === c.user.id ? myName(c) : c.nameOf(paidBy)}. It only counts in the balance once it's approved.`, "/costs");
   back(c.circleId, "/costs", needsOk ? "Sent for approval. It counts once agreed." : "Cost added");
 }
 export async function addSettlement(f: FormData) {
@@ -558,6 +594,9 @@ export async function requestChange(f: FormData) {
   });
   if (error) fail(c.circleId, "/schedule", "Couldn't send the request. Changes can cover up to 60 nights.");
   await activity(c, "asked for a schedule change", null);
+  const { data: home } = await c.supabase.from("households").select("name").eq("id", s(f, "household_id")).maybeSingle();
+  alert(c, "answer", parents(c), `${myName(c)} asked to change the schedule`,
+    `${range(start, end)} at ${home?.name || "the other home"}.${n(f, "reason") ? ` "${s(f, "reason")}"` : ""}${n(f, "in_return") ? ` In return: ${s(f, "in_return")}` : ""}`, "/schedule");
   await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "schedule.request", detail: { start, end } });
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "/schedule", "Request sent. Nothing changes until it's agreed.");
@@ -568,6 +607,9 @@ export async function respondChange(f: FormData) {
   const accept = s(f, "answer") === "yes";
   const { error } = await c.supabase.rpc("respond_schedule_change", { p_id: s(f, "id"), p_accept: accept, p_note: n(f, "note") });
   if (error) fail(c.circleId, s(f, "return") || "/schedule", error.message);
+  const { data: r } = await c.supabase.from("schedule_changes").select("requested_by, start_date, end_date").eq("id", s(f, "id")).maybeSingle();
+  if (r) alert(c, "update", [r.requested_by], `${myName(c)} ${accept ? "agreed to" : "said no to"} your schedule change`,
+    `${range(r.start_date, r.end_date)}.${n(f, "note") ? ` "${s(f, "note")}"` : ""}${accept ? " The schedule has been updated for everyone." : " The schedule stays as it was."}`, "/schedule");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, s(f, "return") || "/schedule", accept ? "Agreed. The schedule has been updated for everyone." : "Answer sent. The schedule stays as it was.");
 }
@@ -591,6 +633,7 @@ export async function recordHandover(f: FormData) {
   if (error) fail(c.circleId, "/handover", "Couldn't record the handover.");
   const missing = all.filter((x) => !packed.includes(x));
   await activity(c, missing.length ? `recorded a handover (missing: ${missing.join(", ")})` : "recorded a handover", null);
+  if (missing.length) alert(c, "update", parents(c), `Handover: ${missing.join(", ")} not packed`, `Recorded by ${myName(c)}.${n(f, "note") ? ` "${s(f, "note")}"` : ""}`, "/handover");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "/handover", "Handover recorded");
 }
@@ -603,6 +646,7 @@ export async function proposeAgreement(f: FormData) {
   });
   if (error) fail(c.circleId, "/agreements", "Only parents can propose agreements.");
   await activity(c, "proposed an agreement:", s(f, "title"));
+  alert(c, "answer", parents(c), `${myName(c)} proposed an agreement`, s(f, "title"), "/agreements");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "/agreements", "Proposed. It becomes an agreement once another parent agrees.");
 }
@@ -612,6 +656,8 @@ export async function respondAgreementAction(f: FormData) {
   const yes = s(f, "answer") === "yes";
   const { error } = await c.supabase.rpc("respond_agreement", { p_id: s(f, "id"), p_agree: yes, p_note: n(f, "note") });
   if (error) fail(c.circleId, s(f, "return") || "/agreements", error.message);
+  const { data: ag } = await c.supabase.from("agreements").select("proposed_by, title").eq("id", s(f, "id")).maybeSingle();
+  if (ag) alert(c, "update", [ag.proposed_by], `${myName(c)} ${yes ? "agreed to" : "didn't agree to"} your proposal`, `${ag.title}${n(f, "note") ? ` - "${s(f, "note")}"` : ""}`, "/agreements");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, s(f, "return") || "/agreements", yes ? "Agreed" : "Answer sent");
 }
@@ -646,6 +692,9 @@ export async function respondExpenseAction(f: FormData) {
   const yes = s(f, "answer") === "yes";
   const { error } = await c.supabase.rpc("respond_expense", { p_id: s(f, "id"), p_approve: yes, p_note: n(f, "note") });
   if (error) fail(c.circleId, s(f, "return") || "/costs", error.message);
+  const { data: ex } = await c.supabase.from("expenses").select("created_by, description, amount_pence").eq("id", s(f, "id")).maybeSingle();
+  if (ex) alert(c, "update", [ex.created_by], `${myName(c)} ${yes ? "approved" : "queried"} ${ex.description} (${money(ex.amount_pence)})`,
+    `${n(f, "note") ? `"${s(f, "note")}" ` : ""}${yes ? "It now counts in the balance." : "It won't count until it's sorted out."}`, "/costs");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, s(f, "return") || "/costs", yes ? "Approved. It now counts in the balance." : "Queried. It won't count until it's sorted out.");
 }
@@ -683,6 +732,7 @@ export async function youngPersonAsk(f: FormData) {
   const msg = s(f, "message").slice(0, 200);
   if (!msg) back(c.circleId);
   await activity(c, "asked:", msg);
+  alert(c, "answer", parents(c), `${myName(c)} asked: ${msg}`, null, "");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "", "Sent to your parents");
 }

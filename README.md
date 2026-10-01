@@ -101,6 +101,17 @@ Save. Sign-up confirmation and password-reset emails will now link back to your 
 
 Open your Vercel address, create an account, confirm your email, and start a Care Circle. Use **People → Invite someone** to create an invitation link, open it in a private browser window and sign up as a second person to see the other roles.
 
+### 6. Switch on email and text alerts (optional)
+
+KIN alerts people when something needs them: a schedule change request, a cost to approve, a proposed agreement, a job given to them, a handover with missing items, or someone pressing "I need help". Every alert shows on the person's **Alerts** page. Each person chooses which also come by email or text under **Your account → Email and text alerts**.
+
+1. **Email:** create a free account at resend.com, add and verify your domain, and create an API key. In Vercel (**Settings → Environment Variables**) add `RESEND_API_KEY` and `KIN_EMAIL_FROM` (for example `KIN <alerts@yourdomain.co.uk>`). Until your domain is verified, Resend only delivers to your own address.
+2. **Texts:** create a Twilio account, then add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_FROM`. In the UK, `TWILIO_FROM` can be a Twilio number or a sender name such as `KIN`. UK texts cost roughly 4p each, so consider keeping texts for paying families.
+3. **Morning email:** add `CRON_SECRET` (any long random string). Vercel then calls `/api/cron/digest` at 6am UTC each day, as set in `vercel.json`.
+4. Redeploy so the new settings take effect.
+
+Demo accounts never send real emails or texts.
+
 ---
 
 ## Before real families use it

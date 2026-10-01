@@ -21,6 +21,9 @@ try {
 await db.exec(`grant usage on schema public, auth, storage to authenticated, anon;
 grant all on all tables in schema public to authenticated; grant all on all sequences in schema public to authenticated;
 grant all on storage.objects to authenticated; grant execute on all functions in schema auth to authenticated, anon;`);
+// 0004 runs after the blanket grants above, as on Supabase where new tables get default grants first
+await db.exec(`alter default privileges in schema public grant all on tables to authenticated;`);
+await db.exec(fs.readFileSync(new URL("../migrations/0004_notifications.sql", import.meta.url), "utf8"));
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -150,3 +153,20 @@ let kellyItem=true; try { await as(K.kelly, `insert into child_items (circle_id,
 ok(!kellyItem, "childminder can't change family records");
 const careStill = (await as(U.helen, `select title from tasks`)).rows;
 ok(careStill.length>0 && careStill.every(r=>r.title==='Cleaning'), "care circle permissions unchanged by children's update");
+
+// ---------------------------------------------------------------- alerts
+await db.query(`insert into notifications (circle_id,user_id,level,title) values ($1,$2,'answer','Dan asked to change the schedule'),($1,$3,'update','Leah agreed')`, [fam, K.leah, K.dan]);
+ok((await as(K.leah, `select title from notifications`)).rows.map(r=>r.title).join()==='Dan asked to change the schedule', "each person sees only their own alerts");
+ok((await as(U.eve, `select * from notifications`)).rows.length===0, "outsider sees no alerts");
+let fakeAlert=true; try { await as(K.leah, `insert into notifications (circle_id,user_id,level,title) values ($1,$2,'urgent','fake')`, [fam, K.dan]) } catch { fakeAlert=false }
+ok(!fakeAlert, "people can't create alerts for others");
+let rewrite=true; try { await as(K.leah, `update notifications set title='changed'`) } catch { rewrite=false }
+ok(!rewrite, "people can't rewrite an alert");
+ok((await as(K.leah, `update notifications set read_at=now() returning id`)).rows.length===1, "people can mark their own alerts read");
+ok((await as(K.leah, `update notifications set read_at=now() where user_id=$1 returning id`, [K.dan])).rows.length===0, "people can't touch someone else's alerts");
+await as(K.leah, `insert into notification_prefs (user_id) values ($1)`, [K.leah]);
+ok((await as(K.dan, `select * from notification_prefs`)).rows.length===0, "alert settings are private");
+let otherPrefs=true; try { await as(K.dan, `insert into notification_prefs (user_id) values ($1)`, [K.kelly]) } catch { otherPrefs=false }
+ok(!otherPrefs, "you can't change someone else's alert settings");
+await db.query(`delete from memberships where circle_id=$1 and user_id=$2`, [fam, K.leah]);
+ok((await db.query(`select * from notifications where user_id=$1`, [K.leah])).rows.length===0, "leaving a family removes its alerts");

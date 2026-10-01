@@ -9,6 +9,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
   const kids = circle.kind === "children";
   const parent = canEdit(role);
   const items: [string, string, string, boolean][] = kids ? [
+    ["../alerts", "Alerts", "Requests and news for you, and how you get them by email or text", true],
     ["../schedule", "Schedule", "Where the children sleep each night, and swap requests", true],
     ["../handover", "Handover", "Packing checklist and handover notes", true],
     ["../children", "Children", "School, allergies, sizes, passports and where things are", true],
@@ -24,6 +25,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
     ["../schedule/settings", "Family settings", "Homes, usual pattern, packing list and cost split", parent],
     ["audit", "Access log", "Access changes and document views", role === "admin"],
   ] : [
+    ["../alerts", "Alerts", "Jobs and news for you, and how you get them by email or text", true],
     ["../letters", "Letters", "Photograph a letter and KIN suggests the tasks", parent],
     ["../playbooks", "Playbooks", "Step-by-step plans: Attendance Allowance, hospital discharge and more", true],
     ["../costs", "Shared costs", "Who paid for what, and who owes whom", parent],
