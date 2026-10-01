@@ -116,7 +116,7 @@ def screen_frame(sc, t, cache):
             im.paste(ov, (0, 0), ov)
             if sc.get("note"):
                 nf = font(700, 28); tw = d.textlength(sc["note"], font=nf)
-                nx = max(920, bx - tw - 64); ny = max(40, by - 28) if nx + tw + 40 > bx else by + min(hh * s, 300) / 2 - 28
+                nx = max(900, px - tw - 60); ny = min(max(60, by + min(hh * s, 300) / 2 - 28), H - 120)
                 ov2 = Image.new("RGBA", im.size, (0, 0, 0, 0)); o2 = ImageDraw.Draw(ov2)
                 o2.rounded_rectangle([nx, ny, nx + tw + 40, ny + 56], 28, fill=(240, 160, 30, int(255 * ha)))
                 o2.text((nx + 20, ny + 28), sc["note"], font=nf, fill=(40, 25, 0, int(255 * ha)), anchor="lm")

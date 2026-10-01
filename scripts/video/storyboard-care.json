@@ -1,0 +1,516 @@
+[
+ {
+  "type": "title",
+  "headline": "Looking after Mum, together.",
+  "sub": "One calm place for the family, and everyone who helps.",
+  "dur": 5
+ },
+ {
+  "type": "cast",
+  "headline": "Meet the Hales",
+  "sub": "Margaret lives alone. Her family and helpers share the load.",
+  "dur": 6.5,
+  "people": [
+   {
+    "name": "Margaret",
+    "role": "Mum",
+    "colour": "amber"
+   },
+   {
+    "name": "Sarah",
+    "role": "Daughter",
+    "colour": "plum"
+   },
+   {
+    "name": "Anthony",
+    "role": "Son",
+    "colour": "blue"
+   },
+   {
+    "name": "Lucy",
+    "role": "Granddaughter",
+    "colour": "coral"
+   },
+   {
+    "name": "Helen",
+    "role": "Cleaner",
+    "colour": "accent"
+   }
+  ]
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790858986531-i68tko.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Today",
+  "headline": "See what needs someone, at a glance",
+  "sub": "Sarah opens KIN: Mum's hospital appointment tomorrow has no driver yet.",
+  "highlight": [
+   131,
+   212,
+   538,
+   187
+  ],
+  "note": "Needs someone",
+  "dur": 7.2
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790858986531-i68tko.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Check-ins",
+  "headline": "Know if no one has checked in",
+  "sub": "Someone usually visits by midday. KIN shows when nobody has, calmly.",
+  "highlight": [
+   131,
+   417,
+   538,
+   150
+  ],
+  "note": "No check-in yet",
+  "dur": 7.2
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859013377-8f364m.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   900
+  ],
+  "persona": {
+   "name": "Anthony",
+   "role": "Son",
+   "colour": "blue"
+  },
+  "step": "Lifts",
+  "headline": "Anthony takes the lift with one tap",
+  "sub": "Jobs that need someone are shared with the whole family.",
+  "highlight": [
+   136,
+   322,
+   528,
+   105
+  ],
+  "note": "I'll drive",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859046625-ziviqr.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Lifts",
+  "headline": "Everyone can see it's covered",
+  "sub": "No group chat, no chasing. Sarah sees Anthony is driving.",
+  "highlight": [
+   131,
+   418,
+   538,
+   148
+  ],
+  "note": "Anthony driving",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859072106-lq8vh0.jpg",
+  "crop": [
+   120,
+   0,
+   696,
+   900
+  ],
+  "persona": {
+   "name": "Helen",
+   "role": "Cleaner",
+   "colour": "accent"
+  },
+  "step": "Helpers",
+  "headline": "The cleaner sees just what she needs",
+  "sub": "Her visits, the address and how to get in. Nothing private.",
+  "highlight": [
+   139,
+   435,
+   538,
+   180
+  ],
+  "note": "Just the essentials",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859098465-3okfnb.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   900
+  ],
+  "persona": {
+   "name": "Helen",
+   "role": "Cleaner",
+   "colour": "accent"
+  },
+  "step": "Check-ins",
+  "headline": "Helen checks in when she arrives",
+  "sub": "The family can see someone is with Mum.",
+  "highlight": [
+   136,
+   165,
+   528,
+   140
+  ],
+  "note": "Checked in",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859116585-2ufkif.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Check-ins",
+  "headline": "Sarah can relax",
+  "sub": "The check-in shows straight away, and the urgent flag clears.",
+  "highlight": [
+   131,
+   394,
+   538,
+   80
+  ],
+  "note": "Helen's there",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859132396-opoyvs.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Margaret",
+   "role": "Mum",
+   "colour": "amber"
+  },
+  "step": "Margaret's view",
+  "headline": "Mum sees her day in large, simple text",
+  "sub": "Who's visiting, and who's driving her tomorrow.",
+  "highlight": [
+   131,
+   315,
+   538,
+   134
+  ],
+  "note": "Anthony is driving",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859132396-opoyvs.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Margaret",
+   "role": "Mum",
+   "colour": "amber"
+  },
+  "step": "Margaret's view",
+  "headline": "Help is one big button away",
+  "sub": "She can tell the family how she is, or press I need help.",
+  "highlight": [
+   406,
+   830,
+   264,
+   87
+  ],
+  "note": "I need help",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859175630-17f6o0.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Letters",
+  "headline": "Snap a letter from the council",
+  "sub": "KIN reads it, explains it simply and suggests what to do.",
+  "highlight": [
+   131,
+   158,
+   538,
+   336
+  ],
+  "note": "Read for you",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859189098-ey6ras.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Playbooks",
+  "headline": "Benefits and paperwork, step by step",
+  "sub": "Attendance Allowance, Blue Badge, power of attorney and more.",
+  "highlight": [
+   131,
+   322,
+   538,
+   530
+  ],
+  "note": "Step by step",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859218817-cq9i0i.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Shared costs",
+  "headline": "Share the costs fairly",
+  "sub": "Who paid for what, and the fewest payments to square up.",
+  "highlight": [
+   131,
+   405,
+   538,
+   277
+  ],
+  "note": "Settle up",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859204905-e4e5f8.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Emergency",
+  "headline": "Everything responders need, in one place",
+  "sub": "999, NHS 111, the family's numbers, GP, allergies and more.",
+  "highlight": [
+   131,
+   526,
+   538,
+   330
+  ],
+  "note": "For responders",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859259671-ot5w1m.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "People",
+  "headline": "Everyone sees only what they should",
+  "sub": "Family see everything. Helpers see their visits. Mum sees her day.",
+  "highlight": [
+   131,
+   91,
+   538,
+   315
+  ],
+  "note": "Each role",
+  "dur": 7.2
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859330404-xgrqes.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "New Care Circle",
+   "role": "Setting up KIN for Dad",
+   "colour": "ink"
+  },
+  "step": "Guided setup",
+  "headline": "Set up a Care Circle in minutes",
+  "sub": "Tick what Dad needs help with.",
+  "highlight": [
+   131,
+   199,
+   538,
+   290
+  ],
+  "note": "Tick what's needed",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859506433-zjeu6n.jpg",
+  "crop": [
+   120,
+   0,
+   696,
+   900
+  ],
+  "persona": {
+   "name": "New Care Circle",
+   "role": "Setting up KIN for Dad",
+   "colour": "ink"
+  },
+  "step": "Guided setup",
+  "headline": "Then describe his week in your own words",
+  "sub": "Who does the shopping, when the bins go out, what's coming up.",
+  "highlight": [
+   139,
+   250,
+   538,
+   266
+  ],
+  "note": "Your words",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859553304-jca8ax.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "New Care Circle",
+   "role": "Setting up KIN for Dad",
+   "colour": "ink"
+  },
+  "step": "Guided setup",
+  "headline": "KIN drafts the jobs and dates for you",
+  "sub": "Check it, untick anything, and invite the family.",
+  "highlight": [
+   131,
+   241,
+   538,
+   367
+  ],
+  "note": "Drafted by AI",
+  "dur": 6.8
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790859291527-0aawh4.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter",
+   "colour": "plum"
+  },
+  "step": "Ask KIN",
+  "headline": "Stuck? Just ask",
+  "sub": "Plain answers about how to do anything in KIN.",
+  "highlight": [
+   131,
+   311,
+   474,
+   164
+  ],
+  "note": "Ask KIN",
+  "dur": 6.8
+ },
+ {
+  "type": "end",
+  "headline": "Try the demo",
+  "url": "kin-six-brown.vercel.app/demo",
+  "sub": "Pick a person and see what they see.",
+  "dur": 6.5
+ }
+]
