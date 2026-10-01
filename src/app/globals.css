@@ -35,7 +35,9 @@ a { color: var(--accent); }
 .small { font-size: 14px; }
 .note { font-size: 13px; color: var(--muted); }
 .label { font: 700 12px var(--font-display), sans-serif; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-.brand { font: 800 14px var(--font-display), sans-serif; letter-spacing: .2em; color: var(--accent); text-decoration: none; }
+.brand { display: inline-block; font: 800 26px/1 var(--font-display), sans-serif; letter-spacing: -0.01em; color: var(--accent); text-decoration: none; padding-top: .1em; }
+.wm-i { position: relative; }
+.wm-i::after { content: ""; position: absolute; left: 50%; top: -0.02em; width: .3em; height: .3em; border-radius: 50%; background: var(--plum); transform: translateX(-50%); }
 .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .between { justify-content: space-between; }

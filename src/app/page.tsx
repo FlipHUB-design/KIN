@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/data";
+import Wordmark from "@/components/Wordmark";
 
 export default async function Landing() {
   const { user } = await getUser();
   if (user) redirect("/circles");
   return (
     <main className="page" style={{ paddingBottom: 48, gap: 28 }}>
-      <span className="brand">KIN</span>
+      <span className="brand"><Wordmark /></span>
       <section className="stack" style={{ gap: 14 }}>
         <h1 style={{ fontSize: 34, lineHeight: 1.15 }}>Know what&apos;s happening. Know what needs doing. Know who&apos;s doing it.</h1>
         <p className="muted" style={{ fontSize: 18 }}>

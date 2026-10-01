@@ -1,9 +1,10 @@
 import Link from "next/link";
+import Wordmark from "@/components/Wordmark";
 
 export default function Privacy() {
   return (
     <main className="page" style={{ paddingBottom: 48 }}>
-      <Link href="/" className="brand">KIN</Link>
+      <Link href="/" className="brand"><Wordmark /></Link>
       <h1>How KIN handles your information</h1>
       <p className="note">Draft for the operator of this service to review with a UK GDPR adviser before launch.</p>
       <div className="card pad">

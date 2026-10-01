@@ -7,6 +7,7 @@ import {
 import { Disclaimer, Header, Hidden, Notice, Rows, taskRow, type Row } from "@/components/ui";
 import { askFamily, checkOut, dismissMissed, needHelp, wellbeing } from "./actions";
 import { KidsFamilyHome, KidsHelperHome, YoungPersonHome } from "./KidsHome";
+import Wordmark from "@/components/Wordmark";
 
 export default async function Home({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
@@ -231,7 +232,7 @@ async function SupportedHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string>
   const today_ = on(t), tomorrow = on(addDays(t, 1));
   return (
     <main className="page sp">
-      <div><span className="brand">KIN</span><h1>Today</h1><p className="muted">{longDate(t)}</p></div>
+      <div><span className="brand"><Wordmark /></span><h1>Today</h1><p className="muted">{longDate(t)}</p></div>
       <Notice sp={sp} />
       <div className="stack">
         {today_.length ? today_.map((r, i) => <div key={i} className="trow"><div><b>{r.time}</b><div>{r.text}</div></div></div>)

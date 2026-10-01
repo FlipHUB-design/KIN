@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/data";
 import { circleStatus, type Appointment, type Checkin, type Circle, type Task, today, addDays } from "@/lib/kin";
+import Wordmark from "@/components/Wordmark";
 
 export default async function Circles() {
   const { supabase, user } = await getUser();
@@ -27,7 +28,7 @@ export default async function Circles() {
   return (
     <main className="page">
       <div className="top">
-        <div><span className="brand">KIN</span><h1>Your families</h1></div>
+        <div><span className="brand"><Wordmark /></span><h1>Your families</h1></div>
         <Link href="/account" className="avatar" aria-label="Your account">{(me?.display_name || "?")[0]}</Link>
       </div>
       {circles.length === 0 ? (

@@ -38,8 +38,14 @@ def background():
     return bg.filter(ImageFilter.GaussianBlur(60))
 BGIMG = background()
 
-def logo(d, x, y, size=34, colour=ACCENT):
-    d.text((x, y), "KIN", font=font(800, size), fill=colour)
+_WM = {}
+def logo(im, x, y, h=44, white=False):
+    """Pastes the KIN wordmark with its top-left at x, y, h pixels tall."""
+    key = (h, white)
+    if key not in _WM:
+        src = Image.open(f"/home/claude/kin/public/wordmark{'-white' if white else ''}.png").convert("RGBA")
+        _WM[key] = src.resize((int(src.width * h / src.height), h), Image.LANCZOS)
+    w = _WM[key]; im.paste(w, (int(x), int(y)), w); return w.width
 
 def chip(d, x, y, name, role, colour):
     f1, f2 = font(700, 30), font(400, 26, "atk")
@@ -81,8 +87,8 @@ def screen_frame(sc, t, cache):
     im = BGIMG.copy(); d = ImageDraw.Draw(im)
     # left panel
     x0 = 130
-    logo(d, x0, 90)
-    if sc.get("step"): d.text((x0 + 100, 98), sc["step"], font=font(700, 24), fill=MUTED)
+    lw = logo(im, x0, 78, 50)
+    if sc.get("step"): d.text((x0 + lw + 28, 100), sc["step"], font=font(700, 24), fill=MUTED)
     y = 250
     if sc.get("persona"):
         p = sc["persona"]; chip(d, x0, y, p["name"], p["role"], p.get("colour", "accent")); y += 120
@@ -120,7 +126,7 @@ def screen_frame(sc, t, cache):
 def title_frame(sc, t, cache):
     im = Image.new("RGB", (W, H), ACCENT); d = ImageDraw.Draw(im)
     a = ease(t * 3)
-    d.text((W // 2, 360 - int((1 - a) * 20)), "KIN", font=font(800, 150), fill=WHITE, anchor="mm")
+    w = logo(Image.new("RGBA", (1, 1)), 0, 0, 190, True); logo(im, (W - w) // 2, 250 - int((1 - a) * 20), 190, True)
     f = font(700, 60)
     for i, line in enumerate(wrap(d, sc["headline"], f, 1400)):
         d.text((W // 2, 540 + i * 74), line, font=f, fill=WHITE, anchor="mm")
@@ -132,7 +138,7 @@ def title_frame(sc, t, cache):
 
 def cast_frame(sc, t, cache):
     im = BGIMG.copy(); d = ImageDraw.Draw(im)
-    logo(d, 130, 90)
+    logo(im, 130, 78, 50)
     d.text((W // 2, 230), sc["headline"], font=font(800, 64), fill=INK, anchor="mm")
     if sc.get("sub"): d.text((W // 2, 310), sc["sub"], font=font(400, 34, "atk"), fill=MUTED, anchor="mm")
     people = sc["people"]; n = len(people); cw = 300; gx = (W - n * cw) // 2
@@ -150,7 +156,7 @@ def cast_frame(sc, t, cache):
 
 def end_frame(sc, t, cache):
     im = Image.new("RGB", (W, H), ACCENT); d = ImageDraw.Draw(im)
-    d.text((W // 2, 330), "KIN", font=font(800, 140), fill=WHITE, anchor="mm")
+    w = logo(Image.new("RGBA", (1, 1)), 0, 0, 170, True); logo(im, (W - w) // 2, 230, 170, True)
     d.text((W // 2, 500), sc["headline"], font=font(700, 56), fill=WHITE, anchor="mm")
     d.rounded_rectangle([W // 2 - 520, 590, W // 2 + 520, 690], 50, fill=WHITE)
     d.text((W // 2, 640), sc["url"], font=font(800, 46), fill=ACCENT, anchor="mm")

@@ -8,9 +8,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "KIN",
+  appleWebApp: { capable: true, title: "KIN", statusBarStyle: "default" },
   description: "Know what's happening. Know what needs doing. Know who's doing it.",
 };
-export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#2B6A55" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

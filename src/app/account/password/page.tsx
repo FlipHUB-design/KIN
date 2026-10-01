@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Wordmark from "@/components/Wordmark";
 
 async function setPassword(formData: FormData) {
   "use server";
@@ -15,7 +16,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   const sp = await searchParams;
   return (
     <main className="page" style={{ maxWidth: 440 }}>
-      <span className="brand">KIN</span>
+      <span className="brand"><Wordmark /></span>
       <h1>Choose a new password</h1>
       {sp.error && <p className="error">{sp.error}</p>}
       <form action={setPassword} className="form">

@@ -7,6 +7,7 @@ import {
 } from "@/lib/kin";
 import { Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
 import { checkOut, agreeChange, declineChange, youngPersonAsk } from "./actions";
+import Wordmark from "@/components/Wordmark";
 
 type Ctx = Awaited<ReturnType<typeof getCircle>>;
 
@@ -325,7 +326,7 @@ export async function YoungPersonHome({ ctx, sp }: { ctx: Ctx; sp: Record<string
   const parents = members.filter((m) => ["admin", "family"].includes(m.role) && m.status === "active");
   return (
     <main className="page sp" style={{ fontSize: 18 }}>
-      <div className="top"><div><span className="brand">KIN</span><h1>Hi {name}</h1><p className="muted">{longDate(t)}</p></div></div>
+      <div className="top"><div><span className="brand"><Wordmark /></span><h1>Hi {name}</h1><p className="muted">{longDate(t)}</p></div></div>
       <Notice sp={sp} />
       {tonight ? (
         <section className={`yp-tonight col-${tonight.colour}`}>

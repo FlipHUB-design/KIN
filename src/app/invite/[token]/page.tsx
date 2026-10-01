@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/data";
 import { roleDesc, roleLabel, type Kind, type Role } from "@/lib/kin";
+import Wordmark from "@/components/Wordmark";
 
 async function accept(formData: FormData) {
   "use server";
@@ -21,7 +22,7 @@ export default async function Invite({ params, searchParams }: { params: Promise
   const here = `/invite/${token}`;
   return (
     <main className="page" style={{ maxWidth: 460 }}>
-      <span className="brand">KIN</span>
+      <span className="brand"><Wordmark /></span>
       {!inv || !inv.valid ? (
         <>
           <h1>This invitation has expired</h1>

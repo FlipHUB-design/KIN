@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { dayLabel, hm, kindOf, isOverdue, RECURRENCE_LABEL, type Task } from "@/lib/kin";
+import Wordmark from "@/components/Wordmark";
 
 export function Notice({ sp }: { sp: Record<string, string | undefined> }) {
   return (
@@ -15,7 +16,7 @@ export function Header({ title, sub, initial, back }: { title: string; sub?: str
     <>
       {back && <Link href={back.href} className="link">‹ {back.label}</Link>}
       <div className="top">
-        <div><Link href="/circles" className="brand">KIN</Link><h1>{title}</h1>{sub && <p className="muted">{sub}</p>}</div>
+        <div><Link href="/circles" className="brand"><Wordmark /></Link><h1>{title}</h1>{sub && <p className="muted">{sub}</p>}</div>
         <Link href="/account" className="avatar" aria-label="Your account">{initial}</Link>
       </div>
     </>

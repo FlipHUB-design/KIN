@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DEMO_ENABLED, KIDS_PICKABLE, PERSONAS, PICKABLE, ensureDemo, type Persona } from "@/lib/demo";
+import Wordmark from "@/components/Wordmark";
 
 async function reset() {
   "use server";
@@ -27,10 +28,10 @@ function People({ list }: { list: Persona[] }) {
 
 export default async function Demo({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
-  if (!DEMO_ENABLED) return <main className="page"><Link href="/" className="brand">KIN</Link><h1>The demo is switched off</h1></main>;
+  if (!DEMO_ENABLED) return <main className="page"><Link href="/" className="brand"><Wordmark /></Link><h1>The demo is switched off</h1></main>;
   return (
     <main className="page" style={{ paddingBottom: 48 }}>
-      <Link href="/" className="brand">KIN</Link>
+      <Link href="/" className="brand"><Wordmark /></Link>
       <h1>Try KIN</h1>
       <p className="muted">Two made-up families. Pick who you&apos;d like to be. Each person sees only what their role allows.</p>
       {sp.error && <p className="error">{sp.error}</p>}
