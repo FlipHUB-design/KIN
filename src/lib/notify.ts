@@ -177,3 +177,11 @@ export function deliveryText(email: string | null, sms: string | null) {
   };
   return [part(email, "Email"), part(sms, "Text")].filter(Boolean).join(" · ") || "In KIN only";
 }
+
+/** Emails someone their invitation link. Returns true if it was sent. */
+export async function sendInviteEmail(to: string, inviter: string, what: string, url: string) {
+  return sendEmail(to, `${inviter} invited you to KIN`,
+    emailHtml({ heading: `${inviter} invited you to KIN`, lines: [`${inviter} is using KIN to ${what}, and would like you to join.`, "The link works once and expires in 14 days."],
+      button: { label: "Join on KIN", href: url }, footer: "If you weren't expecting this, you can ignore this email." }),
+    `${inviter} invited you to KIN to ${what}. Join here: ${url}\n\nThe link works once and expires in 14 days.`);
+}

@@ -54,10 +54,11 @@ export default async function NewCircle({ searchParams }: { searchParams: Promis
     <main className="page">
       <Link href="/circles" className="link">‹ Back</Link>
       <h1>Who are you organising for?</h1>
+      <p className="muted">A few easy questions, then KIN sets everything up for you to check.</p>
       <div className="stack">
-        <Link href="/circles/new?kind=care" className="card pad" style={{ textDecoration: "none", color: "inherit" }}>
+        <Link href="/circles/new/guided?kind=care" className="card pad" style={{ textDecoration: "none", color: "inherit" }}>
           <b>An older parent or relative</b><span className="small muted">Visits, lifts to appointments, household jobs, paperwork and who&apos;s doing what.</span></Link>
-        <Link href="/circles/new?kind=children" className="card pad" style={{ textDecoration: "none", color: "inherit" }}>
+        <Link href="/circles/new/guided?kind=children" className="card pad" style={{ textDecoration: "none", color: "inherit" }}>
           <b>Children</b><span className="small muted">School, clubs, pick-ups and costs, in one home or across two. Built for co-parents, grandparents and childminders too.</span></Link>
       </div>
     </main>

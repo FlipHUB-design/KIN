@@ -306,3 +306,15 @@ export const PATTERNS: { key: string; label: string; desc: string; days: ("A" | 
   { key: "weekends", label: "Every other weekend", desc: "Friday and Saturday nights with the second home every other week", days: ["A","A","A","A","B","B","A", "A","A","A","A","A","A","A"] },
   { key: "weekends-mid", label: "Every other weekend plus a midweek night", desc: "As above, plus every Wednesday night", days: ["A","A","B","A","B","B","A", "A","A","B","A","A","A","A"] },
 ];
+
+/** What an older relative might need help with, asked during guided setup. */
+export const CARE_NEEDS: { key: string; label: string }[] = [
+  { key: "shopping", label: "Shopping" },
+  { key: "lifts", label: "Lifts to appointments" },
+  { key: "medication", label: "Prescriptions and medication" },
+  { key: "cleaning", label: "Cleaning" },
+  { key: "garden", label: "Garden and bins" },
+  { key: "paperwork", label: "Post, bills and forms" },
+  { key: "visits", label: "Regular visits or calls" },
+  { key: "meals", label: "Meals" },
+];

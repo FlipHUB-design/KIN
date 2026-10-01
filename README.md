@@ -24,6 +24,9 @@ Permissions are enforced by the database (Supabase row-level security), not just
 ### Letter reading, playbooks and shared costs
 
 - **Letters:** photograph a letter and KIN suggests tasks with deadlines. Nothing is added until someone confirms. To switch on automatic reading, create an API key at [console.anthropic.com](https://console.anthropic.com) and add it in Vercel as `ANTHROPIC_API_KEY`, then redeploy. Without it, letters are still saved to Documents and the sample letter still works.
+- **Guided setup:** a few easy questions (children, homes, who helps, a normal week in your own words), then KIN drafts the whole setup: children, homes and pattern, invitations, regular jobs, dates, contacts and guides. People untick what they don't want before anything is created. With `ANTHROPIC_API_KEY` set, the AI helper reads what they typed in their own words; without it, the setup is drafted from their answers alone.
+- **Ask KIN:** a help chat (the ? button, or More → Ask KIN) that answers how-to questions from KIN's own help guide, with links to the right screen. With the API key it answers in plain language; without it, it finds the closest guide answer.
+- **AI limits:** each person can use the AI helper a set number of times a day (6 setups, 40 questions, 30 letters), so costs stay predictable. Change them in `src/lib/ai.ts`.
 - **Playbooks:** Attendance Allowance, coming home from hospital, Blue Badge, lasting power of attorney, council tax discounts, and after a death. Each step links to GOV.UK or NHS.uk. Review them every few months, because rules change. They live in `src/lib/playbooks.ts`.
 - **Shared costs:** who paid for what and the fewest payments to settle up. Visible to administrators and family only.
 

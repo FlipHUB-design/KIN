@@ -24,6 +24,7 @@ grant all on storage.objects to authenticated; grant execute on all functions in
 // 0004 runs after the blanket grants above, as on Supabase where new tables get default grants first
 await db.exec(`alter default privileges in schema public grant all on tables to authenticated;`);
 await db.exec(fs.readFileSync(new URL("../migrations/0004_notifications.sql", import.meta.url), "utf8"));
+await db.exec(fs.readFileSync(new URL("../migrations/0005_ai_usage.sql", import.meta.url), "utf8"));
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -170,3 +171,10 @@ let otherPrefs=true; try { await as(K.dan, `insert into notification_prefs (user
 ok(!otherPrefs, "you can't change someone else's alert settings");
 await db.query(`delete from memberships where circle_id=$1 and user_id=$2`, [fam, K.leah]);
 ok((await db.query(`select * from notifications where user_id=$1`, [K.leah])).rows.length===0, "leaving a family removes its alerts");
+
+// ---------------------------------------------------------------- AI limits
+await db.query(`insert into ai_usage (user_id,kind,count) values ($1,'help',3)`, [U.sarah]);
+let readUsage=true; try { await as(U.sarah, `select * from ai_usage`) } catch { readUsage=false }
+ok(!readUsage, "people can't read the AI usage counters");
+let resetUsage=true; try { await as(U.sarah, `delete from ai_usage`) } catch { resetUsage=false }
+ok(!resetUsage, "people can't reset their own AI limit");

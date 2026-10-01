@@ -7,7 +7,8 @@ import { makePdf } from "@/lib/pdf";
 import { playbook } from "@/lib/playbooks";
 import { addDays, today } from "@/lib/kin";
 import { after } from "next/server";
-import { emailHtml, isDemoEmail, notify, sendEmail, site, type Level } from "@/lib/notify";
+import { takeAllowance } from "@/lib/ai";
+import { isDemoEmail, notify, sendInviteEmail, site, type Level } from "@/lib/notify";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const n = (f: FormData, k: string) => s(f, k) || null;
@@ -237,13 +238,8 @@ export async function invite(f: FormData) {
   if (to && !isDemoEmail(c.user.email)) {
     const url = `${site()}/invite/${data.token}`;
     const what = c.circle.kind === "children" ? "organise things for the children" : `coordinate things for ${c.circle.preferred_name}`;
-    emailed = await sendEmail(to, `${myName(c)} invited you to KIN`,
-      emailHtml({ heading: `${myName(c)} invited you to KIN`, lines: [`${myName(c)} is using KIN to ${what}, and would like you to join.`, "The link works once and expires in 14 days."],
-        button: { label: "Join on KIN", href: url }, footer: "If you weren't expecting this, you can ignore this email." }),
-      `${myName(c)} invited you to KIN to ${what}. Join here: ${url}\n\nThe link works once and expires in 14 days.`);
+    emailed = await sendInviteEmail(to, myName(c), what, url);
   }
-  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "invitation.create", detail: { role: s(f, "role") } });
-  await activity(c, "invited", s(f, "name"));
   back(c.circleId, `/people/invite?sent=${data.id}${emailed ? "&emailed=1" : ""}`);
 }
 
@@ -399,6 +395,7 @@ export async function scanLetter(f: FormData) {
   if (error || !doc) { await c.supabase.storage.from("documents").remove([path]); fail(c.circleId, "/letters", "Only family members can add letters."); }
   await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "document.upload", detail: { name: s(f, "name") || "Letter" } });
   if (!letterReadingOn()) back(c.circleId, "/letters", "Letter saved to Documents. Automatic reading isn't switched on yet.");
+  if (!(await takeAllowance(c.user.id, "letter"))) back(c.circleId, "/letters", "Letter saved to Documents. You've reached today's limit for reading letters, so try again tomorrow.");
   const file = await c.supabase.storage.from("documents").download(path);
   if (file.error || !file.data) fail(c.circleId, "/letters", "Couldn't open the letter.");
   let result: LetterResult;

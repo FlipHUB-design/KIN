@@ -44,6 +44,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
         {items.filter((i) => i[3]).map(([k, l, s]) => (
           <Link key={k} href={k.startsWith("../") ? `/c/${id}/${k.slice(3)}` : `/c/${id}/more/${k}`} className="item"><span className="main"><span className="t">{l}</span><span className="s">{s}</span></span><span className="muted">›</span></Link>
         ))}
+        <Link href={`/ask?c=${id}`} className="item"><span className="main"><span className="t">Ask KIN</span><span className="s">Help with how to do something</span></span><span className="muted">›</span></Link>
         <Link href="/circles" className="item"><span className="main"><span className="t">{kids ? "Switch family" : "People I help"}</span><span className="s">Switch to another family or Care Circle, or start a new one</span></span><span className="muted">›</span></Link>
         <Link href="/account" className="item"><span className="main"><span className="t">Your account</span><span className="s">Name, phone, password, your data</span></span><span className="muted">›</span></Link>
       </div>

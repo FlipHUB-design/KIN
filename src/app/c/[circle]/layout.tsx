@@ -7,6 +7,8 @@ export default async function CircleLayout({ children, params }: { children: Rea
   const { role, user, me, supabase } = await getCircle(circle);
   const { count: unread } = await supabase.from("notifications").select("id", { count: "exact", head: true }).eq("circle_id", circle).eq("user_id", user.id).is("read_at", null);
   const fullNav = role === "admin" || role === "family" || role === "contributor";
+  const { circle: c } = await getCircle(circle);
+  const showHelp = !(role === "supported" && c.kind === "care");
   const demo = user.email?.endsWith("@kin-demo.example.com");
   return (
     <>
@@ -23,6 +25,7 @@ export default async function CircleLayout({ children, params }: { children: Rea
         </Link>
       )}
       {children}
+      {showHelp && <Link href={`/ask?c=${circle}`} className={`helpfab${fullNav ? "" : " nonav"}`} aria-label="Ask KIN: help with using the app" title="Ask KIN">?</Link>}
       {fullNav && <Nav base={`/c/${circle}`} />}
     </>
   );
