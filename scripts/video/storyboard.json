@@ -3,13 +3,13 @@
   "type": "title",
   "headline": "Family admin, shared.",
   "sub": "One calm place for everyone who looks after the children.",
-  "dur": 3.6
+  "dur": 5
  },
  {
   "type": "cast",
   "headline": "Meet the Carters",
   "sub": "Two homes, two parents, and the people who help",
-  "dur": 5,
+  "dur": 6.5,
   "people": [
    {
     "name": "Leah",
@@ -62,7 +62,7 @@
    175
   ],
   "note": "Tonight",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -88,7 +88,7 @@
    250
   ],
   "note": "Swap request",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -114,7 +114,7 @@
    37
   ],
   "note": "New alert",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -140,7 +140,7 @@
    245
   ],
   "note": "Agree",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -166,7 +166,7 @@
    52
   ],
   "note": "Changed nights",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -192,7 +192,7 @@
    269
   ],
   "note": "Leah agreed",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -218,7 +218,7 @@
    219
   ],
   "note": "Approve",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -244,7 +244,7 @@
    85
   ],
   "note": "Balance",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -270,7 +270,7 @@
    182
   ],
   "note": "Pick-ups",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -296,7 +296,7 @@
    163
   ],
   "note": "Allergies",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -322,7 +322,7 @@
    263
   ],
   "note": "Jobs to take",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -348,7 +348,7 @@
    170
   ],
   "note": "Tonight",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -374,7 +374,7 @@
    285
   ],
   "note": "Packed?",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -400,7 +400,7 @@
    240
   ],
   "note": "From the letter",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -426,7 +426,7 @@
    41
   ],
   "note": "Download",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -452,7 +452,7 @@
    262
   ],
   "note": "Your words",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -478,7 +478,7 @@
    440
   ],
   "note": "Drafted by AI",
-  "dur": 4.3
+  "dur": 6.8
  },
  {
   "type": "screen",
@@ -504,7 +504,7 @@
    140
   ],
   "note": "Ask KIN",
-  "dur": 4.3
+  "dur": 7.2
  },
  {
   "type": "screen",
@@ -530,13 +530,13 @@
    186
   ],
   "note": "Who's on it",
-  "dur": 4.6
+  "dur": 7.2
  },
  {
   "type": "end",
   "headline": "Try the demo",
   "url": "kin-six-brown.vercel.app/demo",
   "sub": "Pick a person and see what they see.",
-  "dur": 5
+  "dur": 6.5
  }
 ]

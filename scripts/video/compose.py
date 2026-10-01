@@ -108,10 +108,10 @@ def screen_frame(sc, t, cache):
     if sc.get("highlight"):
         hx, hy, hw, hh = sc["highlight"]; cx0, cy0 = cache["shot"].crop[:2]; s = cache["scale"]; pad = cache["pad"]
         bx, by = px + pad + (hx - cx0) * s, py + pad + (hy - cy0) * s
-        ha = ease((t - 0.25) * 5)
+        ha = ease((t - 0.18) * 6)
         if ha > 0:
             ov = Image.new("RGBA", im.size, (0, 0, 0, 0)); od = ImageDraw.Draw(ov)
-            grow = 10 + 4 * math.sin(t * 12)
+            grow = 10 + 3 * math.sin(t * 7)
             od.rounded_rectangle([bx - grow, by - grow, bx + hw * s + grow, by + hh * s + grow], 18, outline=(240, 160, 30, int(255 * ha)), width=6)
             im.paste(ov, (0, 0), ov)
             if sc.get("note"):
