@@ -66,6 +66,7 @@ Rules:
     return { text: "If someone is in danger or needs urgent help, call 999 now. For urgent medical advice, call NHS 111. KIN doesn't contact emergency services.", links: links(["emergency"], cid), ai: false };
   const hits = searchDocs(question, docs);
   if (!hits.length) return { text: "I couldn't find an answer to that. Try asking about tasks, the calendar, inviting someone, costs, alerts or your account.", links: [], ai: false };
-  const top = hits[0];
-  return { text: top.a + (hits[1] ? `\n\nYou might also want: ${hits.slice(1, 3).map((h) => h.q).join(" · ")}` : ""), links: links(top.pages || [], cid), ai: false };
+  const top = hits[0].d;
+  const related = hits.slice(1, 3).filter((h) => h.score >= hits[0].score * 0.75).map((h) => h.d.q);
+  return { text: top.a + (related.length ? `\n\nRelated: ${related.join(" · ")}` : ""), links: links(top.pages || [], cid), ai: false };
 }

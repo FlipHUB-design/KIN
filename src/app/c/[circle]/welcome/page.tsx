@@ -19,7 +19,7 @@ export default async function Welcome({ params }: { params: Promise<{ circle: st
     <main className="page">
       <h1>{kids ? "Your family is set up" : `${circle.preferred_name}'s Care Circle is ready`}</h1>
       <div className="card pad">
-        <p>{[kids && children ? `${children} ${children === 1 ? "child" : "children"}` : null, `${tasks || 0} jobs and dates`, contacts ? `${contacts} contacts` : null, invites?.length ? `${invites.length} ${invites.length === 1 ? "invitation" : "invitations"}` : null].filter(Boolean).join(" · ")}</p>
+        <p>{[kids && children ? `${children} ${children === 1 ? "child" : "children"}` : null, `${tasks || 0} jobs and dates`, contacts ? `${contacts} ${contacts === 1 ? "contact" : "contacts"}` : null, invites?.length ? `${invites.length} ${invites.length === 1 ? "invitation" : "invitations"}` : null].filter(Boolean).join(" · ")}</p>
         <p className="small muted">Everything can be changed. Jobs nobody has taken yet show as &ldquo;Who can do this?&rdquo; until someone takes them.</p>
       </div>
       {!!invites?.length && <>

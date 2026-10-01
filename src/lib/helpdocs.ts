@@ -121,7 +121,7 @@ export const DOCS: Doc[] = [
   { id: "alerts", q: "How do alerts work?", words: "alerts notifications email text sms notify told know", pages: ["alerts", "alertsettings"],
     a: "KIN alerts you when something needs you: a request to answer, a cost to approve, a job given to you, or an answer to your request. Every alert appears on the Alerts page. You choose which also come by email or text in Email and text alerts, under Your account." },
   { id: "quiet", q: "Can I stop texts at night?", words: "quiet hours night texts stop turn off morning email digest", pages: ["alertsettings"],
-    a: "Yes. In Email and text alerts, set your quiet hours (9pm to 7am to start with). Texts aren't sent then, except urgent ones if you've turned those on. You can also turn the morning email on or off." },
+    a: "In Email and text alerts, under Your account, set your quiet hours (9pm to 7am to start with). Texts aren't sent then, except urgent ones if you've turned those on. You can also turn the morning email on or off." },
   { id: "phone", q: "How do I change my name, phone number or password?", words: "change name phone number password account email", pages: ["account"],
     a: "Open Your account to change your name and phone number, or to change your password." },
   { id: "privacy", q: "Is my information private?", words: "private secure safe data gdpr who can see delete export", pages: ["account"],
@@ -135,7 +135,7 @@ export function docsFor(kind?: Kind | null, role?: Role | null) {
   return DOCS.filter((d) => (!d.kinds || !kind || d.kinds.includes(kind)) && (!d.roles || !role || d.roles.includes(role)));
 }
 
-/** Simple keyword match, used when the AI helper isn't available. */
+/** Simple keyword match, used when the AI helper isn't available. Returns docs with scores, best first. */
 export function searchDocs(q: string, docs: Doc[]) {
   const words = q.toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !["how", "the", "can", "and", "what", "does", "for", "with", "you", "are", "who", "this", "that", "where", "when", "why", "our", "get"].includes(w));
   if (!words.length) return [];
@@ -143,5 +143,5 @@ export function searchDocs(q: string, docs: Doc[]) {
     const hay = `${d.q} ${d.words}`.toLowerCase();
     const score = words.reduce((s, w) => s + (hay.includes(w) ? (d.words.includes(w) ? 2 : 1) : w.endsWith("s") && hay.includes(w.slice(0, -1)) ? 1 : 0), 0);
     return { d, score };
-  }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score).map((x) => x.d);
+  }).filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
 }

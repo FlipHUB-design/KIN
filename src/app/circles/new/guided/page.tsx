@@ -16,7 +16,7 @@ export default async function Guided({ searchParams }: { searchParams: Promise<R
   return (
     <>
       <Wizard kind={kind} monday={monday} aiReady={aiOn()} />
-      <p className="page note" style={{ paddingTop: 0 }}>Prefer a short form? <Link href={`/circles/new?kind=${kind}`} className="link">Set up with the basics only</Link></p>
+      <div className="page" style={{ paddingTop: 0, minHeight: 0 }}><p className="note">Prefer a short form? <Link href={`/circles/new?kind=${kind}`}>Set up with the basics only</Link></p></div>
     </>
   );
 }
