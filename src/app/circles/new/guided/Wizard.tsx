@@ -181,7 +181,7 @@ export default function Wizard({ kind, monday, aiReady }: { kind: Kind; monday: 
 
       {step === 3 && (
         <section className="form">
-          <h1>{kids ? "What does a normal week look like?" : `What does ${care.preferred || "their"} week look like?`}</h1>
+          <h1>{kids ? "What does a normal week look like?" : `What does ${care.preferred ? care.preferred + "'s" : care.person ? care.person.split(" ")[0] + "'s" : "their"} week look like?`}</h1>
           <p className="muted">Write it how you&apos;d say it. {aiReady ? "KIN's AI helper turns it into jobs, dates and contacts for you to check." : "This helps you set things up later."}</p>
           <label className="fl">Regular things
             <textarea rows={5} value={a.week} onChange={(e) => (kids ? setKid({ ...kid, week: e.target.value }) : setCare({ ...care, week: e.target.value }))}
