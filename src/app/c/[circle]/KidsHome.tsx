@@ -330,7 +330,7 @@ export async function YoungPersonHome({ ctx, sp }: { ctx: Ctx; sp: Record<string
       {tonight ? (
         <section className={`yp-tonight col-${tonight.colour}`}>
           <span className="label">Tonight you&apos;re at</span><b>{tonight.name}</b>
-          {next && nextHome && <span>Then {nextHome.name} from <strong>{dayLabel(next.date)}</strong>{circle.handover_note ? ` (${circle.handover_note.toLowerCase()})` : ""}</span>}
+          {next && nextHome && <span>Then {nextHome.name} from <strong>{["Today", "Tomorrow"].includes(dayLabel(next.date)) ? dayLabel(next.date).toLowerCase() : dayLabel(next.date)}</strong>{circle.handover_note ? ` (${circle.handover_note.toLowerCase()})` : ""}</span>}
         </section>
       ) : null}
       {fam.twoHomes && <Strip fam={fam} days={14} />}
