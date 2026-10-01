@@ -19,7 +19,7 @@ KIN is not a medical app. It doesn't diagnose, monitor health or contact emergen
 - Simplified large-text screen for the supported person, with "How are you today?" and "I need help"
 - Restricted screen for helpers: only their visits, the address, how to get in and one contact
 
-Permissions are enforced by the database (Supabase row-level security), not just hidden on screen. `npm run test:db` runs 32 checks, for example that a cleaner can't see appointments, a contributor can't see family-only tasks, and an outsider can't see anything by changing a link.
+Permissions are enforced by the database (Supabase row-level security), not just hidden on screen. `npm run test:db` runs 51 checks, for example that a cleaner can't see appointments, a contributor can't see family-only tasks, and an outsider can't see anything by changing a link.
 
 ### Letter reading, playbooks and shared costs
 
@@ -28,6 +28,22 @@ Permissions are enforced by the database (Supabase row-level security), not just
 - **Shared costs:** who paid for what and the fewest payments to settle up. Visible to administrators and family only.
 
 The database changes for these are in `supabase/migrations/0002_letters_playbooks_costs.sql`, which runs after 0001.
+
+### KIN for children and co-parents
+
+A family can be set up for **children** instead of an older relative (choose when you start). Everything above still works, plus:
+
+- **Two homes and a schedule:** add both homes, pick a usual pattern (2-2-5-5, 2-2-3, week on/week off, every other weekend) and fine-tune any night. Everyone sees where the children sleep tonight, colour-coded on Home and the calendar.
+- **Swap requests:** a parent asks for a change with a reason and an offer in return; another parent agrees or says no. Nothing changes until it's agreed. Grandparents, childminders and the children see the result, not the reasons.
+- **Handovers:** a packing list, a record of what went and what was missing, and notes for the other home.
+- **Children:** school, class, allergies and important notes (shared with childminders), sizes, GP, dentist and passport expiry with a renewal reminder. **Where is it?** tracks passports, PE kits and chargers between homes.
+- **Agreements:** bedtimes, screens, money and holidays, agreed once by both parents. Shared rules show to grandparents, childminders and the children.
+- **Costs:** an agreed split (for example 50/50 or 60/40), approvals from the other parent, queries, spend per child, and a separate child maintenance record.
+- **Records:** a dated history of requests, answers, costs and handovers, downloadable as a CSV for mediation.
+- **Views for everyone:** grandparents see the schedule and their tasks; childminders see pick-ups, which home to drop off at, allergies and dates shared with them; a 13+ young person gets their own simple view with what to pack, house rules, a way to message their parents and Childline's number.
+- **Children's playbooks:** child passports, taking children abroad, school places, childcare costs, a new baby, making arrangements after separating, and school holidays.
+
+The database changes are in `supabase/migrations/0003_children_coparenting.sql`. Run it after 0002.
 
 ### Not built yet
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCircle } from "@/lib/data";
-import { canEdit, dayLabel, hm, isOverdue, kindOf, RECURRENCE_LABEL, when, type Task } from "@/lib/kin";
+import { canEdit, childNames, dayLabel, hm, isOverdue, kindOf, RECURRENCE_LABEL, when, type Child, type Task } from "@/lib/kin";
 import { Hidden, Notice } from "@/components/ui";
 import TaskForm from "../TaskForm";
 import { addComment, cancelTask, claimTask, completeTask, declineTask, updateTask } from "../../actions";
@@ -9,7 +9,10 @@ import { addComment, cancelTask, claimTask, completeTask, declineTask, updateTas
 export default async function TaskPage({ params, searchParams }: { params: Promise<{ circle: string; id: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: cid, id } = await params;
   const sp = await searchParams;
-  const { supabase, user, role, nameOf, members } = await getCircle(cid);
+  const { supabase, user, role, nameOf, members, circle } = await getCircle(cid);
+  const kidsMode = circle.kind === "children";
+  const { data: kidRows } = kidsMode ? await supabase.from("children").select("*").eq("circle_id", cid).order("sort") : { data: [] };
+  const kids = (kidRows || []) as Child[];
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await supabase.from("tasks").select("*").eq("id", id).eq("circle_id", cid).maybeSingle();
   if (!data) notFound();
@@ -20,15 +23,16 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     : { data: [] };
   const mine = t.assignee === user.id;
   const transport = t.category === "Transport";
+  const lift = t.category === "Pick-up or drop-off";
   const canTake = role !== "helper";
   const editing = sp.edit === "1" && canEdit(role);
-  const back = t.appointment_id ? { href: `/c/${cid}/appointments/${t.appointment_id}`, label: "Appointment" } : { href: `/c/${cid}/tasks`, label: "Tasks" };
+  const back = t.appointment_id ? { href: `/c/${cid}/appointments/${t.appointment_id}`, label: kidsMode ? "Event" : "Appointment" } : { href: `/c/${cid}/tasks`, label: "Tasks" };
 
   if (editing) return (
     <main className="page">
       <Link href={`/c/${cid}/tasks/${id}`} className="link">‹ Cancel</Link>
       <h1>Edit task</h1>
-      <TaskForm circle={cid} members={members} userId={user.id} role={role} task={t} action={updateTask} submit="Save changes" />
+      <TaskForm circle={cid} members={members} userId={user.id} role={role} task={t} action={updateTask} submit="Save changes" kind={circle.kind} kids={kids} />
     </main>
   );
 
@@ -36,7 +40,8 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     <main className="page">
       <Link href={back.href} className="link">‹ {back.label}</Link>
       <Notice sp={sp} />
-      <div className={`row k-${kindOf(t)}`}><span className="tag">{t.category}</span>{t.private && <span className="tag">Family only</span>}</div>
+      <div className={`row k-${kindOf(t)}`}><span className="tag">{t.category}</span>{t.private && <span className="tag">{kidsMode ? "Parents only" : "Family only"}</span>}
+        {(t.child_ids || []).map((id) => { const k = kids.find((x) => x.id === id); return k ? <span key={id} className={`kid col-${k.colour}`}>{k.first_name}</span> : null; })}</div>
       <h1>{t.title}</h1>
       <p className="muted">
         {dayLabel(t.due_date)}{t.due_time ? ` at ${hm(t.due_time)}` : ""}{t.recurrence !== "none" ? ` · ${RECURRENCE_LABEL[t.recurrence]}` : ""}
@@ -53,12 +58,12 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
         <div className="callout amber">Cancelled</div>
       ) : !t.assignee ? (
         <>
-          <div className="callout amber">{transport ? "Who can drive?" : "Who can do this?"}</div>
-          {canTake && <form action={claimTask}><Hidden circle={cid} id={id} /><button className="btn primary block">{transport ? "I'll drive" : "I'll do it"}</button></form>}
+          <div className="callout amber">{transport ? "Who can drive?" : lift ? `Who can take ${childNames(t.child_ids, kids) || "them"}?` : "Who can do this?"}</div>
+          {canTake && <form action={claimTask}><Hidden circle={cid} id={id} /><button className="btn primary block">{transport ? "I'll drive" : lift ? "I'll take them" : "I'll do it"}</button></form>}
         </>
       ) : (
         <>
-          <div className="callout">{mine ? "You're" : `${nameOf(t.assignee)} is`} {transport ? "driving" : "responsible"}</div>
+          <div className="callout">{mine ? "You're" : `${nameOf(t.assignee)} is`} {transport ? "driving" : lift ? "taking them" : "responsible"}</div>
           <div className="row">
             {(mine || canEdit(role)) && <form action={completeTask}><Hidden circle={cid} id={id} /><button className="btn primary">{mine ? "Mark done" : `Mark done for ${nameOf(t.assignee)}`}</button></form>}
             {mine && <form action={declineTask}><Hidden circle={cid} id={id} /><button className="btn">I can&apos;t do this any more</button></form>}

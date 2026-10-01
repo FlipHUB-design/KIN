@@ -11,7 +11,8 @@ export const maxDuration = 60;
 export default async function Letters({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
   const sp = await searchParams;
-  const { supabase, role, nameOf } = await getCircle(id);
+  const { supabase, role, nameOf, circle } = await getCircle(id);
+  const kidsMode = circle.kind === "children";
   if (!canEdit(role)) return <main className="page"><Link href={`/c/${id}`} className="link">‹ Home</Link><p>Letters are shared with family members only.</p></main>;
   const { data } = await supabase.from("letter_scans").select("*").eq("circle_id", id).order("created_at", { ascending: false }).limit(30);
   const on = letterReadingOn();
@@ -19,7 +20,7 @@ export default async function Letters({ params, searchParams }: { params: Promis
     <main className="page">
       <Link href={`/c/${id}/more`} className="link">‹ More</Link>
       <h1>Letters</h1>
-      <p className="muted">Take a photo of a letter from the council, DWP, NHS, a bank or an insurer. KIN reads it, pulls out any deadlines and suggests tasks. Nothing is added until you say so.</p>
+      <p className="muted">{kidsMode ? "Take a photo of a school letter, party invitation, club newsletter or appointment letter." : "Take a photo of a letter from the council, DWP, NHS, a bank or an insurer."} KIN reads it, pulls out any deadlines and suggests tasks. Nothing is added until you say so.</p>
       <Notice sp={sp} />
       {on ? <LetterUpload circle={id} scan={scanLetter} /> : (
         <div className="card pad">
@@ -28,7 +29,7 @@ export default async function Letters({ params, searchParams }: { params: Promis
           <LetterUpload circle={id} scan={scanLetter} />
         </div>
       )}
-      <form action={scanSampleLetter}><Hidden circle={id} /><button className="btn block">Try it with a sample council letter</button></form>
+      <form action={scanSampleLetter}><Hidden circle={id} /><button className="btn block">{kidsMode ? "Try it with a sample school trip letter" : "Try it with a sample council letter"}</button></form>
       <section className="stack">
         <h2>Read so far</h2>
         <div className="card list">

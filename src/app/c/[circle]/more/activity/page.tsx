@@ -5,7 +5,7 @@ import { isInner, when, type Activity } from "@/lib/kin";
 export default async function ActivityPage({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
   const sp = await searchParams;
-  const { supabase, members, nameOf, role } = await getCircle(id);
+  const { supabase, members, nameOf, role, circle } = await getCircle(id);
   let q = supabase.from("activity").select("*").eq("circle_id", id).order("created_at", { ascending: false }).limit(100);
   if (sp.who) q = q.eq("actor", sp.who);
   const { data } = await q;
@@ -13,7 +13,7 @@ export default async function ActivityPage({ params, searchParams }: { params: P
     <main className="page">
       <Link href={`/c/${id}/more`} className="link">‹ More</Link>
       <h1>Activity</h1>
-      {isInner(role) && (
+      {isInner(role, circle.kind) && (
         <nav className="chips" aria-label="Filter by person">
           <Link href={`/c/${id}/more/activity`} className="chip" aria-current={!sp.who}>Everyone</Link>
           {members.map((m) => <Link key={m.user_id} href={`/c/${id}/more/activity?who=${m.user_id}`} className="chip" aria-current={sp.who === m.user_id}>{nameOf(m.user_id)}</Link>)}
@@ -26,7 +26,7 @@ export default async function ActivityPage({ params, searchParams }: { params: P
         ))}
         {!data?.length && <p className="empty">Nothing yet.</p>}
       </div>
-      {!isInner(role) && <p className="note">You can see your own activity. The full timeline is for the family.</p>}
+      {!isInner(role, circle.kind) && <p className="note">You can see your own activity. The full timeline is for the family.</p>}
     </main>
   );
 }

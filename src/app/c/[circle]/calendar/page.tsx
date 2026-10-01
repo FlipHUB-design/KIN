@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
 import { addDays, canEdit, dayLabel, hm, kindOf, longDate, today, type Appointment, type Task } from "@/lib/kin";
+import { loadFamily } from "@/lib/family";
 import { Header, Notice, Rows, taskRow, type Row } from "@/components/ui";
 
 const dow = (s: string) => (new Date(s + "T12:00:00Z").getUTCDay() + 6) % 7;
@@ -23,13 +24,18 @@ export default async function Calendar({ params, searchParams }: { params: Promi
   } else { from = sel; to = sel; }
   const [{ data: tasks }, { data: appts }] = await Promise.all([
     supabase.from("tasks").select("*").eq("circle_id", id).in("status", ["open", "accepted"]).gte("due_date", from).lte("due_date", to),
-    supabase.from("appointments").select("*").eq("circle_id", id).gte("date", from).lte("date", to).order("time"),
+    supabase.from("appointments").select("*").eq("circle_id", id).lte("date", to).or(`date.gte.${from},end_date.gte.${from}`).order("time"),
   ]);
+  const kidsMode = circle.kind === "children";
+  const fam = kidsMode ? await loadFamily(supabase, id, { from, days: 43 }) : null;
+  const kidChips = (ids?: string[]) => (ids || []).map((cid) => { const k = fam?.children.find((x) => x.id === cid); return k ? <span key={cid} className={`kid col-${k.colour}`}>{k.first_name}</span> : null; });
+  const homeOf = (d: string) => fam?.home(fam.nightOf(d)?.household_id) || null;
   const T = (tasks || []) as Task[], A = (appts || []) as Appointment[];
-  const kinds = (d: string) => [...A.filter((a) => a.date === d).map(() => "appointment"), ...T.filter((t) => t.due_date === d && !t.appointment_id).map((t) => kindOf(t)), ...T.filter((t) => t.due_date === d && t.appointment_id).map(() => "transport")];
+  const on = (a: Appointment, d: string) => a.date <= d && d <= (a.end_date || a.date);
+  const kinds = (d: string) => [...A.filter((a) => on(a, d)).map(() => "appointment"), ...T.filter((t) => t.due_date === d && !t.appointment_id).map((t) => kindOf(t)), ...T.filter((t) => t.due_date === d && t.appointment_id).map(() => "transport")];
   const rowsFor = (d: string): Row[] => [
-    ...A.filter((a) => a.date === d).map((a) => ({ kind: "appointment", when: hm(a.time), title: a.title, href: `${base}/appointments/${a.id}`,
-      sub: <>{a.location}{a.needs_transport && (a.driver ? ` · ${nameOf(a.driver)} driving` : <> · <span className="tag unas">No driver yet</span></>)}</> })),
+    ...A.filter((a) => on(a, d)).map((a) => ({ kind: "appointment", when: a.date === d ? hm(a.time) : "", title: a.title, href: `${base}/appointments/${a.id}`,
+      sub: <>{kidChips(a.child_ids)} {a.end_date ? `${dayLabel(a.date)} to ${dayLabel(a.end_date)} ` : ""}{a.location}{a.needs_transport && (a.driver ? ` · ${nameOf(a.driver)} ${kidsMode ? "taking them" : "driving"}` : <> · <span className="tag unas">{kidsMode ? "Who can take them?" : "No driver yet"}</span></>)}</> })),
     ...T.filter((t) => t.due_date === d).map((t) => taskRow(t, base, nameOf, { when: "time" })),
   ].sort((x, y) => (x.when || "99").localeCompare(y.when || "99"));
   const link = (v: string, d: string) => `${base}/calendar?v=${v}&d=${d}`;
@@ -48,7 +54,7 @@ export default async function Calendar({ params, searchParams }: { params: Promi
           <b>{dayLabel(from).replace(/^\w+ /, "")} – {dayLabel(to).replace(/^\w+ /, "")}</b>
           <Link className="link" href={link("week", addDays(sel, 7))}>Next ›</Link></div>
         <div className="days">{Array.from({ length: 7 }, (_, i) => { const d = addDays(from, i); return (
-          <Link key={d} href={link("week", d)} aria-current={d === sel}>
+          <Link key={d} href={link("week", d)} aria-current={d === sel} className={homeOf(d) ? `col-${homeOf(d)!.colour}` : ""} style={homeOf(d) && d !== sel ? { background: "var(--cs)" } : undefined}>
             <span>{new Date(d + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}</span><b>{Number(d.slice(8))}</b>
             <span className="dots">{kinds(d).slice(0, 4).map((k, j) => <i key={j} className={`k-${k}`} />)}</span></Link>); })}</div>
       </>)}
@@ -58,17 +64,22 @@ export default async function Calendar({ params, searchParams }: { params: Promi
         <div className="month">
           {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => <span key={i} className="dow">{d}</span>)}
           {Array.from({ length: 42 }, (_, i) => { const d = addDays(from, i); return (
-            <Link key={d} href={link("month", d)} aria-current={d === sel} aria-label={`${longDate(d)}, ${kinds(d).length} items`}
-              className={`${d.slice(0, 7) !== sel.slice(0, 7) ? "out" : ""} ${d === today() ? "today" : ""}`}>
+            <Link key={d} href={link("month", d)} aria-current={d === sel} aria-label={`${longDate(d)}, ${kinds(d).length} items${homeOf(d) ? `, at ${homeOf(d)!.name}` : ""}`}
+              className={`${d.slice(0, 7) !== sel.slice(0, 7) ? "out" : ""} ${d === today() ? "today" : ""} ${homeOf(d) ? `home col-${homeOf(d)!.colour}` : ""}`}>
               {Number(d.slice(8))}<span className="dots">{kinds(d).slice(0, 3).map((k, j) => <i key={j} className={`k-${k}`} />)}</span></Link>); })}
         </div>
       </>)}
+      {fam?.twoHomes && homeOf(sel) && <p className={`small col-${homeOf(sel)!.colour}`}><span className="legend-dot" />{longDate(sel)}: at {homeOf(sel)!.name}{fam.nightOf(sel)?.changed ? " (changed by agreement)" : ""}</p>}
       <section className="stack"><h2>{view === "day" ? "Plans" : longDate(sel)}</h2><Rows rows={rowsFor(sel)} empty="Nothing planned." /></section>
+      {fam?.twoHomes && <div className="row small muted">{fam.households.map((h) => <span key={h.id} className={`col-${h.colour}`}><span className="legend-dot" />{h.name}</span>)}</div>}
       <div className="row">
-        {["appointment", "visit", "transport", "task", "maintenance"].map((k) => <span key={k} className={`tag k-${k}`}>{{ appointment: "Appointment", visit: "Visit or call", transport: "Transport", task: "Task", maintenance: "Maintenance" }[k]}</span>)}
+        {(kidsMode
+          ? [["appointment", "Event"], ["visit", "Club or visit"], ["transport", "Pick-up or drop-off"], ["task", "Task"]]
+          : [["appointment", "Appointment"], ["visit", "Visit or call"], ["transport", "Transport"], ["task", "Task"], ["maintenance", "Maintenance"]]
+        ).map(([k, l]) => <span key={k} className={`tag k-${k}`}>{l}</span>)}
       </div>
       <div className="row">
-        {canEdit(role) && <Link href={`${base}/appointments/new`} className="btn primary">Add appointment</Link>}
+        {canEdit(role) && <Link href={`${base}/appointments/new`} className="btn primary">{kidsMode ? "Add event" : "Add appointment"}</Link>}
         <Link href={`${base}/tasks/new`} className="btn">Add task</Link>
       </div>
     </main>

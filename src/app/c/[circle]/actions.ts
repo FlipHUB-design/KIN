@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCircle } from "@/lib/data";
-import { letterReadingOn, readLetter, sampleLetterLines, sampleResult, SAMPLE_LETTER_NAME, type LetterResult } from "@/lib/letters";
+import { letterReadingOn, readLetter, sampleLetterLines, sampleResult, sampleSchoolLines, sampleSchoolResult, SAMPLE_LETTER_NAME, SAMPLE_SCHOOL_LETTER_NAME, type LetterResult } from "@/lib/letters";
 import { makePdf } from "@/lib/pdf";
 import { playbook } from "@/lib/playbooks";
 import { addDays, today } from "@/lib/kin";
@@ -13,6 +13,8 @@ const back: (c: string, path?: string, msg?: string) => never = (c, path = "", m
   redirect(`/c/${c}${path}${msg ? (path.includes("?") ? "&" : "?") + "notice=" + encodeURIComponent(msg) : ""}`);
 const fail: (c: string, path: string, msg: string) => never = (c, path, msg) =>
   redirect(`/c/${c}${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
+
+const ids = (f: FormData, k: string) => f.getAll(k).map(String).filter((x) => /^[0-9a-f-]{36}$/i.test(x));
 
 async function ctx(f: FormData) {
   const circleId = s(f, "circle");
@@ -40,6 +42,7 @@ export async function createTask(f: FormData) {
     status: assignee ? "accepted" : "open",
     private: f.get("private") === "on",
     created_by: c.user.id,
+    child_ids: ids(f, "child"),
   };
   if (!row.title) fail(c.circleId, "/tasks/new", "Give the task a title.");
   const { error } = await c.supabase.from("tasks").insert(row);
@@ -56,7 +59,7 @@ export async function updateTask(f: FormData) {
     title: s(f, "title"), description: n(f, "description"), category: s(f, "category"),
     due_date: n(f, "due_date"), due_time: n(f, "due_time"), recurrence: s(f, "recurrence"),
     private: f.get("private") === "on", assignee: n(f, "assignee"),
-    status: n(f, "assignee") ? "accepted" : "open",
+    status: n(f, "assignee") ? "accepted" : "open", child_ids: ids(f, "child"),
   }).eq("id", id);
   if (error) fail(c.circleId, `/tasks/${id}`, "Only family members can edit tasks.");
   await activity(c, "edited", s(f, "title"));
@@ -101,29 +104,39 @@ export async function addComment(f: FormData) {
 // ---------------------------------------------------------------- appointments
 export async function createAppointment(f: FormData) {
   const c = await ctx(f);
+  const kids = c.circle.kind === "children";
   const transport = f.get("needs_transport") === "yes";
+  const childIds = ids(f, "child");
   const { data: a, error } = await c.supabase.from("appointments").insert({
     circle_id: c.circleId, title: s(f, "title"), date: s(f, "date"), time: n(f, "time"),
     location: n(f, "location"), attending: n(f, "attending"), needs_transport: transport,
-    notes: n(f, "notes"), created_by: c.user.id,
+    notes: n(f, "notes"), created_by: c.user.id, child_ids: childIds,
+    end_date: n(f, "end_date") && s(f, "end_date") > s(f, "date") ? s(f, "end_date") : null,
+    private: f.get("private") === "on", share_with_helpers: f.get("share_with_helpers") === "on",
   }).select().single();
   if (error || !a) fail(c.circleId, "/appointments/new", "Only family members can add appointments.");
+  let who = c.circle.preferred_name;
+  if (kids) {
+    const { data: ks } = await c.supabase.from("children").select("id, first_name").in("id", childIds.length ? childIds : ["00000000-0000-0000-0000-000000000000"]);
+    const names = (ks || []).map((k) => k.first_name);
+    who = names.length ? (names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1]) : "the children";
+  }
   if (transport) {
     let t: string | null = null;
     if (a.time) {
       const [h, m] = a.time.split(":").map(Number);
-      const mins = Math.max(0, h * 60 + m - 45);
+      const mins = Math.max(0, h * 60 + m - (kids ? 30 : 45));
       t = `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
     }
     await c.supabase.from("tasks").insert({
-      circle_id: c.circleId, title: `Drive ${c.circle.preferred_name} to ${a.title}`, category: "Transport",
-      description: [a.title, a.time?.slice(0, 5), a.location].filter(Boolean).join(", "),
-      due_date: a.date, due_time: t, priority: "high", status: "open", appointment_id: a.id, created_by: c.user.id,
+      circle_id: c.circleId, title: kids ? `Take ${who} to ${a.title}` : `Drive ${who} to ${a.title}`, category: kids ? "Pick-up or drop-off" : "Transport",
+      description: [a.title, a.time?.slice(0, 5), a.location].filter(Boolean).join(", "), child_ids: childIds,
+      due_date: a.date, due_time: t, priority: "high", status: "open", appointment_id: a.id, created_by: c.user.id, private: a.private,
     });
   }
-  await activity(c, transport ? "added an appointment and asked for a driver:" : "added an appointment:", a.title);
+  await activity(c, transport ? (kids ? "added an event and asked who can take them:" : "added an appointment and asked for a driver:") : (kids ? "added an event:" : "added an appointment:"), a.title);
   revalidatePath(`/c/${c.circleId}`, "layout");
-  back(c.circleId, `/appointments/${a.id}`, transport ? `Added. The family has been asked who can drive ${c.circle.preferred_name}.` : "Appointment added");
+  back(c.circleId, `/appointments/${a.id}`, transport ? (kids ? `Added. The family has been asked who can take ${who}.` : `Added. The family has been asked who can drive ${who}.`) : (kids ? "Event added" : "Appointment added"));
 }
 
 export async function deleteAppointment(f: FormData) {
@@ -356,7 +369,7 @@ export async function scanLetter(f: FormData) {
   if (file.error || !file.data) fail(c.circleId, "/letters", "Couldn't open the letter.");
   let result: LetterResult;
   try {
-    result = await readLetter(await file.data!.arrayBuffer(), type || file.data!.type);
+    result = await readLetter(await file.data!.arrayBuffer(), type || file.data!.type, c.circle.kind || "care");
   } catch (e) {
     console.error("letter read failed", e);
     return fail(c.circleId, "/letters", "KIN couldn't read that letter. It's saved in Documents. Try a clearer, flatter photo.");
@@ -366,19 +379,26 @@ export async function scanLetter(f: FormData) {
 
 export async function scanSampleLetter(f: FormData) {
   const c = await ctx(f);
-  const lines = sampleLetterLines(c.circle.person_name);
+  const kids = c.circle.kind === "children";
+  let child = "your child";
+  if (kids) {
+    const { data: ks } = await c.supabase.from("children").select("first_name, date_of_birth").eq("circle_id", c.circleId).order("date_of_birth", { ascending: false });
+    child = ks?.[0]?.first_name || child;
+  }
+  const title = kids ? "Orchard Primary School" : "Nenebridge District Council";
+  const lines = kids ? sampleSchoolLines(child) : sampleLetterLines(c.circle.person_name);
   const path = `${c.circleId}/${crypto.randomUUID()}-sample-letter.pdf`;
-  const up = await c.supabase.storage.from("documents").upload(path, makePdf("Nenebridge District Council", lines), { contentType: "application/pdf" });
+  const up = await c.supabase.storage.from("documents").upload(path, makePdf(title, lines), { contentType: "application/pdf" });
   if (up.error) fail(c.circleId, "/letters", "Only family members can add letters.");
   const { data: doc } = await c.supabase.from("documents").insert({
-    circle_id: c.circleId, name: SAMPLE_LETTER_NAME, category: "Property", storage_path: path, access: "family", notes: "Example letter", uploaded_by: c.user.id,
+    circle_id: c.circleId, name: kids ? SAMPLE_SCHOOL_LETTER_NAME : SAMPLE_LETTER_NAME, category: kids ? "Other" : "Property", storage_path: path, access: "family", notes: "Example letter", uploaded_by: c.user.id,
   }).select("id").single();
-  let result: LetterResult = sampleResult(c.circle.preferred_name);
+  let result: LetterResult = kids ? sampleSchoolResult(child) : sampleResult(c.circle.preferred_name);
   let source: "ai" | "sample" = "sample";
   if (letterReadingOn()) {
     try {
-      const bytes = await makePdf("Nenebridge District Council", lines).arrayBuffer();
-      result = await readLetter(bytes, "application/pdf");
+      const bytes = await makePdf(title, lines).arrayBuffer();
+      result = await readLetter(bytes, "application/pdf", c.circle.kind || "care");
       source = "ai";
     } catch (e) { console.error("sample read failed", e); }
   }
@@ -405,7 +425,7 @@ export async function createFromLetter(f: FormData) {
     const { data: t, error } = await c.supabase.from("tasks").insert({
       circle_id: c.circleId, title: s(f, "title") || sg.title, category: sg.category, due_date: n(f, "due_date"),
       description: `${sg.detail}\n\nFrom a letter: ${r.organisation}, ${r.document_type}.`, status: n(f, "assignee") ? "accepted" : "open",
-      assignee: n(f, "assignee"), private: f.get("private") === "on", source: `letter:${s(f, "id")}`, created_by: c.user.id,
+      assignee: n(f, "assignee"), private: f.get("private") === "on", source: `letter:${s(f, "id")}`, created_by: c.user.id, child_ids: ids(f, "child"),
     }).select("id").single();
     if (error || !t) fail(c.circleId, `/letters/${s(f, "id")}`, "Couldn't add the task.");
     sg.task_id = t!.id;
@@ -445,13 +465,19 @@ export async function addExpense(f: FormData) {
   const split = f.getAll("split").map(String);
   if (!(amount > 0)) fail(c.circleId, "/costs", "Enter an amount, like 12.50.");
   if (!split.length) fail(c.circleId, "/costs", "Choose who to split it between.");
+  const shares: Record<string, number> = {};
+  for (const id of split) { const w = Number(s(f, `w_${id}`)); if (w >= 0 && s(f, `w_${id}`) !== "") shares[id] = w; }
+  const paidBy = s(f, "paid_by") || c.user.id;
+  const kids = c.circle.kind === "children";
+  const needsOk = kids && split.some((id) => id !== c.user.id && id !== paidBy) && f.get("approval") !== "skip";
   const { error } = await c.supabase.from("expenses").insert({
     circle_id: c.circleId, description: s(f, "description"), category: s(f, "category") || "Other", amount_pence: amount,
-    paid_by: s(f, "paid_by") || c.user.id, split_between: split, spent_on: s(f, "spent_on") || undefined, created_by: c.user.id,
+    paid_by: paidBy, split_between: split, spent_on: s(f, "spent_on") || undefined, created_by: c.user.id,
+    shares: Object.keys(shares).length === split.length ? shares : null, status: needsOk ? "pending" : "approved", child_ids: ids(f, "child"),
   });
   if (error) fail(c.circleId, "/costs", "Only family members can add shared costs.");
-  await activity(c, "added a shared cost:", s(f, "description"));
-  back(c.circleId, "/costs", "Cost added");
+  await activity(c, needsOk ? "asked the other parent to approve a cost:" : "added a shared cost:", s(f, "description"));
+  back(c.circleId, "/costs", needsOk ? "Sent for approval. It counts once agreed." : "Cost added");
 }
 export async function addSettlement(f: FormData) {
   const c = await ctx(f);
@@ -470,4 +496,193 @@ export async function deleteCost(f: FormData) {
   const { data } = await c.supabase.from(table).delete().eq("id", s(f, "id")).select("id");
   if (!data?.length) fail(c.circleId, "/costs", "You can only remove entries you added.");
   back(c.circleId, "/costs", "Removed");
+}
+
+// ---------------------------------------------------------------- children and co-parenting
+const COLOURS = ["blue", "plum", "amber", "coral", "accent"];
+const colour = (v: string, fallback = "blue") => (COLOURS.includes(v) ? v : fallback);
+
+export async function saveChild(f: FormData) {
+  const c = await ctx(f);
+  const id = n(f, "id");
+  const row = {
+    circle_id: c.circleId, first_name: s(f, "first_name"), last_name: n(f, "last_name"), date_of_birth: n(f, "date_of_birth"),
+    colour: colour(s(f, "colour")), school: n(f, "school"), year_group: n(f, "year_group"), class_name: n(f, "class_name"), teacher: n(f, "teacher"),
+    allergies: n(f, "allergies"), important_notes: n(f, "important_notes"), clothes_size: n(f, "clothes_size"), shoe_size: n(f, "shoe_size"),
+    gp: n(f, "gp"), dentist: n(f, "dentist"), passport_expiry: n(f, "passport_expiry"),
+  };
+  if (!row.first_name) fail(c.circleId, "/children", "Add a first name.");
+  const { error } = id ? await c.supabase.from("children").update(row).eq("id", id) : await c.supabase.from("children").insert(row);
+  if (error) fail(c.circleId, "/children", "Only parents can change the children's details.");
+  await activity(c, id ? "updated details for" : "added", row.first_name);
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "child.update", detail: { name: row.first_name } });
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/children", "Saved");
+}
+
+export async function saveHousehold(f: FormData) {
+  const c = await ctx(f);
+  const id = n(f, "id");
+  const row = { circle_id: c.circleId, name: s(f, "name"), address: n(f, "address"), colour: colour(s(f, "colour"), "plum"), sort: Number(s(f, "sort") || 0) };
+  if (!row.name) fail(c.circleId, "/schedule/settings", "Give the home a name, like Mum's or Dad's.");
+  const { error } = id ? await c.supabase.from("households").update(row).eq("id", id) : await c.supabase.from("households").insert(row);
+  if (error) fail(c.circleId, "/schedule/settings", "Only parents can change homes.");
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/schedule/settings", "Saved");
+}
+
+export async function setPattern(f: FormData) {
+  const c = await ctx(f);
+  const { data: homes } = await c.supabase.from("households").select("id").eq("circle_id", c.circleId).order("sort");
+  const H = (homes || []).map((h) => h.id);
+  if (H.length < 2) fail(c.circleId, "/schedule/settings", "Add both homes first.");
+  const days = Array.from({ length: 14 }, (_, i) => s(f, `d${i}`)).filter((x) => H.includes(x));
+  if (days.length !== 14) fail(c.circleId, "/schedule/settings", "Choose a home for every night.");
+  const anchor = s(f, "anchor");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(anchor)) fail(c.circleId, "/schedule/settings", "Choose the first Monday of the pattern.");
+  const { error } = await c.supabase.from("schedule_patterns").upsert({ circle_id: c.circleId, anchor, days, label: n(f, "label"), updated_by: c.user.id, updated_at: new Date().toISOString() });
+  if (error) fail(c.circleId, "/schedule/settings", "Only parents can change the regular schedule.");
+  await activity(c, "changed the regular schedule", n(f, "label"));
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "schedule.pattern", detail: { label: n(f, "label"), anchor } });
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/schedule", "Regular schedule saved. Everyone in the family can see it.");
+}
+
+export async function requestChange(f: FormData) {
+  const c = await ctx(f);
+  const start = s(f, "start_date"), end = s(f, "end_date") || s(f, "start_date");
+  if (!start || end < start) fail(c.circleId, "/schedule", "Check the dates.");
+  const { error } = await c.supabase.from("schedule_changes").insert({
+    circle_id: c.circleId, start_date: start, end_date: end, household_id: s(f, "household_id"),
+    reason: n(f, "reason"), in_return: n(f, "in_return"), requested_by: c.user.id, status: "requested",
+  });
+  if (error) fail(c.circleId, "/schedule", "Couldn't send the request. Changes can cover up to 60 nights.");
+  await activity(c, "asked for a schedule change", null);
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "schedule.request", detail: { start, end } });
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/schedule", "Request sent. Nothing changes until it's agreed.");
+}
+
+export async function respondChange(f: FormData) {
+  const c = await ctx(f);
+  const accept = s(f, "answer") === "yes";
+  const { error } = await c.supabase.rpc("respond_schedule_change", { p_id: s(f, "id"), p_accept: accept, p_note: n(f, "note") });
+  if (error) fail(c.circleId, s(f, "return") || "/schedule", error.message);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, s(f, "return") || "/schedule", accept ? "Agreed. The schedule has been updated for everyone." : "Answer sent. The schedule stays as it was.");
+}
+
+export async function cancelChange(f: FormData) {
+  const c = await ctx(f);
+  const { error } = await c.supabase.rpc("cancel_schedule_change", { p_id: s(f, "id") });
+  if (error) fail(c.circleId, "/schedule", error.message);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/schedule", "Request withdrawn");
+}
+
+export async function recordHandover(f: FormData) {
+  const c = await ctx(f);
+  const all = f.getAll("all_items").map(String);
+  const packed = f.getAll("packed").map(String);
+  const { error } = await c.supabase.from("handovers").insert({
+    circle_id: c.circleId, from_household: n(f, "from_household"), to_household: n(f, "to_household"), recorded_by: c.user.id,
+    items_packed: packed, items_missing: all.filter((x) => !packed.includes(x)), note: n(f, "note"),
+  });
+  if (error) fail(c.circleId, "/handover", "Couldn't record the handover.");
+  const missing = all.filter((x) => !packed.includes(x));
+  await activity(c, missing.length ? `recorded a handover (missing: ${missing.join(", ")})` : "recorded a handover", null);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/handover", "Handover recorded");
+}
+
+export async function proposeAgreement(f: FormData) {
+  const c = await ctx(f);
+  const { error } = await c.supabase.from("agreements").insert({
+    circle_id: c.circleId, title: s(f, "title"), detail: n(f, "detail"), category: s(f, "category") || "Other",
+    share: f.get("share") === "on", proposed_by: c.user.id, status: "proposed",
+  });
+  if (error) fail(c.circleId, "/agreements", "Only parents can propose agreements.");
+  await activity(c, "proposed an agreement:", s(f, "title"));
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/agreements", "Proposed. It becomes an agreement once another parent agrees.");
+}
+
+export async function respondAgreementAction(f: FormData) {
+  const c = await ctx(f);
+  const yes = s(f, "answer") === "yes";
+  const { error } = await c.supabase.rpc("respond_agreement", { p_id: s(f, "id"), p_agree: yes, p_note: n(f, "note") });
+  if (error) fail(c.circleId, s(f, "return") || "/agreements", error.message);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, s(f, "return") || "/agreements", yes ? "Agreed" : "Answer sent");
+}
+
+export async function withdrawAgreementAction(f: FormData) {
+  const c = await ctx(f);
+  const { error } = await c.supabase.rpc("withdraw_agreement", { p_id: s(f, "id") });
+  if (error) fail(c.circleId, "/agreements", error.message);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/agreements", "Withdrawn");
+}
+
+export async function saveItem(f: FormData) {
+  const c = await ctx(f);
+  const id = n(f, "id");
+  const row = { circle_id: c.circleId, child_id: n(f, "child_id"), name: s(f, "name"), household_id: n(f, "household_id"), location_note: n(f, "location_note"), updated_by: c.user.id, updated_at: new Date().toISOString() };
+  if (!row.name) fail(c.circleId, "/children#where", "What's the item?");
+  const { error } = id ? await c.supabase.from("child_items").update(row).eq("id", id) : await c.supabase.from("child_items").insert(row);
+  if (error) fail(c.circleId, "/children#where", "Only parents can update this list.");
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/children?saved=1#where", "Updated");
+}
+
+export async function deleteItem(f: FormData) {
+  const c = await ctx(f);
+  await c.supabase.from("child_items").delete().eq("id", s(f, "id"));
+  back(c.circleId, "/children#where", "Removed");
+}
+
+export async function respondExpenseAction(f: FormData) {
+  const c = await ctx(f);
+  const yes = s(f, "answer") === "yes";
+  const { error } = await c.supabase.rpc("respond_expense", { p_id: s(f, "id"), p_approve: yes, p_note: n(f, "note") });
+  if (error) fail(c.circleId, s(f, "return") || "/costs", error.message);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, s(f, "return") || "/costs", yes ? "Approved. It now counts in the balance." : "Queried. It won't count until it's sorted out.");
+}
+
+export async function addMaintenance(f: FormData) {
+  const c = await ctx(f);
+  const amount = Math.round(parseFloat(s(f, "amount").replace(/[£,\s]/g, "")) * 100);
+  if (!(amount > 0)) fail(c.circleId, "/costs#maintenance", "Enter an amount, like 250.00.");
+  const { error } = await c.supabase.from("settlements").insert({
+    circle_id: c.circleId, from_user: s(f, "from_user"), to_user: s(f, "to_user"), amount_pence: amount, paid_on: s(f, "paid_on") || undefined,
+    note: n(f, "note"), kind: "maintenance", created_by: c.user.id,
+  });
+  if (error) fail(c.circleId, "/costs#maintenance", "Couldn't record that payment. Check the two people are different.");
+  await activity(c, "recorded a child maintenance payment", null);
+  back(c.circleId, "/costs#maintenance", "Maintenance payment recorded");
+}
+
+export async function saveFamily(f: FormData) {
+  const c = await ctx(f);
+  const packing = s(f, "packing_list").split(/\n+/).map((x) => x.trim()).filter(Boolean).slice(0, 30);
+  const split: Record<string, number> = {};
+  for (const [k, v] of f.entries()) if (k.startsWith("split_") && Number(v) >= 0) split[k.slice(6)] = Number(v);
+  const { error } = await c.supabase.from("care_circles").update({
+    person_name: s(f, "person_name") || c.circle.person_name, preferred_name: s(f, "preferred_name") || c.circle.preferred_name,
+    packing_list: packing, handover_note: n(f, "handover_note"), default_split: Object.keys(split).length ? split : null,
+  }).eq("id", c.circleId);
+  if (error) fail(c.circleId, "/schedule/settings", "Only administrators can change family settings.");
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "family.settings" });
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/schedule/settings", "Saved");
+}
+
+export async function youngPersonAsk(f: FormData) {
+  const c = await ctx(f);
+  const msg = s(f, "message").slice(0, 200);
+  if (!msg) back(c.circleId);
+  await activity(c, "asked:", msg);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "", "Sent to your parents");
 }

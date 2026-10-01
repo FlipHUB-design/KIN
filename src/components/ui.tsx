@@ -51,8 +51,8 @@ export function taskRow(t: Task, base: string, nameOf: (id: string | null) => st
   if (t.status === "done") bits.push(<span key="d" className="tag done">Done</span>);
   else if (isOverdue(t)) bits.push(<span key="o" className="tag over">Overdue</span>);
   bits.push(
-    t.assignee ? <span key="a">{nameOf(t.assignee)}{t.category === "Transport" ? " driving" : ""}</span>
-      : <span key="u" className="tag unas">{t.category === "Transport" ? "Who can drive?" : "Who can do this?"}</span>
+    t.assignee ? <span key="a">{nameOf(t.assignee)}{t.category === "Transport" ? " driving" : t.category === "Pick-up or drop-off" ? " taking them" : ""}</span>
+      : <span key="u" className="tag unas">{t.category === "Transport" ? "Who can drive?" : t.category === "Pick-up or drop-off" ? "Who can take them?" : "Who can do this?"}</span>
   );
   if (t.recurrence !== "none") bits.push(<span key="r">{RECURRENCE_LABEL[t.recurrence]}</span>);
   return {

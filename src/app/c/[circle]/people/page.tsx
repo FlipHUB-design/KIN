@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
-import { ROLE_DESC, ROLE_LABEL, when, type Role } from "@/lib/kin";
+import { circleNoun, roleDesc, roleLabel, when, type Role } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
 import { changeMember, revokeInvite } from "../actions";
 
@@ -14,8 +14,8 @@ export default async function People({ params, searchParams }: { params: Promise
     : { data: [] };
   return (
     <main className="page">
-      <Header title="Care Circle" sub={`Everyone who helps ${circle.preferred_name}`} initial={(me.profiles?.display_name || "?")[0]} />
-      {sp.welcome && <p className="ok">Your Care Circle for {circle.preferred_name} is ready. Next, invite the people who help.</p>}
+      <Header title={circleNoun(circle.kind)} sub={circle.kind === "children" ? "Everyone who helps with the children" : `Everyone who helps ${circle.preferred_name}`} initial={(me.profiles?.display_name || "?")[0]} />
+      {sp.welcome && <p className="ok">{circle.kind === "children" ? "Your family is set up. Next, invite the other parent, grandparents or a childminder." : `Your Care Circle for ${circle.preferred_name} is ready. Next, invite the people who help.`}</p>}
       <Notice sp={sp} />
       <div className="card list">
         {members.map((m) => {
@@ -32,12 +32,12 @@ export default async function People({ params, searchParams }: { params: Promise
                     <Hidden circle={id} /><input type="hidden" name="user" value={m.user_id} /><input type="hidden" name="op" value="role" />
                     <label className="small muted">Access{" "}
                       <select name="role" defaultValue={m.role}>
-                        {(["admin", "family", "contributor", "helper", "supported"] as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                        {(["admin", "family", "contributor", "helper", "supported"] as Role[]).map((r) => <option key={r} value={r}>{roleLabel(r, circle.kind)}</option>)}
                       </select></label>
                     <button className="btn sm">Change</button>
                   </form>
-                ) : <span className="small"><b>{ROLE_LABEL[m.role]}</b></span>}
-                <span className="small muted">{ROLE_DESC[m.role]}</span>
+                ) : <span className="small"><b>{roleLabel(m.role, circle.kind)}</b></span>}
+                <span className="small muted">{roleDesc(m.role, circle.kind)}</span>
                 <span className="small muted">Last active: {m.last_active_at ? when(m.last_active_at) : "Not yet"}</span>
                 {manage && (
                   <div className="row">
@@ -46,7 +46,7 @@ export default async function People({ params, searchParams }: { params: Promise
                       <button className="btn sm">{m.status === "paused" ? "Restore access" : "Pause access"}</button></form>
                     <details><summary className="btn sm warn" style={{ listStyle: "none" }}>Remove</summary>
                       <form action={changeMember} className="stack" style={{ marginTop: 8 }}><Hidden circle={id} /><input type="hidden" name="user" value={m.user_id} /><input type="hidden" name="op" value="remove" />
-                        <span className="small">Remove {m.profiles?.display_name} from {circle.preferred_name}&apos;s circle?</span>
+                        <span className="small">Remove {m.profiles?.display_name} from {circle.kind === "children" ? "the family" : `${circle.preferred_name}'s circle`}?</span>
                         <button className="btn sm warn">Yes, remove</button></form></details>
                   </div>
                 )}
@@ -59,7 +59,7 @@ export default async function People({ params, searchParams }: { params: Promise
         <section className="stack"><h2>Waiting to join</h2>
           <div className="card list">{(invites || []).map((i) => (
             <div key={i.id} className="member"><span className="avatar">{i.name[0]}</span><div className="main">
-              <b>{i.name}</b><span className="small muted">{ROLE_LABEL[i.role as Role]} · {i.relationship}</span>
+              <b>{i.name}</b><span className="small muted">{roleLabel(i.role as Role, circle.kind)} · {i.relationship}</span>
               <div className="row"><Link className="btn sm" href={`/c/${id}/people/invite?sent=${i.id}`}>Show link</Link>
                 <form action={revokeInvite}><Hidden circle={id} id={i.id} /><button className="btn sm">Cancel invitation</button></form></div>
             </div></div>))}</div>

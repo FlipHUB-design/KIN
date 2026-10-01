@@ -1,19 +1,19 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
-import { PLAYBOOKS } from "@/lib/playbooks";
+import { playbooksFor } from "@/lib/playbooks";
 
 export default async function Playbooks({ params }: { params: Promise<{ circle: string }> }) {
   const { circle: id } = await params;
-  const { supabase } = await getCircle(id);
+  const { supabase, circle } = await getCircle(id);
   const { data } = await supabase.from("tasks").select("source, status").eq("circle_id", id).like("source", "playbook:%");
   const started = (slug: string) => (data || []).filter((t) => t.source === `playbook:${slug}`);
   return (
     <main className="page">
       <Link href={`/c/${id}/more`} className="link">‹ More</Link>
       <h1>Playbooks</h1>
-      <p className="muted">Step-by-step plans for the UK paperwork and moments families get stuck on. Start one and KIN adds the steps as tasks, with links to the official guidance.</p>
+      <p className="muted">Step-by-step plans for the UK paperwork and moments families get stuck on{circle.kind === "children" ? ", from passports to school places" : ""}. Start one and KIN adds the steps as tasks, with links to the official guidance.</p>
       <div className="card list">
-        {PLAYBOOKS.map((p) => {
+        {playbooksFor(circle.kind).map((p) => {
           const t = started(p.slug);
           const done = t.filter((x) => x.status === "done").length;
           return (

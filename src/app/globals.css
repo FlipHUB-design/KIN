@@ -162,3 +162,28 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .sp .big .help { background: var(--coral); border-color: var(--coral); color: var(--surface); }
 .sp .btn { font-size: 18px; padding: 12px 18px; }
 .sp .choice span { font-size: 19px; padding: 16px 6px; }
+
+/* ---- children and co-parenting */
+.col-blue { --c: var(--blue); --cs: var(--blue-soft); }
+.col-plum { --c: var(--plum); --cs: var(--plum-soft); }
+.col-amber { --c: var(--amber); --cs: var(--amber-soft); }
+.col-coral { --c: var(--coral); --cs: var(--coral-soft); }
+.col-accent { --c: var(--accent); --cs: var(--accent-soft); }
+.kid { display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--font-display), sans-serif; padding: 1px 8px; border-radius: 99px; background: var(--cs); color: var(--c); white-space: nowrap; }
+.tonight { border-radius: 16px; padding: 16px; background: var(--cs); color: var(--ink); display: flex; flex-direction: column; gap: 10px; border-left: 6px solid var(--c); }
+.tonight .big { font: 800 22px var(--font-display), sans-serif; color: var(--c); line-height: 1.2; }
+.strip { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; }
+.strip a, .strip div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; border-radius: 8px; background: var(--cs, var(--sunk)); color: var(--c, var(--muted)); text-decoration: none; font-size: 11px; min-width: 0; }
+.strip b { font: 700 14px var(--font-display), sans-serif; color: var(--ink); }
+.strip .now { box-shadow: inset 0 0 0 2px var(--ink); }
+.strip .chg::after { content: "•"; font-size: 12px; line-height: 6px; color: var(--ink); }
+@media (max-width: 420px) { .strip { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+.legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--c); margin-right: 6px; vertical-align: middle; }
+.month a.home { background: var(--cs); }
+.month a.home[aria-current="true"] { background: var(--accent); }
+.reqcard { border: 1px solid var(--amber); }
+.pills { display: flex; flex-wrap: wrap; gap: 4px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.yp-tonight { border-radius: 20px; padding: 22px; text-align: center; display: flex; flex-direction: column; gap: 6px; background: var(--cs); border: 3px solid var(--c); }
+.yp-tonight b { font: 800 30px var(--font-display), sans-serif; color: var(--c); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

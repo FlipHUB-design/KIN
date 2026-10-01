@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
-import { canEdit, CONTACT_CATEGORIES } from "@/lib/kin";
+import { canEdit, CONTACT_CATEGORIES, KID_CONTACT_CATEGORIES } from "@/lib/kin";
 import { Hidden, Notice } from "@/components/ui";
 import { deleteContact, saveContact } from "../../actions";
 
 export default async function Contacts({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
   const sp = await searchParams;
-  const { supabase, role } = await getCircle(id);
+  const { supabase, role, circle } = await getCircle(id);
   const { data } = await supabase.from("contacts").select("*").eq("circle_id", id).order("category").order("name");
   const edit = canEdit(role);
   const editing = sp.edit ? data?.find((c) => c.id === sp.edit) : null;
@@ -22,7 +22,7 @@ export default async function Contacts({ params, searchParams }: { params: Promi
           <label className="fl">Name<input name="name" defaultValue={c.name} required /></label>
           <div className="two">
             <label className="fl">Organisation<input name="organisation" defaultValue={c.organisation || ""} /></label>
-            <label className="fl">Type<select name="category" defaultValue={c.category || "Other"}>{CONTACT_CATEGORIES.map((x) => <option key={x}>{x}</option>)}</select></label>
+            <label className="fl">Type<select name="category" defaultValue={c.category || "Other"}>{(circle.kind === "children" ? KID_CONTACT_CATEGORIES : CONTACT_CATEGORIES).map((x) => <option key={x}>{x}</option>)}</select></label>
           </div>
           <div className="two">
             <label className="fl">Phone<input name="phone" type="tel" defaultValue={c.phone || ""} /></label>
@@ -30,7 +30,7 @@ export default async function Contacts({ params, searchParams }: { params: Promi
           </div>
           <label className="fl">Notes<textarea name="notes" defaultValue={c.notes || ""} /></label>
           <label className="fl">Who can see this?<select name="visibility" defaultValue={c.visibility || "family"}>
-            <option value="family">Family only</option><option value="everyone">Everyone in the circle, including helpers</option></select></label>
+            <option value="family">Family only</option><option value="everyone">{circle.kind === "children" ? "Everyone, including childminders" : "Everyone in the circle, including helpers"}</option></select></label>
           <button className="btn primary block">Save contact</button>
         </form>
         {editing && <form action={deleteContact}><Hidden circle={id} id={editing.id} /><button className="link" style={{ color: "var(--coral)" }}>Delete contact</button></form>}

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCircle } from "@/lib/data";
-import { canEdit, dayLabel, longDate, when } from "@/lib/kin";
+import { canEdit, dayLabel, longDate, when, type Child } from "@/lib/kin";
+import { ChildPicker } from "../../tasks/TaskForm";
 import type { LetterResult } from "@/lib/letters";
 import { Hidden, Notice } from "@/components/ui";
 import { createFromLetter, dismissSuggestion } from "../../actions";
@@ -9,7 +10,10 @@ import { createFromLetter, dismissSuggestion } from "../../actions";
 export default async function LetterPage({ params, searchParams }: { params: Promise<{ circle: string; id: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: cid, id } = await params;
   const sp = await searchParams;
-  const { supabase, role, members, user, nameOf } = await getCircle(cid);
+  const { supabase, role, members, user, nameOf, circle } = await getCircle(cid);
+  const kidsMode = circle.kind === "children";
+  const { data: kidRows } = kidsMode ? await supabase.from("children").select("*").eq("circle_id", cid).order("sort") : { data: [] };
+  const kids = (kidRows || []) as Child[];
   if (!canEdit(role) || !/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data: scan } = await supabase.from("letter_scans").select("*").eq("id", id).eq("circle_id", cid).maybeSingle();
   if (!scan) notFound();
@@ -43,6 +47,7 @@ export default async function LetterPage({ params, searchParams }: { params: Pro
                   <Hidden circle={cid} id={id} /><input type="hidden" name="i" value={i} />
                   <label className="fl">Task<input name="title" defaultValue={sg.title} required /></label>
                   <p className="small">{sg.detail}</p>
+                  {kidsMode && <ChildPicker kids={kids} selected={kids.filter((k) => `${sg.title} ${sg.detail} ${r.summary}`.includes(k.first_name)).map((k) => k.id)} label="For which children?" />}
                   <div className="two">
                     <label className="fl">Due<input type="date" name="due_date" defaultValue={sg.due_date || ""} /></label>
                     <label className="fl">Who?<select name="assignee" defaultValue="">
@@ -50,7 +55,7 @@ export default async function LetterPage({ params, searchParams }: { params: Pro
                       {who.map((m) => <option key={m.user_id} value={m.user_id}>{m.profiles?.display_name}{m.user_id === user.id ? " (you)" : ""}</option>)}
                     </select></label>
                   </div>
-                  <label className="checkline"><input type="checkbox" name="private" defaultChecked /> Family only</label>
+                  <label className="checkline"><input type="checkbox" name="private" defaultChecked={!kidsMode} /> {kidsMode ? "Parents only" : "Family only"}</label>
                   <div className="row"><button className="btn primary">Create task</button></div>
                 </form>
                 <form action={dismissSuggestion}><Hidden circle={cid} id={id} /><input type="hidden" name="i" value={i} /><button className="link">Ignore</button></form>

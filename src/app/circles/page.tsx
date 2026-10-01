@@ -27,15 +27,15 @@ export default async function Circles() {
   return (
     <main className="page">
       <div className="top">
-        <div><span className="brand">KIN</span><h1>People I help</h1></div>
+        <div><span className="brand">KIN</span><h1>Your families</h1></div>
         <Link href="/account" className="avatar" aria-label="Your account">{(me?.display_name || "?")[0]}</Link>
       </div>
       {circles.length === 0 ? (
         <div className="card pad">
           <h2>Welcome{me?.display_name ? `, ${me.display_name.split(" ")[0]}` : ""}</h2>
-          <p>Start a Care Circle for the person you help. You can invite the rest of the family straight after.</p>
+          <p>Set up a family for your children, or a Care Circle for an older relative. You can invite everyone else straight after.</p>
           <p className="note">Been invited by someone else? Open the invitation link they sent you.</p>
-          <Link href="/circles/new" className="btn primary">Start a Care Circle</Link>
+          <Link href="/circles/new" className="btn primary">Get started</Link>
         </div>
       ) : (
         <>
@@ -59,7 +59,7 @@ export default async function Circles() {
               );
             })}
           </div>
-          <Link href="/circles/new" className="btn">Start another Care Circle</Link>
+          <Link href="/circles/new" className="btn">Add a family or Care Circle</Link>
         </>
       )}
     </main>

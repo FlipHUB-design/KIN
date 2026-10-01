@@ -6,11 +6,17 @@ import {
 } from "@/lib/kin";
 import { Disclaimer, Header, Hidden, Notice, Rows, taskRow, type Row } from "@/components/ui";
 import { askFamily, checkOut, dismissMissed, needHelp, wellbeing } from "./actions";
+import { KidsFamilyHome, KidsHelperHome, YoungPersonHome } from "./KidsHome";
 
 export default async function Home({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
   const sp = await searchParams;
   const ctx = await getCircle(id);
+  if (ctx.circle.kind === "children") {
+    if (ctx.role === "supported") return <YoungPersonHome ctx={ctx} sp={sp} />;
+    if (ctx.role === "helper") return <KidsHelperHome ctx={ctx} sp={sp} />;
+    return <KidsFamilyHome ctx={ctx} sp={sp} />;
+  }
   if (ctx.role === "supported") return <SupportedHome ctx={ctx} sp={sp} />;
   if (ctx.role === "helper") return <HelperHome ctx={ctx} sp={sp} />;
   return <FamilyHome ctx={ctx} sp={sp} />;
