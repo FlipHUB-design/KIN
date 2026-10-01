@@ -609,7 +609,7 @@ export async function respondChange(f: FormData) {
   if (error) fail(c.circleId, s(f, "return") || "/schedule", error.message);
   const { data: r } = await c.supabase.from("schedule_changes").select("requested_by, start_date, end_date").eq("id", s(f, "id")).maybeSingle();
   if (r) alert(c, "update", [r.requested_by], `${myName(c)} ${accept ? "agreed to" : "said no to"} your schedule change`,
-    `${range(r.start_date, r.end_date)}.${n(f, "note") ? ` "${s(f, "note")}"` : ""}${accept ? " The schedule has been updated for everyone." : " The schedule stays as it was."}`, "/schedule");
+    `${range(r.start_date, r.end_date)}.${n(f, "note") ? ` "${s(f, "note")}".` : ""}${accept ? " The schedule has been updated for everyone." : " The schedule stays as it was."}`, "/schedule");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, s(f, "return") || "/schedule", accept ? "Agreed. The schedule has been updated for everyone." : "Answer sent. The schedule stays as it was.");
 }
@@ -694,7 +694,7 @@ export async function respondExpenseAction(f: FormData) {
   if (error) fail(c.circleId, s(f, "return") || "/costs", error.message);
   const { data: ex } = await c.supabase.from("expenses").select("created_by, description, amount_pence").eq("id", s(f, "id")).maybeSingle();
   if (ex) alert(c, "update", [ex.created_by], `${myName(c)} ${yes ? "approved" : "queried"} ${ex.description} (${money(ex.amount_pence)})`,
-    `${n(f, "note") ? `"${s(f, "note")}" ` : ""}${yes ? "It now counts in the balance." : "It won't count until it's sorted out."}`, "/costs");
+    `${n(f, "note") ? `"${s(f, "note")}". ` : ""}${yes ? "It now counts in the balance." : "It won't count until it's sorted out."}`, "/costs");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, s(f, "return") || "/costs", yes ? "Approved. It now counts in the balance." : "Queried. It won't count until it's sorted out.");
 }
