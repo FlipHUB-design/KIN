@@ -193,6 +193,8 @@ Rules:
   const aiKeys = new Set(aiTasks.map((t) => lower(t.title)));
   plan.tasks = [...aiTasks, ...plan.tasks.filter((t) => !aiKeys.has(lower(t.title)))];
   plan.contacts = dedupe([...plan.contacts, ...(out.contacts || []).slice(0, 12).map((c) => ({ name: str(c.name, 100), organisation: opt(c.organisation, 100), category: str(c.category, 40) || "Other", phone: opt(c.phone, 30), include: true }))].filter((c) => c.name), (c) => lower(c.name));
+  // People being invited don't also need to be contacts
+  plan.contacts = plan.contacts.filter((c) => !plan.people.some((p) => lower(p.name) === lower(c.name) || lower(c.name).startsWith(lower(p.name) + " ")));
   for (const d of out.child_details || []) {
     const c = plan.children.find((x) => x.first_name === d.name);
     if (!c) continue;
