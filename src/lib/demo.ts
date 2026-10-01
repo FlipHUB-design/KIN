@@ -97,7 +97,7 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   if (old?.length) await admin.from("care_circles").delete().in("id", old.map((c) => c.id));
 
   const ins = async <T = { id: string }>(table: string, rows: object | object[], sel = "id") => {
-    const { data, error } = await admin.from(table).insert(rows).select(sel);
+    const { data, error } = await admin.from(table).insert(rows, { defaultToNull: false }).select(sel);
     if (error) throw new Error(`${table}: ${error.message}`);
     return data as unknown as T[];
   };
@@ -269,7 +269,7 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
   const monday = addDays(t, -dow);
   const next = (wd: number) => addDays(t, (wd - dow + 7) % 7); // next Mon..Sun (today counts)
   const ins = async <T = { id: string }>(table: string, rows: object | object[], sel = "id") => {
-    const { data, error } = await admin.from(table).insert(rows).select(sel);
+    const { data, error } = await admin.from(table).insert(rows, { defaultToNull: false }).select(sel);
     if (error) throw new Error(`${table}: ${error.message}`);
     return data as unknown as T[];
   };
