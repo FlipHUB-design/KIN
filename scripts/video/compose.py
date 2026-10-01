@@ -93,12 +93,12 @@ def screen_frame(sc, t, cache):
     if sc.get("persona"):
         p = sc["persona"]; chip(d, x0, y, p["name"], p["role"], p.get("colour", "accent")); y += 120
     a = ease(t * 4)
-    f = font(800, 64); lines = wrap(d, sc["headline"], f, 820)
+    f = font(800, 62); lines = wrap(d, sc["headline"], f, 760)
     for i, line in enumerate(lines):
         d.text((x0, y + i * 76 + int((1 - a) * 20)), line, font=f, fill=INK)
     y += len(lines) * 76 + 24
     f2 = font(400, 34, "atk")
-    for i, line in enumerate(wrap(d, sc.get("sub", ""), f2, 800)):
+    for i, line in enumerate(wrap(d, sc.get("sub", ""), f2, 740)):
         d.text((x0, y + i * 48), line, font=f2, fill=MUTED)
     # phone on the right, gentle drift in
     ph = cache["phone"]; px = 1820 - ph.size[0] - 40 + int((1 - ease(t * 3)) * 40); py = (H - ph.size[1]) // 2 + 10
@@ -116,7 +116,7 @@ def screen_frame(sc, t, cache):
             im.paste(ov, (0, 0), ov)
             if sc.get("note"):
                 nf = font(700, 28); tw = d.textlength(sc["note"], font=nf)
-                nx = max(60, bx - tw - 70); ny = by + hh * s / 2 - 28
+                nx = max(920, bx - tw - 64); ny = max(40, by - 28) if nx + tw + 40 > bx else by + min(hh * s, 300) / 2 - 28
                 ov2 = Image.new("RGBA", im.size, (0, 0, 0, 0)); o2 = ImageDraw.Draw(ov2)
                 o2.rounded_rectangle([nx, ny, nx + tw + 40, ny + 56], 28, fill=(240, 160, 30, int(255 * ha)))
                 o2.text((nx + 20, ny + 28), sc["note"], font=nf, fill=(40, 25, 0, int(255 * ha)), anchor="lm")

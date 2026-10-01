@@ -1,0 +1,542 @@
+[
+ {
+  "type": "title",
+  "headline": "Family admin, shared.",
+  "sub": "One calm place for everyone who looks after the children.",
+  "dur": 3.6
+ },
+ {
+  "type": "cast",
+  "headline": "Meet the Carters",
+  "sub": "Two homes, two parents, and the people who help",
+  "dur": 5,
+  "people": [
+   {
+    "name": "Leah",
+    "role": "Mum",
+    "colour": "plum"
+   },
+   {
+    "name": "Dan",
+    "role": "Dad",
+    "colour": "blue"
+   },
+   {
+    "name": "Jean",
+    "role": "Grandma",
+    "colour": "amber"
+   },
+   {
+    "name": "Kelly",
+    "role": "Childminder",
+    "colour": "accent"
+   },
+   {
+    "name": "Ruby",
+    "role": "Age 13",
+    "colour": "coral"
+   }
+  ]
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857500634-ksj5eq.jpg",
+  "crop": [
+   120,
+   0,
+   680,
+   884
+  ],
+  "persona": {
+   "name": "Dan",
+   "role": "Dad",
+   "colour": "blue"
+  },
+  "step": "Two homes",
+  "headline": "Everyone knows where the children sleep tonight",
+  "sub": "Built from your usual pattern, with every handover on the calendar.",
+  "highlight": [
+   145,
+   202,
+   511,
+   175
+  ],
+  "note": "Tonight",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857577654-4u8crq.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Dan",
+   "role": "Dad",
+   "colour": "blue"
+  },
+  "step": "Swaps",
+  "headline": "Need to swap a weekend? Just ask.",
+  "sub": "Dan is away for work, so he asks Leah. Nothing changes until she agrees.",
+  "highlight": [
+   146,
+   330,
+   494,
+   250
+  ],
+  "note": "Swap request",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857610699-by6rw4.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Alerts",
+  "headline": "Leah hears about it straight away",
+  "sub": "In the app, by email or by text. Everyone chooses how.",
+  "highlight": [
+   120,
+   40,
+   545,
+   37
+  ],
+  "note": "New alert",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857626820-0nwyrf.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Swaps",
+  "headline": "One tap to agree",
+  "sub": "Every request comes with the reason and what's offered in return.",
+  "highlight": [
+   129,
+   327,
+   528,
+   245
+  ],
+  "note": "Agree",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857649612-zculhw.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Swaps",
+  "headline": "The schedule updates for everyone",
+  "sub": "Dan, Grandma, the childminder and the children all see the change.",
+  "highlight": [
+   129,
+   468,
+   528,
+   52
+  ],
+  "note": "Changed nights",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857724094-yair3h.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Dan",
+   "role": "Dad",
+   "colour": "blue"
+  },
+  "step": "Alerts",
+  "headline": "Dan hears back, no chasing",
+  "sub": "Answers arrive as alerts, never lost in a chat thread.",
+  "highlight": [
+   130,
+   326,
+   526,
+   269
+  ],
+  "note": "Leah agreed",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857672284-hix71a.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Shared costs",
+  "headline": "Costs agreed by both parents",
+  "sub": "Dan bought a school blazer. It only counts once Leah approves it.",
+  "highlight": [
+   129,
+   397,
+   528,
+   219
+  ],
+  "note": "Approve",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857696694-u9cg74.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Shared costs",
+  "headline": "Always know who owes what",
+  "sub": "Balances update instantly. Child maintenance is kept separately.",
+  "highlight": [
+   129,
+   317,
+   528,
+   85
+  ],
+  "note": "Balance",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857751683-ojny9w.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Kelly",
+   "role": "Childminder",
+   "colour": "accent"
+  },
+  "step": "Helpers",
+  "headline": "The childminder sees just what she needs",
+  "sub": "Her pick-ups and which home to drop off at. No money, no private notes.",
+  "highlight": [
+   129,
+   263,
+   528,
+   182
+  ],
+  "note": "Pick-ups",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857768288-kjkmm3.jpg",
+  "crop": [
+   110,
+   0,
+   675,
+   900
+  ],
+  "persona": {
+   "name": "Kelly",
+   "role": "Childminder",
+   "colour": "accent"
+  },
+  "step": "Helpers",
+  "headline": "Allergies and house rules, everywhere",
+  "sub": "Everyone looking after the children sees what keeps them safe.",
+  "highlight": [
+   129,
+   230,
+   528,
+   163
+  ],
+  "note": "Allergies",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857788027-laif6p.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Jean",
+   "role": "Grandma",
+   "colour": "amber"
+  },
+  "step": "Family",
+  "headline": "Grandma can see where to help",
+  "sub": "The schedule and the jobs that need someone. Never the money.",
+  "highlight": [
+   131,
+   342,
+   538,
+   263
+  ],
+  "note": "Jobs to take",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857811315-gwddv8.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Ruby",
+   "role": "Age 13",
+   "colour": "coral"
+  },
+  "step": "Children",
+  "headline": "Ruby gets her own simple view",
+  "sub": "Where she's sleeping tonight and what to pack. For ages 13 and up.",
+  "highlight": [
+   131,
+   190,
+   538,
+   170
+  ],
+  "note": "Tonight",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857837207-wle64i.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Handovers",
+  "headline": "No more forgotten PE kits",
+  "sub": "Tick what's packed. Anything missing is flagged to the other home.",
+  "highlight": [
+   131,
+   160,
+   538,
+   285
+  ],
+  "note": "Packed?",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857896597-v8in1f.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "School letters",
+  "headline": "Snap a school letter, get the to-dos",
+  "sub": "KIN reads it and suggests the tasks, with the right dates.",
+  "highlight": [
+   131,
+   343,
+   538,
+   240
+  ],
+  "note": "From the letter",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857870776-ccwute.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Records",
+  "headline": "A dated record of everything",
+  "sub": "Requests, answers, costs and handovers. Download it for mediation.",
+  "highlight": [
+   131,
+   357,
+   538,
+   41
+  ],
+  "note": "Download",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857998847-ztf7q3.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   900
+  ],
+  "persona": {
+   "name": "New family",
+   "role": "Setting up KIN",
+   "colour": "ink"
+  },
+  "step": "Guided setup",
+  "headline": "Set up in minutes, in your own words",
+  "sub": "Describe a normal week. KIN's AI helper drafts the rest.",
+  "highlight": [
+   136,
+   245,
+   528,
+   262
+  ],
+  "note": "Your words",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790857960691-wd2pm5.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "New family",
+   "role": "Setting up KIN",
+   "colour": "ink"
+  },
+  "step": "Guided setup",
+  "headline": "Jobs, dates and invitations, drafted for you",
+  "sub": "Check it, untick anything you don't want, and you're set.",
+  "highlight": [
+   131,
+   67,
+   538,
+   440
+  ],
+  "note": "Drafted by AI",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790858032574-l6q30d.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Leah",
+   "role": "Mum",
+   "colour": "plum"
+  },
+  "step": "Ask KIN",
+  "headline": "Stuck? Just ask",
+  "sub": "Plain answers about how to do anything, with a link to the right screen.",
+  "highlight": [
+   131,
+   311,
+   473,
+   140
+  ],
+  "note": "Ask KIN",
+  "dur": 4.3
+ },
+ {
+  "type": "screen",
+  "img": "/root/.claude/projects/-home-claude-kin/3a6347f3-afc3-5bcb-b5c6-c04122bbcf21/tool-results/mcp-remote-devices-blob-1790858051916-hcez3p.jpg",
+  "crop": [
+   112,
+   0,
+   688,
+   917
+  ],
+  "persona": {
+   "name": "Sarah",
+   "role": "Daughter, caring for her mum",
+   "colour": "plum"
+  },
+  "step": "Older relatives",
+  "headline": "Looking after Mum too? Same app.",
+  "sub": "Visits, lifts, check-ins and paperwork, shared across the family.",
+  "highlight": [
+   131,
+   279,
+   538,
+   186
+  ],
+  "note": "Who's on it",
+  "dur": 4.6
+ },
+ {
+  "type": "end",
+  "headline": "Try the demo",
+  "url": "kin-six-brown.vercel.app/demo",
+  "sub": "Pick a person and see what they see.",
+  "dur": 5
+ }
+]
