@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCircle } from "@/lib/data";
 import { AGREEMENT_CATEGORIES, canEdit, when, type Agreement } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
-import { proposeAgreement, respondAgreementAction, withdrawAgreementAction } from "../actions";
+import { proposeAgreement, agreeAgreement, declineAgreement, withdrawAgreementAction } from "../actions";
 
 export default async function Agreements({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
@@ -27,10 +27,10 @@ export default async function Agreements({ params, searchParams }: { params: Pro
             <div key={a.id} className="card pad reqcard">
               <span className="label">{a.category}</span><b>{a.title}</b>{a.detail && <p className="small">{a.detail}</p>}
               <p className="note">Proposed by {nameOf(a.proposed_by)} {when(a.proposed_at).toLowerCase()}{a.share ? " · will be shared with grandparents, childminders and the children" : " · parents only"}</p>
-              <form action={respondAgreementAction} className="stack">
+              <form className="stack">
                 <Hidden circle={id} id={a.id} />
                 <label className="fl"><span className="sr-only">Note</span><input name="note" placeholder="Add a note (optional)" maxLength={500} /></label>
-                <div className="row"><button name="answer" value="yes" className="btn primary sm">Agree</button><button name="answer" value="no" className="btn sm">Not agreed</button></div>
+                <div className="row"><button formAction={agreeAgreement} className="btn primary sm">Agree</button><button formAction={declineAgreement} className="btn sm">Not agreed</button></div>
               </form>
             </div>
           ))}

@@ -3,7 +3,7 @@ import { getCircle } from "@/lib/data";
 import { loadFamily } from "@/lib/family";
 import { addDays, canEdit, dayLabel, hm, longDate, today, when, type Appointment, type ScheduleChange } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
-import { cancelChange, requestChange, respondChange } from "../actions";
+import { cancelChange, requestChange, agreeChange, declineChange } from "../actions";
 
 const dow = (s: string) => (new Date(s + "T12:00:00Z").getUTCDay() + 6) % 7;
 const range = (c: ScheduleChange) => (c.start_date === c.end_date ? longDate(c.start_date) : `${dayLabel(c.start_date)} to ${dayLabel(c.end_date)}`);
@@ -79,10 +79,10 @@ export default async function Schedule({ params, searchParams }: { params: Promi
               {c.reason && <p className="small">&ldquo;{c.reason}&rdquo;</p>}
               {c.in_return && <p className="small muted">In return: {c.in_return}</p>}
               <p className="note">Asked {when(c.requested_at).toLowerCase()}</p>
-              <form action={respondChange} className="stack">
+              <form className="stack">
                 <Hidden circle={id} id={c.id} />
                 <label className="fl"><span className="sr-only">Note</span><input name="note" placeholder="Add a note (optional)" maxLength={500} /></label>
-                <div className="row"><button name="answer" value="yes" className="btn primary sm">Agree</button><button name="answer" value="no" className="btn sm">Say no</button></div>
+                <div className="row"><button formAction={agreeChange} className="btn primary sm">Agree</button><button formAction={declineChange} className="btn sm">Say no</button></div>
               </form>
             </div>
           ))}

@@ -5,8 +5,8 @@ import {
   addDays, ageOn, balances, canEdit, childNames, dayLabel, hm, isLift, isOverdue, kidsLabel, kindOf, longDate, money, nextHandover, sharesOf, timeOf, today, when,
   type Activity, type Agreement, type Appointment, type Child, type ChildItem, type Expense, type ScheduleChange, type Settlement, type Task,
 } from "@/lib/kin";
-import { Disclaimer, Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
-import { checkOut, respondChange, youngPersonAsk } from "./actions";
+import { Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
+import { checkOut, agreeChange, declineChange, youngPersonAsk } from "./actions";
 
 type Ctx = Awaited<ReturnType<typeof getCircle>>;
 
@@ -109,7 +109,7 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
   // Status: coordination only
   const reasons: string[] = [];
   let level = 0;
-  for (const a of appts) if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) { level = 2; reasons.push(`No one is taking ${childNames(a.child_ids, kids) || "them"} to ${a.title} ${dayLabel(a.date).toLowerCase()}`); }
+  for (const a of appts) if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) { level = 2; reasons.push(`No one is taking ${childNames(a.child_ids, kids) || "them"} to ${a.title} ${["Today", "Tomorrow"].includes(dayLabel(a.date)) ? dayLabel(a.date).toLowerCase() : `on ${dayLabel(a.date)}`}`); }
   const waiting = forMe.changes.length + forMe.expenses.length + forMe.agreements.length;
   if (waiting) { level = Math.max(level, 1); reasons.push(`${waiting} thing${waiting === 1 ? "" : "s"} waiting for your answer`); }
   for (const x of tasks) {
@@ -159,10 +159,10 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
               <b>{nameOf(c.requested_by)} asks: {c.start_date === c.end_date ? dayLabel(c.start_date) : `${dayLabel(c.start_date)} to ${dayLabel(c.end_date)}`} at {fam.home(c.household_id)?.name}</b>
               {c.reason && <p className="small">&ldquo;{c.reason}&rdquo;</p>}
               {c.in_return && <p className="small muted">In return: {c.in_return}</p>}
-              <form action={respondChange} className="stack">
+              <form className="stack">
                 <Hidden circle={circle.id} id={c.id} ret="/" />
                 <label className="fl"><span className="sr-only">Note</span><input name="note" placeholder="Add a note (optional)" maxLength={500} /></label>
-                <div className="row"><button name="answer" value="yes" className="btn primary sm">Agree</button><button name="answer" value="no" className="btn sm">Say no</button></div>
+                <div className="row"><button formAction={agreeChange} className="btn primary sm">Agree</button><button formAction={declineChange} className="btn sm">Say no</button></div>
               </form>
             </div>
           ))}
@@ -221,7 +221,7 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
           {!actR.data?.length && <p className="empty">Nothing yet.</p>}
         </div>
       </section>
-      <Disclaimer />
+      <p className="disclaimer">KIN helps families organise. It isn&apos;t legal advice. In an emergency call 999. For urgent medical advice call NHS 111.</p>
     </main>
   );
 }

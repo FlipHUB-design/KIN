@@ -686,3 +686,12 @@ export async function youngPersonAsk(f: FormData) {
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "", "Sent to your parents");
 }
+
+// Separate actions for yes/no buttons, so the choice never depends on which button the browser reports
+const withAnswer = (f: FormData, a: "yes" | "no") => { f.set("answer", a); return f; };
+export async function agreeChange(f: FormData) { return respondChange(withAnswer(f, "yes")); }
+export async function declineChange(f: FormData) { return respondChange(withAnswer(f, "no")); }
+export async function agreeAgreement(f: FormData) { return respondAgreementAction(withAnswer(f, "yes")); }
+export async function declineAgreement(f: FormData) { return respondAgreementAction(withAnswer(f, "no")); }
+export async function approveExpense(f: FormData) { return respondExpenseAction(withAnswer(f, "yes")); }
+export async function queryExpense(f: FormData) { return respondExpenseAction(withAnswer(f, "no")); }
