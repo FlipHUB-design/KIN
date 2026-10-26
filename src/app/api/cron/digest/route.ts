@@ -25,7 +25,10 @@ export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ error: "Not allowed" }, { status: 401 });
   const admin = createAdminClient();
-  if (!admin || !emailOn()) return NextResponse.json({ sent: 0, reason: "email not set up" });
+  if (!admin) return NextResponse.json({ sent: 0, reason: "database not set up" });
+  // Touch the database every day so the free Supabase plan doesn't pause the project for inactivity
+  await admin.from("care_circles").select("id", { count: "exact", head: true });
+  if (!emailOn()) return NextResponse.json({ sent: 0, reason: "email not set up", kept_alive: true });
   const t = today(), y = addDays(t, -1);
 
   const { data: members } = await admin.from("memberships").select("circle_id, user_id, role, care_circles(person_name, preferred_name, kind)").eq("status", "active");

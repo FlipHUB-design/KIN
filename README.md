@@ -110,7 +110,7 @@ KIN alerts people when something needs them: a schedule change request, a cost t
 
 1. **Email:** create a free account at resend.com, add and verify your domain, and create an API key. In Vercel (**Settings → Environment Variables**) add `RESEND_API_KEY` and `KIN_EMAIL_FROM` (for example `KIN <alerts@yourdomain.co.uk>`). Until your domain is verified, Resend only delivers to your own address.
 2. **Texts:** create a Twilio account, then add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_FROM`. In the UK, `TWILIO_FROM` can be a Twilio number or a sender name such as `KIN`. UK texts cost roughly 4p each, so consider keeping texts for paying families.
-3. **Morning email:** add `CRON_SECRET` (any long random string). Vercel then calls `/api/cron/digest` at 6am UTC each day, as set in `vercel.json`.
+3. **Morning email and keep-alive:** add `CRON_SECRET` (any long random string). Vercel then calls `/api/cron/digest` at 6am UTC each day, as set in `vercel.json`. The same daily job also keeps a free Supabase project from being paused for inactivity, even before email is set up.
 4. Redeploy so the new settings take effect.
 
 Demo accounts never send real emails or texts.
