@@ -65,6 +65,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
         <h2>Your data</h2>
         <p className="small">Download everything you can see in KIN as a file.</p>
         <Link href="/account/alerts" className="btn">Email and text alerts</Link>
+        <Link href="/account/calendar" className="btn">Add KIN to my calendar</Link>
         <a href="/account/export" className="btn">Download my data</a>
         <Link href="/account/password" className="btn">Change password</Link>
         <form action={signOut}><button className="btn block">Sign out</button></form>

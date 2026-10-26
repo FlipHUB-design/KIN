@@ -25,7 +25,7 @@ export default async function LetterPage({ params, searchParams }: { params: Pro
       <Notice sp={sp} />
       <span className="label">{r.document_type}</span>
       <h1>{r.organisation}</h1>
-      <p className="muted">{r.letter_date ? `Dated ${longDate(r.letter_date)} · ` : ""}Read by {nameOf(scan.created_by)} {when(scan.created_at).toLowerCase()}</p>
+      <p className="muted">{r.letter_date ? `Dated ${longDate(r.letter_date)} · ` : ""}{scan.source === "email" && !scan.created_by ? "Forwarded by email and read" : `Read by ${nameOf(scan.created_by)}`} {when(scan.created_at).toLowerCase()}</p>
       {scan.source === "sample" && <p className="note">This is a sample result. Real letters are read automatically once letter reading is switched on.</p>}
       <div className="card pad"><span className="label">What it says</span><p>{r.summary}</p>
         {scan.document_id && <a className="link" href={`/c/${cid}/more/documents/${scan.document_id}`} target="_blank" rel="noopener">Open the letter</a>}

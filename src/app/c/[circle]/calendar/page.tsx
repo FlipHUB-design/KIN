@@ -82,6 +82,7 @@ export default async function Calendar({ params, searchParams }: { params: Promi
         {canEdit(role) && <Link href={`${base}/appointments/new`} className="btn primary">{kidsMode ? "Add event" : "Add appointment"}</Link>}
         <Link href={`${base}/tasks/new`} className="btn">Add task</Link>
       </div>
+      <Link href="/account/calendar" className="link">Show these dates in my Google, Apple or Outlook calendar</Link>
     </main>
   );
 }

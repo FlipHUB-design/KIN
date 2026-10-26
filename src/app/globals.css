@@ -230,3 +230,36 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .chatform input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--surface); color: var(--ink); font: inherit; }
 .helpfab { position: fixed; right: 16px; bottom: 84px; z-index: 20; width: 52px; height: 52px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; text-decoration: none; font: 700 22px var(--font-display), sans-serif; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
 .helpfab.nonav { bottom: 20px; }
+
+/* calm message helper */
+.tonebox { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 12px; background: var(--accent-soft); border: 1px solid var(--accent); }
+.tonebox.could_be_calmer { background: var(--plum-soft); border-color: var(--plum); }
+.tonetext { margin: 0; padding: 10px 12px; background: var(--surface); border-radius: 10px; white-space: pre-wrap; }
+
+/* threads */
+.thread { display: flex; flex-direction: column; gap: 10px; }
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg .bub { background: var(--sunk); border-radius: 12px; padding: 10px 12px; flex: 1; min-width: 0; }
+.msg .bub.outcome { background: var(--amber-soft); }
+.msg .bub p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* rota, wellbeing, picture view */
+.rota { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.rday { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; min-height: 92px; font-size: 13px; }
+.rday b { font-size: 14px; }
+.rday.gap { border-color: var(--coral); background: var(--coral-soft); }
+.rday.off { background: var(--sunk); color: var(--muted); }
+.mood { display: inline-block; width: 18px; height: 18px; border-radius: 50%; }
+.moodgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.mcell { border-radius: 8px; min-height: 40px; display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); }
+.mcell.good { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.mcell.ok { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
+.mcell.not_great { background: var(--coral-soft); color: var(--coral); border-color: var(--coral); }
+.kidweek { display: flex; flex-direction: column; gap: 12px; }
+.kidday { display: grid; grid-template-columns: 88px 64px 1fr; gap: 14px; align-items: center; background: var(--surface); border: 2px solid var(--line); border-radius: 20px; padding: 14px 16px; }
+.kidday.today { border-width: 4px; }
+.kidday .dname { font: 800 22px/1.1 var(--font-display), sans-serif; }
+.kidday .home { font: 800 26px/1.2 var(--font-display), sans-serif; }
+.kidday .pick { font-size: 18px; margin-top: 4px; }
+.kidday svg { width: 64px; height: 64px; }
+@media (max-width: 520px) { .rota { grid-template-columns: repeat(4, minmax(0, 1fr)); } .kidday { grid-template-columns: 70px 48px 1fr; } .kidday svg { width: 48px; height: 48px; } }

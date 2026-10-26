@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getCircle } from "@/lib/data";
 import { canEdit, hm, longDate, type Appointment } from "@/lib/kin";
 import { Hidden, Notice } from "@/components/ui";
-import { claimTask, deleteAppointment } from "../../actions";
+import { claimTask, deleteAppointment, savePack } from "../../actions";
+import Thread from "@/components/Thread";
 
 export default async function AppointmentPage({ params, searchParams }: { params: Promise<{ circle: string; id: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: cid, id } = await params;
@@ -32,7 +33,38 @@ export default async function AppointmentPage({ params, searchParams }: { params
       {tr && !tr.assignee && role !== "helper" && (
         <form action={claimTask}><Hidden circle={cid} id={tr.id} ret={`/appointments/${id}`} /><button className="btn primary block">{kidsMode ? "I'll take them" : "I'll drive"}</button></form>
       )}
-      {tr && <Link href={`/c/${cid}/tasks/${tr.id}`} className="link">{kidsMode ? "Pick-up task and comments" : "Transport task and comments"}</Link>}
+      {tr && <Link href={`/c/${cid}/tasks/${tr.id}`} className="link">{kidsMode ? "Pick-up task" : "Transport task"}</Link>}
+
+      <section className="stack" id="pack">
+        <h2>{kidsMode ? "Before you go" : "Appointment pack"}</h2>
+        {(a.pack_questions || a.pack_bring || a.pack_parking) ? (
+          <div className="card"><dl className="kv">
+            <dt>{kidsMode ? "Taking them" : "Who's taking " + (circle.preferred_name || "them")}</dt><dd>{a.needs_transport ? (a.driver ? nameOf(a.driver) : "No one yet") : a.attending || "Not set"}</dd>
+            {a.pack_questions && <><dt>Questions to ask</dt><dd style={{ whiteSpace: "pre-wrap" }}>{a.pack_questions}</dd></>}
+            {a.pack_bring && <><dt>What to bring</dt><dd style={{ whiteSpace: "pre-wrap" }}>{a.pack_bring}</dd></>}
+            {a.pack_parking && <><dt>Parking and getting there</dt><dd style={{ whiteSpace: "pre-wrap" }}>{a.pack_parking}</dd></>}
+          </dl></div>
+        ) : <p className="muted small">Nothing added yet. Add the questions to ask, what to bring and where to park, so whoever goes has it all.</p>}
+        {canEdit(role) && (
+          <details className="card pad">
+            <summary style={{ fontWeight: 700, cursor: "pointer" }}>{a.pack_questions || a.pack_bring || a.pack_parking ? "Edit the pack" : "Add to the pack"}</summary>
+            <form action={savePack} className="form" style={{ marginTop: 12 }}>
+              <Hidden circle={cid} id={id} />
+              <label className="fl">Questions to ask<textarea name="pack_questions" rows={4} defaultValue={a.pack_questions || ""} placeholder={kidsMode ? "e.g. How is she getting on with reading?" : "e.g. Can the new tablets be taken with her blood pressure ones?"} /></label>
+              <label className="fl">What to bring<textarea name="pack_bring" rows={2} defaultValue={a.pack_bring || ""} placeholder="e.g. Appointment letter, medication list, glasses" /></label>
+              <label className="fl">Parking and getting there<textarea name="pack_parking" rows={2} defaultValue={a.pack_parking || ""} placeholder="e.g. Car park B, pay at the machine. Drop-off by main entrance." /></label>
+              <span className="note">Everyone who can see this {kidsMode ? "event" : "appointment"} can read the pack.</span>
+              <button className="btn primary">Save pack</button>
+            </form>
+          </details>
+        )}
+      </section>
+
+      {role !== "helper" && <Thread supabase={supabase} circleId={cid} type="appointment" subjectId={id} nameOf={nameOf} canPost kind="outcome" filter="outcome"
+        title={kidsMode ? "Notes afterwards" : "What was said"} empty={kidsMode ? "No notes yet." : "No notes yet. Afterwards, anyone can add what was said, so the family isn't relying on one person's memory."}
+        placeholder={kidsMode ? "e.g. Teacher says reading is going well. Next parents' evening in March." : "e.g. Consultant is happy. Blood test in 6 weeks; the surgery will call."} />}
+      {role !== "helper" && <Thread supabase={supabase} circleId={cid} type="appointment" subjectId={id} nameOf={nameOf} canPost filter="comment"
+        title="Discussion" empty="No messages yet." placeholder="e.g. I can take her if someone collects." />}
       {canEdit(role) && (
         <form action={deleteAppointment}><Hidden circle={cid} id={id} /><button className="link" style={{ color: "var(--coral)" }}>{kidsMode ? "Remove event" : "Remove appointment"}</button></form>
       )}

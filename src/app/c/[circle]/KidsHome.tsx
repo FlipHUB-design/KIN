@@ -8,6 +8,7 @@ import {
 import { Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
 import { checkOut, agreeChange, declineChange, youngPersonAsk } from "./actions";
 import Wordmark from "@/components/Wordmark";
+import ToneCheck from "@/components/ToneCheck";
 
 type Ctx = Awaited<ReturnType<typeof getCircle>>;
 
@@ -162,8 +163,8 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
               {c.in_return && <p className="small muted">In return: {c.in_return}</p>}
               <form className="stack">
                 <Hidden circle={circle.id} id={c.id} ret="/" />
-                <label className="fl"><span className="sr-only">Note</span><input name="note" placeholder="Add a note (optional)" maxLength={500} /></label>
-                <div className="row"><button formAction={agreeChange} className="btn primary sm">Agree</button><button formAction={declineChange} className="btn sm">Say no</button></div>
+                <ToneCheck circleId={circle.id} name="note" input maxLength={500} placeholder="Add a note (optional)" />
+                <div className="row"><button formAction={agreeChange} className="btn primary sm">Agree</button><button formAction={declineChange} className="btn sm">Say no</button><Link href={`${base}/thread/change/${c.id}`} className="btn sm">Discuss</Link></div>
               </form>
             </div>
           ))}
@@ -185,7 +186,9 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
 
       <nav className="chips" aria-label="Quick links">
         {fam.twoHomes && <Link href={`${base}/schedule`} className="chip">Schedule</Link>}
+        {fam.twoHomes && parent && <Link href={`${base}/schedule/holidays`} className="chip">Holidays and special days</Link>}
         <Link href={`${base}/children`} className="chip">Children</Link>
+        <Link href={`${base}/children/view`} className="chip">Children&apos;s picture view</Link>
         {parent && <Link href={`${base}/costs`} className="chip">Costs{net ? ` · ${net > 0 ? `owed ${money(net)}` : `you owe ${money(-net)}`}` : ""}</Link>}
         {parent && <Link href={`${base}/agreements`} className="chip">Agreements</Link>}
         {parent && <Link href={`${base}/letters`} className="chip">Read a school letter</Link>}

@@ -8,6 +8,8 @@ import { playbook } from "@/lib/playbooks";
 import { addDays, today } from "@/lib/kin";
 import { after } from "next/server";
 import { takeAllowance } from "@/lib/ai";
+import { moodKey, WEEKDAYS } from "@/lib/support";
+import { readLetterText } from "@/lib/letters";
 import { isDemoEmail, notify, sendInviteEmail, site, type Level } from "@/lib/notify";
 
 const s = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -213,6 +215,8 @@ export async function askFamily(f: FormData) {
 export async function wellbeing(f: FormData) {
   const c = await ctx(f);
   await activity(c, `said they're feeling ${s(f, "mood").toLowerCase()} today`, n(f, "note"));
+  const mood = moodKey(s(f, "mood"));
+  if (mood) await c.supabase.from("wellbeing_entries").insert({ circle_id: c.circleId, user_id: c.user.id, mood, note: n(f, "note") });
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "", "Thank you. Your family can see this.");
 }
@@ -371,7 +375,7 @@ export async function deleteDocument(f: FormData) {
 
 // ---------------------------------------------------------------- letters
 
-async function saveScan(c: Awaited<ReturnType<typeof ctx>>, documentId: string | null, result: LetterResult, source: "ai" | "sample") {
+async function saveScan(c: Awaited<ReturnType<typeof ctx>>, documentId: string | null, result: LetterResult, source: "ai" | "sample" | "email") {
   const { data, error } = await c.supabase.from("letter_scans").insert({
     circle_id: c.circleId, document_id: documentId, result, source, created_by: c.user.id,
   }).select("id").single();
@@ -742,3 +746,167 @@ export async function agreeAgreement(f: FormData) { return respondAgreementActio
 export async function declineAgreement(f: FormData) { return respondAgreementAction(withAnswer(f, "no")); }
 export async function approveExpense(f: FormData) { return respondExpenseAction(withAnswer(f, "yes")); }
 export async function queryExpense(f: FormData) { return respondExpenseAction(withAnswer(f, "no")); }
+
+// ---------------------------------------------------------------- discussion threads
+const SUBJECTS = { appointment: "appointments", change: "schedule_changes", agreement: "agreements", expense: "expenses" } as const;
+type Subject = keyof typeof SUBJECTS;
+const threadPath = (type: string, id: string) => (type === "appointment" ? `/appointments/${id}#thread` : `/thread/${type}/${id}`);
+
+export async function addDiscussion(f: FormData) {
+  const c = await ctx(f);
+  const type = s(f, "type") as Subject, sid = s(f, "subject"), body = s(f, "body").slice(0, 2000);
+  const kind = s(f, "kind") === "outcome" ? "outcome" : "comment";
+  const ret = threadPath(type, sid);
+  if (!(type in SUBJECTS)) fail(c.circleId, "", "Couldn't find that.");
+  if (!body) back(c.circleId, ret);
+  const { error } = await c.supabase.from("discussions").insert({ circle_id: c.circleId, subject_type: type, subject_id: sid, author: c.user.id, body, kind });
+  if (error) fail(c.circleId, ret, "You can't add to this discussion.");
+  // Tell the people involved
+  const people = new Set<string>();
+  let title = "a discussion";
+  if (type === "appointment") {
+    const { data: a } = await c.supabase.from("appointments").select("title, driver, created_by").eq("id", sid).maybeSingle();
+    if (a) { title = a.title; [a.driver, a.created_by].forEach((x) => x && people.add(x)); }
+    parents(c).forEach((x) => people.add(x));
+  } else if (type === "change") {
+    const { data: r } = await c.supabase.from("schedule_changes").select("requested_by, responded_by").eq("id", sid).maybeSingle();
+    title = "a schedule request"; parents(c).forEach((x) => people.add(x)); if (r?.requested_by) people.add(r.requested_by);
+  } else if (type === "agreement") {
+    const { data: g } = await c.supabase.from("agreements").select("title").eq("id", sid).maybeSingle();
+    title = g?.title || "an agreement"; parents(c).forEach((x) => people.add(x));
+  } else {
+    const { data: e } = await c.supabase.from("expenses").select("description, created_by, split_between").eq("id", sid).maybeSingle();
+    title = e?.description || "a cost"; (e?.split_between || []).forEach((x: string) => people.add(x)); if (e?.created_by) people.add(e.created_by);
+  }
+  const { data: prior } = await c.supabase.from("discussions").select("author").eq("subject_type", type).eq("subject_id", sid);
+  (prior || []).forEach((p) => p.author && people.add(p.author));
+  alert(c, "update", [...people], kind === "outcome" ? `${myName(c)} added notes from ${title}` : `${myName(c)} replied on "${title}"`, body.slice(0, 200), ret);
+  await activity(c, kind === "outcome" ? "added notes from" : "commented on", title);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, ret);
+}
+
+// ---------------------------------------------------------------- appointment pack
+export async function savePack(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id");
+  const { error } = await c.supabase.from("appointments").update({
+    pack_questions: n(f, "pack_questions")?.slice(0, 2000) ?? null, pack_bring: n(f, "pack_bring")?.slice(0, 1000) ?? null,
+    pack_parking: n(f, "pack_parking")?.slice(0, 1000) ?? null,
+  }).eq("id", id).eq("circle_id", c.circleId);
+  if (error) fail(c.circleId, `/appointments/${id}`, "Only family members can change the appointment pack.");
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, `/appointments/${id}`, "Appointment pack saved");
+}
+
+// ---------------------------------------------------------------- medications
+export async function saveMedication(f: FormData) {
+  const c = await ctx(f);
+  const id = n(f, "id");
+  const repeat = Number(s(f, "repeat_days")) || null;
+  const row = {
+    circle_id: c.circleId, name: s(f, "name").slice(0, 120), dose: n(f, "dose"), when_taken: n(f, "when_taken"), notes: n(f, "notes"),
+    pharmacy: n(f, "pharmacy"), repeat_days: repeat && repeat >= 1 && repeat <= 365 ? repeat : null, next_order: n(f, "next_order"),
+    updated_by: c.user.id, updated_at: new Date().toISOString(),
+  };
+  if (!row.name) fail(c.circleId, "/medications", "Add the medicine's name.");
+  const { error } = id ? await c.supabase.from("medications").update(row).eq("id", id) : await c.supabase.from("medications").insert(row);
+  if (error) fail(c.circleId, "/medications", "Only family members can change the medication list.");
+  await activity(c, id ? "updated the medication list:" : "added to the medication list:", row.name);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/medications", "Saved");
+}
+export async function markOrdered(f: FormData) {
+  const c = await ctx(f);
+  const { data: m } = await c.supabase.from("medications").select("*").eq("id", s(f, "id")).maybeSingle();
+  if (!m) fail(c.circleId, "/medications", "Not found.");
+  const t = today();
+  const next = m!.repeat_days ? addDays(t, m!.repeat_days) : null;
+  await c.supabase.from("medications").update({ last_ordered: t, next_order: next, updated_by: c.user.id, updated_at: new Date().toISOString() }).eq("id", m!.id);
+  await activity(c, "ordered a repeat prescription:", m!.name);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, s(f, "return") || "/medications", next ? `Marked as ordered. Next one due ${next.split("-").reverse().join("/")}.` : "Marked as ordered");
+}
+export async function stopMedication(f: FormData) {
+  const c = await ctx(f);
+  const { data } = await c.supabase.from("medications").update({ active: s(f, "active") === "yes", updated_by: c.user.id, updated_at: new Date().toISOString() }).eq("id", s(f, "id")).select("name").maybeSingle();
+  if (data) await activity(c, s(f, "active") === "yes" ? "restarted on the medication list:" : "marked as stopped:", data.name);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/medications", "Updated");
+}
+
+// ---------------------------------------------------------------- care rota
+export async function saveVisitDays(f: FormData) {
+  const c = await ctx(f);
+  const days = f.getAll("day").map(Number).filter((d) => d >= 0 && d <= 6);
+  const { error } = await c.supabase.from("care_circles").update({ visit_days: [...new Set(days)].sort() }).eq("id", c.circleId);
+  if (error) fail(c.circleId, "/rota", "Only administrators can change this.");
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/rota", "Saved");
+}
+export async function volunteerVisit(f: FormData) {
+  const c = await ctx(f);
+  const date = s(f, "date");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail(c.circleId, "/rota", "Pick a day.");
+  const { error } = await c.supabase.from("tasks").insert({
+    circle_id: c.circleId, title: `Visit ${c.circle.preferred_name}`, category: "Visit", assignee: c.user.id, status: "accepted",
+    due_date: date, due_time: n(f, "time"), recurrence: s(f, "weekly") === "on" ? "weekly" : "none", created_by: c.user.id,
+  });
+  if (error) fail(c.circleId, "/rota", "You can't add visits in this circle.");
+  await activity(c, `will visit on ${WEEKDAYS[(new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7]}`, null);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/rota", "Thank you. The family can see you've got it.");
+}
+
+// ---------------------------------------------------------------- child screens (home tablet)
+export async function createScreen(f: FormData) {
+  const c = await ctx(f);
+  const { error } = await c.supabase.from("child_screens").insert({ circle_id: c.circleId, child_id: s(f, "child"), created_by: c.user.id });
+  if (error) fail(c.circleId, "/children/view", "Only parents can create tablet links.");
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "child_screen.create" });
+  back(c.circleId, `/children/view?child=${s(f, "child")}`, "Tablet link created");
+}
+export async function revokeScreen(f: FormData) {
+  const c = await ctx(f);
+  await c.supabase.from("child_screens").update({ revoked: true }).eq("token", s(f, "token")).eq("circle_id", c.circleId);
+  await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "child_screen.revoke" });
+  back(c.circleId, `/children/view?child=${s(f, "child")}`, "That link no longer works");
+}
+
+// ---------------------------------------------------------------- holidays and special days
+export async function proposeSpecial(f: FormData) {
+  const c = await ctx(f);
+  const start = s(f, "start_date"), end = s(f, "end_date") || start;
+  if (!start || end < start) fail(c.circleId, "/schedule/holidays", "Check the dates.");
+  const { error } = await c.supabase.from("schedule_changes").insert({
+    circle_id: c.circleId, start_date: start, end_date: end, household_id: s(f, "household_id"), label: n(f, "label"),
+    reason: n(f, "note"), in_return: n(f, "in_return"), requested_by: c.user.id, status: "requested",
+  });
+  if (error) fail(c.circleId, "/schedule/holidays", "Couldn't send the plan. Plans can cover up to 60 nights.");
+  const { data: home } = await c.supabase.from("households").select("name").eq("id", s(f, "household_id")).maybeSingle();
+  alert(c, "answer", parents(c), `${myName(c)} proposed a plan for ${s(f, "label") || "a special day"}`,
+    `${range(start, end)} at ${home?.name || "the other home"}.${n(f, "note") ? ` "${s(f, "note")}"` : ""}`, "/schedule/holidays");
+  await activity(c, "proposed a plan for", s(f, "label") || "a special day");
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, "/schedule/holidays", "Plan sent. It fills the schedule once it's agreed.");
+}
+
+// ---------------------------------------------------------------- school emails
+export async function readPastedEmail(f: FormData) {
+  const c = await ctx(f);
+  const text = s(f, "text");
+  if (text.length < 40) fail(c.circleId, "/letters", "Paste the whole email, including the dates.");
+  if (!letterReadingOn()) fail(c.circleId, "/letters", "Automatic reading isn't switched on yet.");
+  if (!(await takeAllowance(c.user.id, "email"))) fail(c.circleId, "/letters", "You've reached today's limit for reading emails. Try again tomorrow.");
+  let result: LetterResult;
+  try { result = await readLetterText(text, c.circle.kind || "care"); }
+  catch (e) { console.error("email read failed", e); return fail(c.circleId, "/letters", "KIN couldn't read that email. Please try again."); }
+  await saveScan(c, null, result, "email");
+}
+export async function createInbound(f: FormData) {
+  const c = await ctx(f);
+  if (f.get("reset") === "yes") await c.supabase.from("inbound_addresses").delete().eq("circle_id", c.circleId);
+  const { error } = await c.supabase.from("inbound_addresses").insert({ circle_id: c.circleId });
+  if (error) fail(c.circleId, "/letters", "Only family members can set up email forwarding.");
+  back(c.circleId, "/letters#forward", f.get("reset") === "yes" ? "New address made. The old one no longer works." : "Forwarding address ready");
+}

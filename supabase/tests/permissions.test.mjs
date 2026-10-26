@@ -25,6 +25,7 @@ grant all on storage.objects to authenticated; grant execute on all functions in
 await db.exec(`alter default privileges in schema public grant all on tables to authenticated;`);
 await db.exec(fs.readFileSync(new URL("../migrations/0004_notifications.sql", import.meta.url), "utf8"));
 await db.exec(fs.readFileSync(new URL("../migrations/0005_ai_usage.sql", import.meta.url), "utf8"));
+try { await db.exec(fs.readFileSync(new URL("../migrations/0006_family_support.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0006 ERROR:", e.message); process.exit(1); }
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -154,6 +155,46 @@ let kellyItem=true; try { await as(K.kelly, `insert into child_items (circle_id,
 ok(!kellyItem, "childminder can't change family records");
 const careStill = (await as(U.helen, `select title from tasks`)).rows;
 ok(careStill.length>0 && careStill.every(r=>r.title==='Cleaning'), "care circle permissions unchanged by children's update");
+
+// ---------------------------------------------------------------- family support (0006)
+const hosp = (await as(U.sarah, `select id from appointments where title='Hospital'`)).rows[0].id;
+await as(U.anthony, `insert into discussions (circle_id,subject_type,subject_id,author,body,kind) values ($1,'appointment',$2,$3,'Consultant said review in 6 weeks','outcome')`, [circle, hosp, U.anthony]);
+ok((await as(U.lucy, `select * from discussions`)).rows.length===1, "contributor can read an appointment's notes");
+ok((await as(U.helen, `select * from discussions`)).rows.length===0, "helper can't read appointment notes");
+let helperNote=true; try { await as(U.helen, `insert into discussions (circle_id,subject_type,subject_id,author,body) values ($1,'appointment',$2,$3,'x')`, [circle, hosp, U.helen]) } catch { helperNote=false }
+ok(!helperNote, "helper can't add to appointment threads");
+let fakeAuthor=true; try { await as(U.lucy, `insert into discussions (circle_id,subject_type,subject_id,author,body) values ($1,'appointment',$2,$3,'x')`, [circle, hosp, U.sarah]) } catch { fakeAuthor=false }
+ok(!fakeAuthor, "nobody can post as someone else");
+ok((await as(U.eve, `select * from discussions`)).rows.length===0, "outsider sees no threads");
+await as(U.sarah, `insert into medications (circle_id,name,repeat_days,next_order) values ($1,'Amlodipine',28,'2026-10-20')`, [circle]);
+ok((await as(U.anthony, `select * from medications`)).rows.length===1, "family can see the medication list");
+ok((await as(U.lucy, `select * from medications`)).rows.length===0 && (await as(U.helen, `select * from medications`)).rows.length===0, "contributors and helpers can't see medications");
+let lucyMed=true; try { await as(U.lucy, `insert into medications (circle_id,name) values ($1,'x')`, [circle]) } catch { lucyMed=false }
+ok(!lucyMed, "contributor can't change medications");
+await as(U.helen, `insert into wellbeing_entries (circle_id,user_id,mood) values ($1,$2,'good')`, [circle, U.helen]);
+ok((await as(U.sarah, `select * from wellbeing_entries`)).rows.length===1 && (await as(U.helen, `select * from wellbeing_entries`)).rows.length===0, "wellbeing answers are for the family only");
+await as(K.leah, `insert into child_screens (circle_id,child_id) values ($1,$2)`, [fam, alfie]);
+ok((await as(K.kelly, `select * from child_screens`)).rows.length===0 && (await as(K.ruby, `select * from child_screens`)).rows.length===0, "only parents can see tablet links");
+await as(K.leah, `insert into inbound_addresses (circle_id) values ($1)`, [fam]);
+ok((await as(K.jean, `select * from inbound_addresses`)).rows.length===0, "only parents can see the school email address");
+const chg = (await as(K.dan, `select id from schedule_changes limit 1`)).rows[0].id;
+await as(K.leah, `insert into discussions (circle_id,subject_type,subject_id,author,body) values ($1,'change',$2,$3,'Fine by me')`, [fam, chg, K.leah]);
+ok((await as(K.jean, `select * from discussions where subject_type='change'`)).rows.length===0, "grandparent can't read swap discussions");
+// calendar feeds
+await as(U.sarah, `insert into calendar_feeds (user_id) values ($1)`, [U.sarah]);
+await as(U.helen, `insert into calendar_feeds (user_id) values ($1)`, [U.helen]);
+await as(K.jean, `insert into calendar_feeds (user_id) values ($1)`, [K.jean]);
+ok((await as(U.helen, `select * from calendar_feeds`)).rows.length===1, "people see only their own calendar link");
+const tok = async (u) => (await db.query(`select token from calendar_feeds where user_id=$1`, [u])).rows[0].token;
+let anonFeed=true; try { await as(U.eve, `select * from calendar_feed($1)`, [await tok(U.sarah)]) } catch { anonFeed=false }
+ok(!anonFeed, "the feed function can't be called from the app directly");
+const feed = async (u) => (await db.query(`select kind, title from calendar_feed($1)`, [await tok(u)])).rows;
+ok((await feed(U.sarah)).some(r=>r.title==='Hospital'), "administrator's calendar shows appointments");
+ok(!(await feed(U.helen)).some(r=>r.kind==='appointment'), "a helper's calendar shows no appointments");
+ok((await feed(U.helen)).some(r=>r.title==='Cleaning'), "a helper's calendar shows their own jobs");
+const jeanFeed = (await feed(K.jean)).map(r=>r.title);
+ok(jeanFeed.includes('Parents evening') && !jeanFeed.includes('Mediation session'), "grandparent's calendar leaves out parents-only events");
+ok((await db.query(`select * from calendar_feed('nope')`)).rows.length===0, "an unknown calendar link shows nothing");
 
 // ---------------------------------------------------------------- alerts
 await db.query(`insert into notifications (circle_id,user_id,level,title) values ($1,$2,'answer','Dan asked to change the schedule'),($1,$3,'update','Leah agreed')`, [fam, K.leah, K.dan]);

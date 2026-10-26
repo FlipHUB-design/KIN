@@ -16,6 +16,7 @@ export type Circle = {
   packing_list?: string[];
   handover_note?: string | null;
   default_split?: Record<string, number> | null;
+  visit_days?: number[];
 };
 export type Member = {
   circle_id: string;
@@ -62,6 +63,9 @@ export type Appointment = {
   end_date?: string | null;
   private?: boolean;
   share_with_helpers?: boolean;
+  pack_questions?: string | null;
+  pack_bring?: string | null;
+  pack_parking?: string | null;
 };
 export type Checkin = {
   id: string;

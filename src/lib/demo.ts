@@ -36,6 +36,15 @@ export const isKidsPersona = (p: Persona) => (KIDS_PICKABLE as string[]).include
 export const demoEmail = (p: Persona) => `${p}.demo@kin-demo.example.com`;
 
 type Admin = SupabaseClient;
+/** Inserts for tables added in later migrations: skipped quietly if the migration hasn't been run yet. */
+async function soft(admin: Admin, table: string, rows: object | object[]) {
+  const { error } = await admin.from(table).insert(rows, { defaultToNull: false });
+  if (error) console.warn(`demo: skipped ${table}: ${error.message}`);
+}
+async function softUpdate(admin: Admin, table: string, values: object, id: string) {
+  const { error } = await admin.from(table).update(values).eq("id", id);
+  if (error) console.warn(`demo: skipped ${table} update: ${error.message}`);
+}
 
 /** ISO timestamp for a London wall-clock date and time. */
 function londonISO(date: string, time: string) {
@@ -73,13 +82,13 @@ export async function ensureDemo(admin: Admin, force = false): Promise<{ care: s
   const ids = await ensureUsers(admin);
   const { data: s } = await admin.auth.admin.getUserById(ids.sarah);
   const meta = (s.user?.user_metadata || {}) as { demo_seeded_on?: string; demo_circle?: string; demo_kids_circle?: string; demo_version?: number };
-  if (!force && meta.demo_seeded_on === today() && meta.demo_circle && meta.demo_kids_circle && meta.demo_version === 3) {
+  if (!force && meta.demo_seeded_on === today() && meta.demo_circle && meta.demo_kids_circle && meta.demo_version === 4) {
     const { data: still } = await admin.from("care_circles").select("id").in("id", [meta.demo_circle, meta.demo_kids_circle]);
     if (still?.length === 2) return { care: meta.demo_circle, kids: meta.demo_kids_circle };
   }
   const care = await seed(admin, ids);
   const kids = await seedKids(admin, ids);
-  await admin.auth.admin.updateUserById(ids.sarah, { user_metadata: { ...meta, demo_seeded_on: today(), demo_circle: care, demo_kids_circle: kids, demo_version: 3 } });
+  await admin.auth.admin.updateUserById(ids.sarah, { user_metadata: { ...meta, demo_seeded_on: today(), demo_circle: care, demo_kids_circle: kids, demo_version: 4 } });
   return { care, kids };
 }
 
@@ -245,6 +254,32 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   })));
   await ins("activity", { circle_id: M, actor: U.sarah, verb: 'started the playbook "Claim Attendance Allowance" with 6 tasks', created_at: ts(-6, "19:30") }, "id");
 
+  // ---------------------------------------------------------------- newer features (migration 0006)
+  await softUpdate(admin, "appointments", {
+    pack_questions: "Is the new tablet helping with her breathing?\nDoes she still need the follow-up scan?\nWho do we call if she gets worse before the next appointment?",
+    pack_bring: "Blue folder, medication list, glasses and hearing aid, a snack and a bottle of water.",
+    pack_parking: "Multi-storey car park off Cliftonville Road. Blue badge spaces on level 1. Outpatients is through the main entrance, then left.",
+  }, hosp.id);
+  const [bloods] = await ins<{ id: string }>("appointments", { circle_id: M, title: "Blood test", date: D(-7), time: "09:20", location: "Orchard Lane Surgery", attending: "Margaret and Anthony", needs_transport: true, driver: U.anthony, created_by: U.sarah });
+  await soft(admin, "discussions", [
+    { circle_id: M, subject_type: "appointment", subject_id: hosp.id, author: U.david, body: "Can someone ask about the follow-up scan? Last time they said it might not be needed.", created_at: ts(-1, "20:05") },
+    { circle_id: M, subject_type: "appointment", subject_id: hosp.id, author: U.sarah, body: "Added it to the questions. I'll write up what they say afterwards.", created_at: ts(-1, "20:30") },
+    { circle_id: M, subject_type: "appointment", subject_id: bloods.id, kind: "outcome", author: U.anthony, body: "All done, nurse was lovely. Results in about a week; the surgery will text Mum if anything needs a follow-up.", created_at: ts(-7, "10:15") },
+  ]);
+  await softUpdate(admin, "care_circles", { visit_days: [0, 1, 2, 3, 4, 5, 6] }, M);
+  await soft(admin, "medications", [
+    { circle_id: M, name: "Amlodipine 5mg", dose: "1 tablet", when_taken: "Morning", pharmacy: "Duston Pharmacy", repeat_days: 28, last_ordered: D(-27), next_order: D(1), updated_by: U.sarah },
+    { circle_id: M, name: "Atorvastatin 20mg", dose: "1 tablet", when_taken: "Evening", pharmacy: "Duston Pharmacy", repeat_days: 28, last_ordered: D(-10), next_order: D(18), updated_by: U.sarah },
+    { circle_id: M, name: "Paracetamol 500mg", dose: "2 tablets when needed", when_taken: "Up to four times a day", notes: "Bought over the counter.", updated_by: U.sarah },
+    { circle_id: M, name: "Clenil inhaler", dose: "2 puffs", when_taken: "Morning and evening", pharmacy: "Duston Pharmacy", repeat_days: 56, last_ordered: D(-40), next_order: D(16), updated_by: U.anthony },
+  ]);
+  const moods = ["good", "good", "ok", "good", "good", "good", "ok", "good", "good", "ok", "good", "good", "good", "not_great", "ok", "good", "good", "good", "ok", "good", "not_great", "ok", "good", "not_great", "ok", "good", "ok", "good"];
+  const answerers = [U.sarah, U.anthony, U.margaret, U.sarah, U.david, U.anthony, U.margaret];
+  await soft(admin, "wellbeing_entries", moods.map((mood, i) => ({
+    circle_id: M, user_id: answerers[i % answerers.length], mood, created_at: ts(-(27 - i), "11:30"),
+    note: mood === "not_great" ? ["Bit low today, missing Dad.", "Knee sore, didn't go out.", "Tired after a bad night."][i % 3] : null,
+  })));
+
   // ---------------------------------------------------------------- John (second circle for Sarah and Anthony)
   const [{ id: J }] = await ins("care_circles", { person_name: "John Hale", preferred_name: "Dad", created_by: U.sarah });
   await ins("memberships", [
@@ -318,12 +353,20 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
   const A = mum.id, B = dad.id;
   await ins("schedule_patterns", { circle_id: K, anchor: monday, days: [A, A, B, B, A, A, A, A, A, B, B, B, B, B], label: "2-2-5-5", updated_by: U.leah }, "circle_id");
   const chg = (o: Record<string, unknown>) => ({ circle_id: K, ...o });
-  await ins("schedule_changes", [
+  const changeRows = await ins<{ id: string; status: string }>("schedule_changes", [
     chg({ start_date: addDays(monday, 11), end_date: addDays(monday, 13), household_id: A, reason: "I'm at a work conference in Manchester that weekend, back Sunday night.", in_return: "I'll have them the weekend after instead (Fri to Sun).", status: "requested", requested_by: U.dan, requested_at: ts(-1, "21:10") }),
     chg({ start_date: addDays(monday, 9), end_date: addDays(monday, 9), household_id: A, reason: "Ruby's drama show finishes late. Can they stay at mine that night so I can take her?", status: "accepted", requested_by: U.leah, requested_at: ts(-4, "19:00"), responded_by: U.dan, responded_at: ts(-4, "20:30"), response_note: "Of course. I'll come to the show." }),
     chg({ start_date: D(-10), end_date: D(-10), household_id: A, reason: "Gran's 70th birthday lunch.", status: "accepted", requested_by: U.leah, requested_at: ts(-18, "18:00"), responded_by: U.dan, responded_at: ts(-18, "19:12"), response_note: "No problem." }),
     chg({ start_date: D(-20), end_date: D(-20), household_id: B, reason: "Extra night so I can take Alfie to the match.", status: "declined", requested_by: U.dan, requested_at: ts(-24, "17:30"), responded_by: U.leah, responded_at: ts(-24, "18:05"), response_note: "Alfie has the dentist that morning. Could we do the week after?" }),
+  ], "id, status");
+  const dansSwap = changeRows.find((c) => c.status === "requested")!.id;
+  await soft(admin, "discussions", [
+    { circle_id: K, subject_type: "change", subject_id: dansSwap, author: U.leah, body: "That should be fine. Would you pick them up from school on the Friday after, rather than at mine?", created_at: ts(-1, "21:30") },
+    { circle_id: K, subject_type: "change", subject_id: dansSwap, author: U.dan, body: "Yes, I'll do the school run that Friday. Thanks.", created_at: ts(-1, "21:42") },
   ]);
+  const yr = Number(t.slice(0, 4)), xmas = `${t.slice(5) > "12-26" ? yr + 1 : yr}-12-24`;
+  await soft(admin, "schedule_changes", { circle_id: K, start_date: xmas, end_date: xmas, household_id: A, label: "Christmas Eve", reason: "Christmas Eve at mine, as we agreed last year. Dad's from 2pm Christmas Day.", status: "requested", requested_by: U.leah, requested_at: ts(-2, "20:50") });
+  await soft(admin, "medications", { circle_id: K, name: "Salbutamol inhaler (Alfie)", dose: "2 puffs when needed", when_taken: "Before football and if wheezy", notes: "One at each home and one in his school bag.", pharmacy: "Kingsthorpe Pharmacy", repeat_days: 90, last_ordered: D(-60), next_order: D(30), updated_by: U.leah });
 
   const apptRows = await ins<{ id: string; title: string }>("appointments", [
     { circle_id: K, title: "Football tournament", date: D(2), time: "09:00", location: "Kingsthorpe Rec", attending: "Alfie", needs_transport: true, child_ids: [alfie.id], notes: "Bring boots and shin pads. Finishes around 1pm.", created_by: U.dan },

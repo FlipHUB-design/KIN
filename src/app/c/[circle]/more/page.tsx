@@ -11,6 +11,9 @@ export default async function More({ params }: { params: Promise<{ circle: strin
   const items: [string, string, string, boolean][] = kids ? [
     ["../alerts", "Alerts", "Requests and news for you, and how you get them by email or text", true],
     ["../schedule", "Schedule", "Where the children sleep each night, and swap requests", true],
+    ["../schedule/holidays", "Holidays and special days", "Christmas, Easter, birthdays and school holidays, planned early", parent],
+    ["../children/view", "Children's picture view", "A simple week in pictures for a home tablet", parent],
+    ["../medications", "Medicines", "What each child takes, and repeat prescriptions", isInner(role, circle.kind)],
     ["../handover", "Handover", "Packing checklist and handover notes", true],
     ["../children", "Children", "School, allergies, sizes, passports and where things are", true],
     ["../costs", "Costs", "Shared costs, approvals and child maintenance", parent],
@@ -26,6 +29,9 @@ export default async function More({ params }: { params: Promise<{ circle: strin
     ["audit", "Access log", "Access changes and document views", role === "admin"],
   ] : [
     ["../alerts", "Alerts", "Jobs and news for you, and how you get them by email or text", true],
+    ["../rota", "Care rota", "Who's visiting when, and the days nobody has covered yet", true],
+    ["../medications", "Medications", "The medication list and repeat prescription reminders", isInner(role)],
+    ["../wellbeing", `How ${circle.preferred_name}'s been`, "The daily check-in answers over recent weeks", isInner(role) && role !== "supported"],
     ["../letters", "Letters", "Photograph a letter and KIN suggests the tasks", parent],
     ["../playbooks", "Playbooks", "Step-by-step plans: Attendance Allowance, hospital discharge and more", true],
     ["../costs", "Shared costs", "Who paid for what, and who owes whom", parent],
@@ -46,7 +52,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
         ))}
         <Link href={`/ask?c=${id}`} className="item"><span className="main"><span className="t">Ask KIN</span><span className="s">Help with how to do something</span></span><span className="muted">›</span></Link>
         <Link href="/circles" className="item"><span className="main"><span className="t">{kids ? "Switch family" : "People I help"}</span><span className="s">Switch to another family or Care Circle, or start a new one</span></span><span className="muted">›</span></Link>
-        <Link href="/account" className="item"><span className="main"><span className="t">Your account</span><span className="s">Name, phone, password, your data</span></span><span className="muted">›</span></Link>
+        <Link href="/account" className="item"><span className="main"><span className="t">Your account</span><span className="s">Name, phone, password, calendar sync, your data</span></span><span className="muted">›</span></Link>
       </div>
       <p className="disclaimer">{kids
         ? "KIN helps families organise. It isn't legal advice and doesn't replace a court order, mediation or professional support."

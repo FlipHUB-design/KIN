@@ -4,6 +4,7 @@ import { balances, canEdit, dayLabel, expenseCategoriesFor, money, settleUp, sha
 import { Header, Hidden, Notice } from "@/components/ui";
 import { ChildPicker } from "../tasks/TaskForm";
 import { addExpense, addMaintenance, addSettlement, deleteCost, approveExpense, queryExpense } from "../actions";
+import ToneCheck from "@/components/ToneCheck";
 
 export default async function Costs({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
@@ -59,8 +60,8 @@ export default async function Costs({ params, searchParams }: { params: Promise<
               <span className="small">Your share: <b>{money(sharesOf(e)[user.id] || 0)}</b>{e.shares ? ` (${Object.entries(e.shares).map(([k, v]) => `${nameOf(k)} ${v}`).join(" / ")})` : ""}</span>
               <form className="stack">
                 <Hidden circle={id} id={e.id} />
-                <label className="fl"><span className="sr-only">Note</span><input name="note" placeholder="Add a note (optional), e.g. please add the receipt" maxLength={500} /></label>
-                <div className="row"><button formAction={approveExpense} className="btn primary sm">Approve</button><button formAction={queryExpense} className="btn sm">Query it</button></div>
+                <ToneCheck circleId={id} name="note" input maxLength={500} placeholder="Add a note (optional), e.g. please add the receipt" />
+                <div className="row"><button formAction={approveExpense} className="btn primary sm">Approve</button><button formAction={queryExpense} className="btn sm">Query it</button><Link href={`/c/${id}/thread/expense/${e.id}`} className="btn sm">Discuss</Link></div>
               </form>
             </div>
           ))}
@@ -85,9 +86,9 @@ export default async function Costs({ params, searchParams }: { params: Promise<
         <section className="stack"><h2>Not counted yet</h2>
           <div className="card list">
             {[...waitingOthers, ...disputed].map((e) => (
-              <div key={e.id} className="item"><span className="main"><span className="t">{e.description} {chips(e.child_ids)}</span>
+              <Link key={e.id} href={`/c/${id}/thread/expense/${e.id}`} className="item"><span className="main"><span className="t">{e.description} {chips(e.child_ids)}</span>
                 <span className="s"><span className={`tag ${e.status === "disputed" ? "over" : "unas"}`}>{e.status === "disputed" ? "Queried" : "Waiting for approval"}</span> {nameOf(e.paid_by)} paid {dayLabel(e.spent_on)}{e.response_note ? ` · ${nameOf(e.responded_by || null)}: “${e.response_note}”` : ""}</span></span>
-                <b style={{ fontVariantNumeric: "tabular-nums" }}>{money(e.amount_pence)}</b></div>
+                <b style={{ fontVariantNumeric: "tabular-nums" }}>{money(e.amount_pence)}</b></Link>
             ))}
           </div>
         </section>

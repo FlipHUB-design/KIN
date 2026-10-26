@@ -4,6 +4,7 @@ import { loadFamily } from "@/lib/family";
 import { addDays, canEdit, dayLabel, hm, longDate, today, when, type Appointment, type ScheduleChange } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
 import { cancelChange, requestChange, agreeChange, declineChange } from "../actions";
+import ToneCheck from "@/components/ToneCheck";
 
 const dow = (s: string) => (new Date(s + "T12:00:00Z").getUTCDay() + 6) % 7;
 const range = (c: ScheduleChange) => (c.start_date === c.end_date ? longDate(c.start_date) : `${dayLabel(c.start_date)} to ${dayLabel(c.end_date)}`);
@@ -81,8 +82,8 @@ export default async function Schedule({ params, searchParams }: { params: Promi
               <p className="note">Asked {when(c.requested_at).toLowerCase()}</p>
               <form className="stack">
                 <Hidden circle={id} id={c.id} />
-                <label className="fl"><span className="sr-only">Note</span><input name="note" placeholder="Add a note (optional)" maxLength={500} /></label>
-                <div className="row"><button formAction={agreeChange} className="btn primary sm">Agree</button><button formAction={declineChange} className="btn sm">Say no</button></div>
+                <ToneCheck circleId={id} name="note" input maxLength={500} placeholder="Add a note (optional)" />
+                <div className="row"><button formAction={agreeChange} className="btn primary sm">Agree</button><button formAction={declineChange} className="btn sm">Say no</button><Link href={`/c/${id}/thread/change/${c.id}`} className="btn sm">Discuss</Link></div>
               </form>
             </div>
           ))}
@@ -99,7 +100,7 @@ export default async function Schedule({ params, searchParams }: { params: Promi
               <label className="fl">To night of<input type="date" name="end_date" defaultValue={sel} required /></label>
             </div>
             <label className="fl">The children would be at<select name="household_id" defaultValue={other?.id}>{fam.households.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}</select></label>
-            <label className="fl">Reason<input name="reason" maxLength={500} placeholder="e.g. Work trip, back Sunday afternoon" /></label>
+            <ToneCheck circleId={id} name="reason" label="Reason" input maxLength={500} placeholder="e.g. Work trip, back Sunday afternoon" />
             <label className="fl">In return (optional)<input name="in_return" maxLength={300} placeholder="e.g. I'll have them the following weekend instead" /></label>
             <p className="note">Keep it short and about the children. Nothing changes until another parent agrees, and both of you get a record.</p>
             <button className="btn primary">Send request</button>
@@ -111,7 +112,7 @@ export default async function Schedule({ params, searchParams }: { params: Promi
         <section className="stack"><h2>Your requests</h2>
           <div className="card list">{mine.map((c) => (
             <div key={c.id} className="item"><span className="main"><span className="t">{range(c)} at {fam.home(c.household_id)?.name}</span><span className="s">Waiting for an answer · asked {when(c.requested_at).toLowerCase()}</span></span>
-              <form action={cancelChange}><Hidden circle={id} id={c.id} /><button className="btn sm">Withdraw</button></form></div>
+              <div className="row"><Link href={`/c/${id}/thread/change/${c.id}`} className="btn sm">Discuss</Link><form action={cancelChange}><Hidden circle={id} id={c.id} /><button className="btn sm">Withdraw</button></form></div></div>
           ))}</div>
         </section>
       )}
@@ -126,6 +127,7 @@ export default async function Schedule({ params, searchParams }: { params: Promi
           <Link href={`${base}/records`} className="link">Full record</Link>
         </section>
       )}
+      {parent && <Link href={`${base}/schedule/holidays`} className="btn">Plan holidays and special days</Link>}
       {parent && <Link href={`${base}/schedule/settings`} className="btn">Homes, usual pattern and packing list</Link>}
     </main>
   );

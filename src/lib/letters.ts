@@ -77,6 +77,32 @@ export async function readLetter(bytes: ArrayBuffer, mediaType: string, kind: "c
   return clean(use.input);
 }
 
+/** Reads a pasted or forwarded email (plain text) the same way as a letter. */
+export async function readLetterText(text: string, kind: "care" | "children" = "care"): Promise<LetterResult> {
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) throw new Error("Letter reading isn't switched on.");
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1500,
+      system: SYSTEM.replace("{TODAY}", today()).replace("{WHO}", kind === "children"
+        ? "the admin of bringing up their children, often across two homes (school letters, trips, clubs, parties, appointments)"
+        : "the practical admin of supporting an older relative"),
+      tools: [TOOL],
+      tool_choice: { type: "tool", name: TOOL.name },
+      messages: [{ role: "user", content: `This is an email or letter, pasted as text:\n<letter>\n${text.slice(0, 20000)}\n</letter>\nRead it and record it.` }],
+    }),
+    signal: AbortSignal.timeout(45000),
+  });
+  if (!res.ok) throw new Error(`Letter reading failed (${res.status})`);
+  const json = await res.json();
+  const use = (json.content || []).find((c: { type: string }) => c.type === "tool_use");
+  if (!use) throw new Error("Couldn't read that email.");
+  return clean(use.input);
+}
+
 const isDate = (s: unknown) => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 function clean(r: Partial<LetterResult>): LetterResult {
   return {

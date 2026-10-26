@@ -19,7 +19,7 @@ KIN is not a medical app. It doesn't diagnose, monitor health or contact emergen
 - Simplified large-text screen for the supported person, with "How are you today?" and "I need help"
 - Restricted screen for helpers: only their visits, the address, how to get in and one contact
 
-Permissions are enforced by the database (Supabase row-level security), not just hidden on screen. `npm run test:db` runs 51 checks, for example that a cleaner can't see appointments, a contributor can't see family-only tasks, and an outsider can't see anything by changing a link.
+Permissions are enforced by the database (Supabase row-level security), not just hidden on screen. `npm run test:db` runs 81 checks, for example that a cleaner can't see appointments, a contributor can't see family-only tasks, and an outsider can't see anything by changing a link.
 
 ### Letter reading, playbooks and shared costs
 
@@ -114,6 +114,21 @@ KIN alerts people when something needs them: a schedule change request, a cost t
 4. Redeploy so the new settings take effect.
 
 Demo accounts never send real emails or texts.
+
+### 7. Family support features (migration 0006)
+
+Run `supabase/migrations/0006_family_support.sql` in the Supabase SQL editor. It adds:
+
+- **Calendar sync:** each person makes a private link under **Your account → Add KIN to my calendar** (`/api/ical/<token>.ics`) for Google, Apple or Outlook. It shows exactly what their role can see. Needs `SUPABASE_SERVICE_ROLE_KEY`.
+- **Discussions** on each appointment, swap request, agreement and cost, and **What was said** notes after appointments.
+- **Appointment packs:** questions to ask, what to bring, parking.
+- **Medications** with repeat prescription reminders (in the morning email). A list only; no medical advice.
+- **Care rota** with uncovered days highlighted, and a **wellbeing trend** from the daily check-in.
+- **Holidays and special days** planner, a **children's picture view** for a home tablet (`/screen/<token>`), and a **PDF summary for a mediator or solicitor** on the Records page.
+- **Check my tone:** a calm-message helper on notes and replies (uses `ANTHROPIC_API_KEY`).
+- **School email forwarding** (optional): sign up for an inbound email service such as Postmark, point a domain or subdomain's MX records at it (for example `in.yourdomain.co.uk`), and set its inbound webhook to `https://<your-site>/api/inbound/email?secret=<KIN_INBOUND_SECRET>`. Then add `KIN_INBOUND_DOMAIN` (for example `in.yourdomain.co.uk`) and `KIN_INBOUND_SECRET` (any long random string) in Vercel. Each family gets a private address like `kin-1a2b3c…@in.yourdomain.co.uk`. Without these, families can still paste an email in.
+
+Until 0006 is run, the rest of KIN carries on working and these screens show nothing.
 
 ---
 

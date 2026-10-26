@@ -8,6 +8,8 @@ import { Disclaimer, Header, Hidden, Notice, Rows, taskRow, type Row } from "@/c
 import { askFamily, checkOut, dismissMissed, needHelp, wellbeing } from "./actions";
 import { KidsFamilyHome, KidsHelperHome, YoungPersonHome } from "./KidsHome";
 import Wordmark from "@/components/Wordmark";
+import { gaps, rota } from "@/lib/support";
+import { trend, type Entry } from "@/lib/wellbeing";
 
 export default async function Home({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
@@ -63,11 +65,25 @@ function dayRows(date: string, tasks: Task[], appts: Appointment[], ctx: Ctx, ba
 }
 
 async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> }) {
-  const { circle, members, nameOf, role, user } = ctx;
+  const { circle, members, nameOf, role, user, supabase } = ctx;
   const base = `/c/${circle.id}`;
   const d = await load(ctx);
   const t = today();
   const s = circleStatus({ circle, tasks: d.tasks, appts: d.appts, checkins: d.checkins, dismissedToday: circle.checkin_dismissed_on === t });
+  // Family support: rota gaps, repeat prescriptions and wellbeing
+  const inner = role === "admin" || role === "family";
+  const [{ data: meds }, { data: moods }] = inner ? await Promise.all([
+    supabase.from("medications").select("name, next_order").eq("circle_id", circle.id).eq("active", true).not("next_order", "is", null).lte("next_order", addDays(t, 3)),
+    supabase.from("wellbeing_entries").select("mood, note, created_at, user_id").eq("circle_id", circle.id).gte("created_at", addDays(t, -28)),
+  ]) : [{ data: null }, { data: null }];
+  const rotaGaps = (circle.visit_days || []).length ? gaps(rota({ visitDays: circle.visit_days || [], tasks: d.tasks, checkins: d.checkins, days: 7 })) : [];
+  const mood = trend((moods || []) as Entry[]);
+  const extra: string[] = [
+    ...rotaGaps.slice(0, 2).map((g) => `Nobody's visiting ${["Today", "Tomorrow"].includes(dayLabel(g.date)) ? dayLabel(g.date).toLowerCase() : "on " + dayLabel(g.date)}`),
+    ...(meds || []).map((m) => `Repeat prescription for ${m.name} ${m.next_order! < t ? "is overdue" : "is due " + dayLabel(m.next_order).toLowerCase()}`),
+    ...(mood.rising ? [`${circle.preferred_name} has said "Not great" ${mood.recent} times in two weeks`] : []),
+  ];
+  if (extra.length) { s.reasons.push(...extra); if (s.level === 0) Object.assign(s, { level: 1, label: "Attention needed", cls: "attn" }); }
   const myOpen = d.checkins.find((c) => c.user_id === user.id && !c.checked_out_at && dateOf(c.checked_in_at) === t);
   const todays = d.checkins.filter((c) => dateOf(c.checked_in_at) === t);
   const missed = missedCheckin(circle, d.checkins) && circle.checkin_dismissed_on !== t;
@@ -95,7 +111,7 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
       <Notice sp={sp} />
       <section className={`status ${s.cls}`} aria-live="polite">
         <div className="sline"><span className="dot" />{s.label}</div>
-        {s.reasons.length ? <ul>{s.reasons.slice(0, 4).map((r) => <li key={r}>{r}</li>)}</ul>
+        {s.reasons.length ? <ul>{s.reasons.slice(0, 6).map((r) => <li key={r}>{r}</li>)}</ul>
           : <p style={{ color: "var(--ink)" }}>Everything coming up has someone looking after it.</p>}
         <p className="small muted">Family coordination status only. It isn&apos;t a health or safety assessment.</p>
       </section>
@@ -129,6 +145,9 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
 
       {canEdit(role) && (
         <nav className="chips" aria-label="Quick actions">
+          <Link href={`${base}/rota`} className="chip">Care rota{rotaGaps.length ? ` · ${rotaGaps.length} to cover` : ""}</Link>
+          <Link href={`${base}/medications`} className="chip">Medications</Link>
+          <Link href={`${base}/wellbeing`} className="chip">How {circle.preferred_name}&apos;s been</Link>
           <Link href={`${base}/letters`} className="chip">Read a letter</Link>
           <Link href={`${base}/playbooks`} className="chip">Playbooks</Link>
           <Link href={`${base}/costs`} className="chip">Shared costs{d.owed ? ` · ${d.owed}` : ""}</Link>

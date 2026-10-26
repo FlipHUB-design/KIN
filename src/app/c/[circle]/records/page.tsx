@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
-import { canEdit, when } from "@/lib/kin";
+import { addDays, canEdit, today, when } from "@/lib/kin";
 import { buildRecords, RECORD_TYPES } from "@/lib/records";
 import { Header } from "@/components/ui";
 
 export default async function Records({ params, searchParams }: { params: Promise<{ circle: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id } = await params;
   const sp = await searchParams;
-  const { supabase, role, nameOf, me } = await getCircle(id);
+  const { supabase, role, nameOf, me, circle } = await getCircle(id);
   const base = `/c/${id}`;
   if (!canEdit(role)) return <main className="page"><Link href={base} className="link">‹ Home</Link><p>Records are for parents.</p></main>;
   const all = await buildRecords(supabase, id, nameOf);
@@ -21,6 +21,17 @@ export default async function Records({ params, searchParams }: { params: Promis
         {RECORD_TYPES.map((t) => <Link key={t} href={`${base}/records?type=${t}`} className="chip" aria-current={type === t}>{t}</Link>)}
       </nav>
       <a href={`${base}/records/export${type ? `?type=${type}` : ""}`} className="btn">Download as a spreadsheet (CSV)</a>
+      {circle.kind === "children" && (
+        <form action={`${base}/records/pdf`} method="get" className="card">
+          <h2 style={{ marginTop: 0 }}>Summary for a mediator or solicitor</h2>
+          <p className="muted">A clean PDF of agreements, swaps, costs and payments over the dates you choose, with a full dated log.</p>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <label className="fl" style={{ flex: 1, minWidth: 140 }}>From<input type="date" name="from" defaultValue={addDays(today(), -180)} required /></label>
+            <label className="fl" style={{ flex: 1, minWidth: 140 }}>To<input type="date" name="to" defaultValue={today()} required /></label>
+          </div>
+          <button className="btn primary">Download the PDF summary</button>
+        </form>
+      )}
       <div className="card list">
         {list.map((r, i) => (
           <div key={i} className="item" style={{ alignItems: "flex-start" }}>
