@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
 import {
-  addDays, balances, canEdit, circleStatus, dateOf, dayLabel, hm, isOverdue, longDate, missedCheckin, money, timeOf, today, when,
+  addDays, balances, canEdit, circleStatus, dateOf, dayLabel, dayWord, hm, isOverdue, longDate, missedCheckin, money, timeOf, today, when,
   type Activity, type Appointment, type Checkin, type Expense, type Settlement, type Task,
 } from "@/lib/kin";
 import { Disclaimer, Header, Hidden, Notice, Rows, taskRow, type Row } from "@/components/ui";
@@ -79,8 +79,8 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
   const rotaGaps = (circle.visit_days || []).length ? gaps(rota({ visitDays: circle.visit_days || [], tasks: d.tasks, checkins: d.checkins, days: 7 })) : [];
   const mood = trend((moods || []) as Entry[]);
   const extra: string[] = [
-    ...rotaGaps.slice(0, 2).map((g) => `Nobody's visiting ${["Today", "Tomorrow"].includes(dayLabel(g.date)) ? dayLabel(g.date).toLowerCase() : "on " + dayLabel(g.date)}`),
-    ...(meds || []).map((m) => `Repeat prescription for ${m.name} ${m.next_order! < t ? "is overdue" : "is due " + dayLabel(m.next_order).toLowerCase()}`),
+    ...rotaGaps.slice(0, 2).map((g) => `Nobody's visiting ${["Today", "Tomorrow"].includes(dayLabel(g.date)) ? dayWord(g.date) : "on " + dayLabel(g.date)}`),
+    ...(meds || []).map((m) => `Repeat prescription for ${m.name} ${m.next_order! < t ? "is overdue" : "is due " + dayWord(m.next_order)}`),
     ...(mood.rising ? [`${circle.preferred_name} has said "Not great" ${mood.recent} times in two weeks`] : []),
   ];
   if (extra.length) { s.reasons.push(...extra); if (s.level === 0) Object.assign(s, { level: 1, label: "Attention needed", cls: "attn" }); }
@@ -111,7 +111,7 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
       <Notice sp={sp} />
       <section className={`status ${s.cls}`} aria-live="polite">
         <div className="sline"><span className="dot" />{s.label}</div>
-        {s.reasons.length ? <ul>{s.reasons.slice(0, 6).map((r) => <li key={r}>{r}</li>)}</ul>
+        {s.reasons.length ? <ul>{s.reasons.slice(0, 7).map((r) => <li key={r}>{r}</li>)}{s.reasons.length > 7 && <li className="muted">and {s.reasons.length - 7} more</li>}</ul>
           : <p style={{ color: "var(--ink)" }}>Everything coming up has someone looking after it.</p>}
         <p className="small muted">Family coordination status only. It isn&apos;t a health or safety assessment.</p>
       </section>

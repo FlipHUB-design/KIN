@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
 import { loadFamily } from "@/lib/family";
-import { addDays, ageOn, canEdit, COLOURS, dayLabel, today, type Child, type ChildItem } from "@/lib/kin";
+import { addDays, ageOn, canEdit, COLOURS, dayWord, today, type Child, type ChildItem } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
 import { deleteItem, saveChild, saveItem } from "../actions";
 
@@ -103,7 +103,7 @@ export default async function Children({ params, searchParams }: { params: Promi
             {items.map((i) => (
               <div key={i.id} className="item" style={{ flexWrap: "wrap" }}>
                 <span className="main"><span className="t">{i.name} {i.child_id && <span className={`kid col-${kids.find((k) => k.id === i.child_id)?.colour}`}>{kids.find((k) => k.id === i.child_id)?.first_name}</span>}</span>
-                  <span className="s">{fam.home(i.household_id)?.name || "Somewhere else"}{i.location_note ? ` · ${i.location_note}` : ""} · updated {dayLabel(i.updated_at.slice(0, 10)).toLowerCase()} by {nameOf(i.updated_by)}</span></span>
+                  <span className="s">{fam.home(i.household_id)?.name || "Somewhere else"}{i.location_note ? ` · ${i.location_note}` : ""} · updated {dayWord(i.updated_at.slice(0, 10))} by {nameOf(i.updated_by)}</span></span>
                 {parent && (
                   <form action={saveItem} className="row" style={{ gap: 4 }}>
                     <Hidden circle={id} id={i.id} /><input type="hidden" name="name" value={i.name} /><input type="hidden" name="child_id" value={i.child_id || ""} /><input type="hidden" name="location_note" value={i.location_note || ""} />

@@ -23,7 +23,7 @@ export default async function Thread({ supabase, circleId, type, subjectId, name
         {msgs.map((m) => (
           <div key={m.id} className="msg">
             <span className="avatar" aria-hidden="true">{nameOf(m.author)[0]}</span>
-            <div className={`bub ${m.kind}`}>
+            <div className={`bub${m.kind === "outcome" ? " outcome" : ""}`}>
               <span className="small"><b>{nameOf(m.author)}</b> · {when(m.created_at)}{m.kind === "outcome" ? " · Notes from the appointment" : ""}</span>
               <p>{m.body}</p>
             </div>

@@ -135,6 +135,8 @@ export const addDays = (s: string, n: number) => {
   d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 };
+/** dayLabel for use mid-sentence: "tomorrow", but "Tue 29 Sept" keeps its capitals. */
+export const dayWord = (s: string | null) => { const l = dayLabel(s); return ["Today", "Tomorrow", "Yesterday"].includes(l) ? l.toLowerCase() : l; };
 export const dayLabel = (s: string | null) => {
   if (!s) return "No date";
   const t = today();
@@ -167,7 +169,7 @@ export function circleStatus(opts: { tasks: Task[]; appts: Appointment[]; checki
   for (const a of opts.appts) {
     if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) {
       level = 2;
-      reasons.push(`No driver yet for ${a.title} ${dayLabel(a.date).toLowerCase()}${a.time ? ` at ${hm(a.time)}` : ""}`);
+      reasons.push(`No driver yet for ${a.title} ${dayWord(a.date)}${a.time ? ` at ${hm(a.time)}` : ""}`);
     }
   }
   if (missedCheckin(opts.circle, opts.checkins) && !opts.dismissedToday) {

@@ -24,7 +24,7 @@ export default async function Wellbeing({ params }: { params: Promise<{ circle: 
           <p>{tr.recent ? `${tr.recent} “Not great” ${tr.recent === 1 ? "day" : "days"} in the last two weeks.` : "No “Not great” days in the last two weeks."}</p></section>
       )}
       <section className="stack">
-        <h2>Last 8 weeks</h2>
+        <h2>Last {Math.ceil(tr.cells.length / 7)} weeks</h2>
         <div className="moodgrid" aria-hidden="true">{["M", "T", "W", "T", "F", "S", "S"].map((d, i) => <span key={i} className="small muted" style={{ textAlign: "center" }}>{d}</span>)}</div>
         <div className="moodgrid" role="list" aria-label="One square per day">
           {tr.cells.map((c) => (

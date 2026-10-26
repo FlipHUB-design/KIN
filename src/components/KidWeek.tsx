@@ -12,7 +12,7 @@ const House = ({ colour }: { colour: string }) => (
 );
 
 /** A big, friendly week view for younger children: where they sleep and who's collecting them. */
-export default function KidWeek({ name, days }: { name: string; days: KidDay[] }) {
+export default function KidWeek({ days }: { name?: string; days: KidDay[] }) {
   const t = today();
   return (
     <div className="kidweek">
@@ -21,7 +21,7 @@ export default function KidWeek({ name, days }: { name: string; days: KidDay[] }
           <div className="dname">{d.date === t ? "Today" : WEEKDAYS[weekdayOf(d.date)]}<div className="small muted" style={{ fontWeight: 400 }}>{Number(d.date.slice(8))} {new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" })}</div></div>
           {d.colour ? <House colour={d.colour} /> : <span />}
           <div>
-            <div className="home" style={d.colour ? { color: `var(--${d.colour})` } : undefined}>{d.home ? `${name} sleeps at ${d.home.replace(/'s$/, "'s house")}` : "Ask a grown-up"}</div>
+            <div className="home" style={d.colour ? { color: `var(--${d.colour})` } : undefined}>{d.home ? `Sleeping at ${d.home.replace(/'s$/, "'s house")}` : "Ask a grown-up"}</div>
             {d.lines.map((l, i) => <div key={i} className="pick">{l}</div>)}
           </div>
         </div>

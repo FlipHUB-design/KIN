@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { getCircle } from "@/lib/data";
 import { loadFamily, type Family } from "@/lib/family";
 import {
-  addDays, ageOn, balances, canEdit, childNames, dayLabel, hm, isLift, isOverdue, kidsLabel, kindOf, longDate, money, nextHandover, sharesOf, timeOf, today, when,
+  addDays, ageOn, balances, canEdit, childNames, dayLabel, dayWord, hm, isLift, isOverdue, kidsLabel, kindOf, longDate, money, nextHandover, sharesOf, timeOf, today, when,
   type Activity, type Agreement, type Appointment, type Child, type ChildItem, type Expense, type ScheduleChange, type Settlement, type Task,
 } from "@/lib/kin";
 import { Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
@@ -111,7 +111,7 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
   // Status: coordination only
   const reasons: string[] = [];
   let level = 0;
-  for (const a of appts) if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) { level = 2; reasons.push(`No one is taking ${childNames(a.child_ids, kids) || "them"} to ${a.title} ${["Today", "Tomorrow"].includes(dayLabel(a.date)) ? dayLabel(a.date).toLowerCase() : `on ${dayLabel(a.date)}`}`); }
+  for (const a of appts) if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) { level = 2; reasons.push(`No one is taking ${childNames(a.child_ids, kids) || "them"} to ${a.title} ${["Today", "Tomorrow"].includes(dayLabel(a.date)) ? dayWord(a.date) : `on ${dayLabel(a.date)}`}`); }
   const waiting = forMe.changes.length + forMe.expenses.length + forMe.agreements.length;
   if (waiting) { level = Math.max(level, 1); reasons.push(`${waiting} thing${waiting === 1 ? "" : "s"} waiting for your answer`); }
   for (const x of tasks) {
@@ -334,13 +334,13 @@ export async function YoungPersonHome({ ctx, sp }: { ctx: Ctx; sp: Record<string
       {tonight ? (
         <section className={`yp-tonight col-${tonight.colour}`}>
           <span className="label">Tonight you&apos;re at</span><b>{tonight.name}</b>
-          {next && nextHome && <span>Then {nextHome.name} from <strong>{["Today", "Tomorrow"].includes(dayLabel(next.date)) ? dayLabel(next.date).toLowerCase() : dayLabel(next.date)}</strong>{circle.handover_note ? ` (${circle.handover_note.toLowerCase()})` : ""}</span>}
+          {next && nextHome && <span>Then {nextHome.name} from <strong>{["Today", "Tomorrow"].includes(dayLabel(next.date)) ? dayWord(next.date) : dayLabel(next.date)}</strong>{circle.handover_note ? ` (${circle.handover_note.toLowerCase()})` : ""}</span>}
         </section>
       ) : null}
       {fam.twoHomes && <Strip fam={fam} days={14} />}
       {next && nextHome && (circle.packing_list || []).length > 0 && (
         <section className="card pad">
-          <h2>Pack for {nextHome.name}, {dayLabel(next.date).toLowerCase()}</h2>
+          <h2>Pack for {nextHome.name}, {dayWord(next.date)}</h2>
           <ul style={{ margin: 0, paddingLeft: 20 }}>{(circle.packing_list || []).map((p) => <li key={p}>{p}</li>)}</ul>
         </section>
       )}

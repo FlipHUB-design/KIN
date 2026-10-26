@@ -11,6 +11,8 @@ export function trend(entries: Entry[], weeks = 8) {
   const start = addDays(t, -(weeks * 7 - 1) - weekdayOf(addDays(t, -(weeks * 7 - 1))));
   const cells: { date: string; mood: MoodKey | null; future: boolean }[] = [];
   for (let d = start; cells.length < weeks * 7 + 7 && (d <= t || weekdayOf(d) !== 0); d = addDays(d, 1)) cells.push({ date: d, mood: byDay.get(d)?.mood || null, future: d > t });
+  // Don't show empty weeks before the first answer (keep at least two weeks)
+  while (cells.length > 14 && cells.slice(0, 7).every((c) => !c.mood)) cells.splice(0, 7);
   const count = (from: string, to: string, m: MoodKey) => [...byDay.entries()].filter(([d, e]) => d >= from && d <= to && e.mood === m).length;
   const recent = count(addDays(t, -13), t, "not_great"), before = count(addDays(t, -27), addDays(t, -14), "not_great");
   const answered = [...byDay.keys()].filter((d) => d >= addDays(t, -13)).length;

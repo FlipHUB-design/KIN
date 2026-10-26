@@ -96,6 +96,8 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   const t = today();
   const D = (n: number) => addDays(t, n);
   const ts = (n: number, time: string) => londonISO(D(n), time);
+  const dow = (new Date(t + "T12:00:00Z").getUTCDay() + 6) % 7; // Monday = 0
+  const nextDay = (wd: number) => addDays(t, ((wd - dow + 7) % 7) || 7); // the coming Mon..Sun, not today
 
   // Remove every circle a demo user created, with its files
   const { data: old } = await admin.from("care_circles").select("id").in("created_by", Object.values(U));
@@ -151,12 +153,13 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   const tasks = await ins<{ id: string; title: string }>("tasks", [
     task({ title: "Drive Margaret to Outpatient appointment", category: "Transport", due_date: D(1), due_time: "13:45", priority: "high", appointment_id: hosp.id, description: "Outpatient appointment, 14:30, Northampton General Hospital" }),
     task({ title: "Weekly shopping", category: "Shopping", assignee: U.anthony, due_date: D(3), due_time: "10:00", recurrence: "weekly" }),
-    task({ title: "Sunday phone call", category: "Visit", assignee: U.david, due_date: D(4), due_time: "18:00", recurrence: "weekly" }),
-    task({ title: "Tuesday visit", category: "Visit", assignee: U.sarah, due_date: D(6), due_time: "11:00", recurrence: "weekly" }),
+    task({ title: "Sunday phone call", category: "Visit", assignee: U.david, due_date: nextDay(6), due_time: "18:00", recurrence: "weekly" }),
+    task({ title: "Tuesday visit", category: "Visit", assignee: U.sarah, due_date: nextDay(1), due_time: "11:00", recurrence: "weekly" }),
     task({ title: "Collect repeat prescription", category: "Administration", due_date: D(0), due_time: "16:00", priority: "high", private: true, description: "Ready at Duston Pharmacy from today." }),
     task({ title: "Book boiler service", category: "Maintenance", due_date: D(-5), recurrence: "annually", description: "Last serviced a year ago. Engineer details in Home." }),
     task({ title: "Reply to council tax letter", category: "Administration", assignee: U.sarah, due_date: D(10), private: true, description: "Single person discount review. Reply by the date on the letter." }),
     task({ title: "Cleaning visit", category: "Household", assignee: U.helen, due_date: D(2), due_time: "10:00", recurrence: "weekly", description: "Kitchen, bathroom and change the bed." }),
+    task({ title: "Thursday coffee", category: "Visit", assignee: U.mary, due_date: nextDay(3), due_time: "10:30", recurrence: "weekly", description: "Pops round from next door." }),
     task({ title: "Put the bins out", category: "Household", assignee: U.mary, due_date: D(5), due_time: "19:00", recurrence: "weekly" }),
     task({ title: "Evening visit", category: "Visit", assignee: U.anthony, due_date: D(0), due_time: "17:30", description: "Dropping round after work." }),
     task({ title: "Call Gran after school", category: "Visit", assignee: U.lucy, due_date: D(1), due_time: "16:30" }),
@@ -291,7 +294,7 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   await ins("emergency_info", { circle_id: J }, "circle_id");
   await ins("tasks", [
     { circle_id: J, title: "Collect new glasses", category: "Shopping", due_date: D(2), status: "open", recurrence: "none", created_by: U.sarah, description: "Ready at the optician on Watling Street." },
-    { circle_id: J, title: "Sunday visit", category: "Visit", assignee: U.anthony, due_date: D(4), due_time: "14:00", recurrence: "weekly", status: "accepted", created_by: U.anthony },
+    { circle_id: J, title: "Sunday visit", category: "Visit", assignee: U.anthony, due_date: nextDay(6), due_time: "14:00", recurrence: "weekly", status: "accepted", created_by: U.anthony },
   ]);
   await ins("activity", { circle_id: J, actor: U.anthony, verb: "checked in", created_at: ts(-3, "14:05") }, "id");
   await ins("checkins", { circle_id: J, user_id: U.anthony, checked_in_at: ts(-3, "14:05"), checked_out_at: ts(-3, "16:00"), mood: "Good", note: "Watched the rugby together." });
@@ -313,6 +316,7 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
     return data as unknown as T[];
   };
   const split = { [U.leah]: 50, [U.dan]: 50 };
+  const xy = Number(t.slice(0, 4)) + (t.slice(5) > "12-18" ? 1 : 0); // the coming Christmas
 
   const [{ id: K }] = await ins("care_circles", {
     person_name: "The Carter family", preferred_name: "the children", kind: "children", created_by: U.leah,
@@ -364,7 +368,7 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
     { circle_id: K, subject_type: "change", subject_id: dansSwap, author: U.leah, body: "That should be fine. Would you pick them up from school on the Friday after, rather than at mine?", created_at: ts(-1, "21:30") },
     { circle_id: K, subject_type: "change", subject_id: dansSwap, author: U.dan, body: "Yes, I'll do the school run that Friday. Thanks.", created_at: ts(-1, "21:42") },
   ]);
-  const yr = Number(t.slice(0, 4)), xmas = `${t.slice(5) > "12-26" ? yr + 1 : yr}-12-24`;
+  const xmas = `${xy}-12-24`;
   await soft(admin, "schedule_changes", { circle_id: K, start_date: xmas, end_date: xmas, household_id: A, label: "Christmas Eve", reason: "Christmas Eve at mine, as we agreed last year. Dad's from 2pm Christmas Day.", status: "requested", requested_by: U.leah, requested_at: ts(-2, "20:50") });
   await soft(admin, "medications", { circle_id: K, name: "Salbutamol inhaler (Alfie)", dose: "2 puffs when needed", when_taken: "Before football and if wheezy", notes: "One at each home and one in his school bag.", pharmacy: "Kingsthorpe Pharmacy", repeat_days: 90, last_ordered: D(-60), next_order: D(30), updated_by: U.leah });
 
@@ -375,7 +379,7 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
     { circle_id: K, title: "INSET day (no school)", date: D(15), child_ids: both, share_with_helpers: true, notes: "Kelly has Alfie 8am to 5pm.", created_by: U.leah },
     { circle_id: K, title: "Drama club show", date: addDays(monday, 9), time: "18:30", location: "Northfield Academy hall", attending: "Ruby, Mum and Dad", child_ids: [ruby.id], created_by: U.leah },
     { circle_id: K, title: "Year 9 options evening", date: D(20), time: "18:00", location: "Northfield Academy", attending: "Ruby, Mum and Dad", child_ids: [ruby.id], created_by: U.dan },
-    { circle_id: K, title: "October half term", date: D(25), end_date: D(29), child_ids: both, share_with_helpers: true, notes: "Usual pattern applies. Holiday club booked for Alfie on the Tuesday.", created_by: U.leah },
+    { circle_id: K, title: "Christmas holidays", date: `${xy}-12-19`, end_date: `${xy + 1}-01-03`, child_ids: both, share_with_helpers: true, notes: "School closes Friday 18 December. Holiday club booked for Alfie on 22 and 23 December.", created_by: U.leah },
     { circle_id: K, title: "Oscar's birthday party", date: D(2), time: "14:00", location: "Jump Zone, Northampton", child_ids: [alfie.id], notes: "Pick up at 4pm.", created_by: U.leah },
     { circle_id: K, title: "Mediation session (parents only)", date: D(12), time: "10:00", location: "Nene Family Mediation", attending: "Leah and Dan", private: true, notes: "Agenda: Christmas arrangements.", created_by: U.leah },
   ], "id, title");

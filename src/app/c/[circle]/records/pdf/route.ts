@@ -11,7 +11,7 @@ const ukDay = (ts: string) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ })
 /** A plain summary of agreements, swaps and costs over a chosen period, for a mediator or solicitor. */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ circle: string }> }) {
   const { circle: id } = await params;
-  const { supabase, role, nameOf, circle, user } = await getCircle(id);
+  const { supabase, role, nameOf, circle, user, members } = await getCircle(id);
   if (!canEdit(role) || circle.kind !== "children") return new NextResponse("Not found", { status: 404 });
 
   const q = req.nextUrl.searchParams;
@@ -21,8 +21,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ circ
   const inRange = (s: string | null | undefined) => !!s && s.slice(0, 10) >= from && s.slice(0, 10) <= to;
   const tsInRange = (s: string | null | undefined) => !!s && inRange(ukDay(s));
 
-  const me = (await supabase.from("profiles").select("display_name").eq("id", user.id).single()).data?.display_name || "Me";
-  const name = (uid: string | null) => { const n = nameOf(uid); return n === "You" ? me : n; };
+  // Full names throughout, so the summary reads the same whoever downloads it
+  const full = (uid: string | null) => members.find((m) => m.user_id === uid)?.profiles?.display_name || null;
+  const me = full(user.id) || "Me";
+  const name = (uid: string | null) => full(uid) || (nameOf(uid) === "You" ? me : nameOf(uid));
+  const fullOf = (short: string) => (short === "You" ? me : members.find((m) => m.profiles?.display_name?.split(" ")[0] === short)?.profiles?.display_name || short);
+  const sentence = (s: string) => s.trim().replace(/[.!\s]+$/, "");
 
   const [ag, ch, ex, st, hh, kids] = await Promise.all([
     supabase.from("agreements").select("*").eq("circle_id", id).order("proposed_at"),
@@ -63,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ circ
     blocks.push({ type: "row", cells: ["Nights", "Request", "Asked by", "Outcome"], widths: W4, bold: true });
     for (const c of changes) {
       const nights = c.start_date === c.end_date ? d(c.start_date) : `${d(c.start_date)} to ${d(c.end_date)}`;
-      const what = `${c.label ? `${c.label}: ` : ""}at ${home(c.household_id)}${c.reason ? `. Reason: ${c.reason}` : ""}${c.in_return ? `. In return: ${c.in_return}` : ""}`;
+      const what = `${c.label ? `${c.label}: ` : ""}at ${home(c.household_id)}${c.reason ? `. Reason: ${sentence(c.reason)}` : ""}${c.in_return ? `. In return: ${sentence(c.in_return)}` : ""}`;
       const outcome = { accepted: "Agreed", declined: "Not agreed", cancelled: "Withdrawn", requested: "Awaiting" }[c.status]
         + (c.responded_at && c.status !== "requested" ? ` ${d(c.responded_at)}` : "") + (c.response_note ? `. ${c.response_note}` : "");
       blocks.push({ type: "row", cells: [nights, what, `${name(c.requested_by)}, ${d(c.requested_at)}`, outcome], widths: W4 });
@@ -92,7 +96,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ circ
   if (!pays.length) blocks.push({ type: "para", text: "No payments recorded in this period.", muted: true });
   else {
     blocks.push({ type: "row", cells: ["Date", "Payment", "Type", "Amount"], widths: W4, bold: true });
-    for (const s of pays) blocks.push({ type: "row", cells: [d(s.paid_on), `${name(s.from_user)} to ${name(s.to_user)}${s.note ? ` (${s.note})` : ""}`, s.kind === "maintenance" ? "Maintenance" : "Settling up", money(s.amount_pence)], widths: W4 });
+    for (const s of pays) blocks.push({ type: "row", cells: [d(s.paid_on), `${name(s.from_user)} to ${name(s.to_user)}${s.note ? `. ${s.note}` : ""}`, s.kind === "maintenance" ? "Maintenance" : "Settling up", money(s.amount_pence)], widths: W4 });
     const maint = pays.filter((s) => s.kind === "maintenance").reduce((n, s) => n + s.amount_pence, 0);
     if (maint) blocks.push({ type: "para", text: `Maintenance recorded in this period: ${money(maint)}.` });
   }
@@ -104,11 +108,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ circ
   blocks.push({ type: "para", text: handovers.length ? `${handovers.length} handover${handovers.length === 1 ? "" : "s"} recorded, ${handovers.filter((h) => h.text.includes("Missing:")).length} with something missing. Details are in the log below.` : "No handovers recorded in this period.", muted: true });
 
   blocks.push({ type: "heading", text: "Full dated log" });
-  const stamp = (s: string) => new Intl.DateTimeFormat("en-GB", { timeZone: TZ, dateStyle: "short", timeStyle: "short" }).format(new Date(s));
+  const stamp = (s: string) => new Intl.DateTimeFormat("en-GB", { timeZone: TZ, dateStyle: "short", timeStyle: "short" }).format(new Date(s)).replace(",", "");
   if (!log.length) blocks.push({ type: "para", text: "Nothing recorded in this period.", muted: true });
   else {
     blocks.push({ type: "row", cells: ["When (UK)", "Who", "What"], widths: [17, 15, 68], bold: true });
-    for (const r of log) blocks.push({ type: "row", cells: [stamp(r.at), r.who === "You" ? me : r.who, `${r.type}: ${r.text}`], widths: [17, 15, 68] });
+    for (const r of log) blocks.push({ type: "row", cells: [stamp(r.at), fullOf(r.who), `${r.type}: ${r.text.replace(/\.\./g, ".")}`], widths: [17, 15, 68] });
   }
 
   const childNames = (kids.data || []).map((k) => k.first_name as string);

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
-import { addDays, canEdit, dayLabel, isInner, today } from "@/lib/kin";
+import { addDays, canEdit, dayWord, isInner, today } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
 import { markOrdered, saveMedication, stopMedication } from "../actions";
 
@@ -46,7 +46,7 @@ export default async function Medications({ params, searchParams }: { params: Pr
       {!!due.length && (
         <section className="status attn">
           <div className="sline"><span className="dot" />Repeat prescriptions due</div>
-          <ul>{due.map((m) => <li key={m.id}>{m.name}: {m.next_order! < t ? "overdue since" : "due"} {dayLabel(m.next_order).toLowerCase()}</li>)}</ul>
+          <ul>{due.map((m) => <li key={m.id}>{m.name}: {m.next_order! < t ? "overdue since" : "due"} {dayWord(m.next_order)}</li>)}</ul>
         </section>
       )}
       <section className="stack">
@@ -54,9 +54,9 @@ export default async function Medications({ params, searchParams }: { params: Pr
         {!active.length && <p className="muted">Nothing on the list yet.</p>}
         {active.map((m) => (
           <div key={m.id} className="card pad">
-            <div className="row between"><b>{m.name}</b>{m.next_order && <span className={`tag ${m.next_order < t ? "over" : m.next_order <= addDays(t, 7) ? "unas" : ""}`}>Reorder {dayLabel(m.next_order).toLowerCase()}</span>}</div>
+            <div className="row between"><b>{m.name}</b>{m.next_order && <span className={`tag ${m.next_order < t ? "over" : m.next_order <= addDays(t, 7) ? "unas" : ""}`}>Reorder {dayWord(m.next_order)}</span>}</div>
             <span className="small">{[m.dose, m.when_taken].filter(Boolean).join(" · ") || "No dose noted"}</span>
-            <span className="small muted">{[m.repeat_days ? `Repeat every ${m.repeat_days} days` : null, m.pharmacy, m.last_ordered ? `Last ordered ${dayLabel(m.last_ordered).toLowerCase()}` : null, m.notes].filter(Boolean).join(" · ")}</span>
+            <span className="small muted">{[m.repeat_days ? `Repeat every ${m.repeat_days} days` : null, m.pharmacy, m.last_ordered ? `Last ordered ${dayWord(m.last_ordered)}` : null, m.notes].filter(Boolean).join(" · ")}</span>
             {edit && (
               <div className="row">
                 {m.repeat_days && <form action={markOrdered}><Hidden circle={id} id={m.id} /><button className="btn sm primary">Ordered today</button></form>}

@@ -30,7 +30,7 @@ export default async function ChildView({ params, searchParams }: { params: Prom
       {parent && (
         <section className="card pad stack">
           <h2>Put this on a tablet at home</h2>
-          <p className="small">Make a private link that shows {child.first_name} just this week view, with no sign-in. It shows first names, the homes and what&apos;s on, and nothing else. You can switch it off at any time.</p>
+          <p className="small">Make a private link that shows {child.first_name} this view on a tablet, with no sign-in. It shows first names, the homes and what&apos;s on, and nothing else. You can switch it off at any time.</p>
           {(screens || []).map((sc) => {
             const url = `${site()}/screen/${sc.token}`;
             return (

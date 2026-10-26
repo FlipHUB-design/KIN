@@ -10,7 +10,16 @@ type Row = { kind: string; id: string; circle_name: string; title: string; start
 const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
 const ymd = (s: string) => s.replace(/-/g, "");
 /** Lines longer than 75 characters continue on the next line after a space (RFC 5545). */
-const fold = (l: string) => { const out: string[] = []; for (let i = 0; i < l.length; i += i ? 74 : 75) out.push((i ? " " : "") + l.slice(i, i + (i ? 74 : 75))); return out.join("\r\n"); };
+const fold = (l: string) => {
+  const out: string[] = []; let cur = "", n = 0;
+  for (const ch of l) {
+    const b = Buffer.byteLength(ch);
+    if (n + b > (out.length ? 74 : 75)) { out.push(cur); cur = ""; n = 0; }
+    cur += ch; n += b;
+  }
+  out.push(cur);
+  return out.join("\r\n ");
+};
 const stamp = () => new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
 
 const LONDON = [
