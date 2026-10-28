@@ -5,8 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * Email and text alerts.
  * - Email goes through Resend (RESEND_API_KEY, KIN_EMAIL_FROM).
  * - Texts go through Twilio (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM or TWILIO_MESSAGING_SERVICE_SID).
- * Every alert is also saved in KIN, so it shows on the person's Alerts page even
- * when email or text isn't set up. Demo accounts never send anything outside KIN.
+ * Every alert is also saved in Many Hands, so it shows on the person's Alerts page even
+ * when email or text isn't set up. Demo accounts never send anything outside Many Hands.
  */
 
 export type Level = "answer" | "update" | "urgent";
@@ -59,7 +59,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 export function emailHtml(opts: { heading: string; lines: string[]; button?: { label: string; href: string }; footer: string }) {
   return `<!doctype html><html><body style="margin:0;background:#f6f3ee;font-family:Arial,Helvetica,sans-serif;color:#1f1b16">
 <div style="max-width:520px;margin:0 auto;padding:24px 16px">
-<div style="font-weight:700;letter-spacing:.08em;font-size:13px;color:#6b6259;margin-bottom:12px">KIN</div>
+<div style="font-weight:800;font-size:22px;letter-spacing:-.02em;margin-bottom:12px"><span style="color:#2B6A55">many</span><span style="color:#16201B">hands</span></div>
 <div style="background:#fff;border-radius:14px;padding:22px 20px;border:1px solid #e8e1d6">
 <h1 style="font-size:20px;line-height:1.3;margin:0 0 12px">${esc(opts.heading)}</h1>
 ${opts.lines.filter(Boolean).map((l) => `<p style="font-size:16px;line-height:1.5;margin:0 0 10px">${esc(l)}</p>`).join("")}
@@ -76,7 +76,7 @@ export async function sendEmail(to: string, subject: string, html: string, text:
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.KIN_EMAIL_FROM || "KIN <onboarding@resend.dev>", to: [to], subject, html, text }),
+      body: JSON.stringify({ from: process.env.KIN_EMAIL_FROM || "Many Hands <onboarding@resend.dev>", to: [to], subject, html, text }),
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) console.error("Email failed", res.status, await res.text().catch(() => ""));
@@ -141,8 +141,8 @@ export async function notify(a: Alert) {
         if (demo) email_status = "demo";
         else if (!emailOn()) email_status = "not_setup";
         else if (email) email_status = (await sendEmail(email, a.title,
-          emailHtml({ heading: a.title, lines: [a.body || ""], button: { label: a.level === "answer" ? "Open KIN to answer" : "Open KIN", href: link },
-            footer: `You're getting this because you're in ${a.circleName} on KIN. Change which alerts you get at ${site()}/account/alerts` }),
+          emailHtml({ heading: a.title, lines: [a.body || ""], button: { label: a.level === "answer" ? "Open Many Hands to answer" : "Open Many Hands", href: link },
+            footer: `You're getting this because you're in ${a.circleName} on Many Hands. Change which alerts you get at ${site()}/account/alerts` }),
           `${a.title}\n\n${a.body ? a.body + "\n\n" : ""}${link}\n\nChange which alerts you get: ${site()}/account/alerts`)) ? "sent" : "failed";
       }
 
@@ -152,7 +152,7 @@ export async function notify(a: Alert) {
         else if (a.level !== "urgent" && inQuietHours(String(p?.quiet_start || "21:00"), String(p?.quiet_end || "07:00"))) sms_status = "quiet";
         else if (demo) sms_status = "demo";
         else if (!smsOn()) sms_status = "not_setup";
-        else sms_status = (await sendText(phone, `KIN: ${a.title}. ${link}`)) ? "sent" : "failed";
+        else sms_status = (await sendText(phone, `Many Hands: ${a.title}. ${link}`)) ? "sent" : "failed";
       }
       return { circle_id: a.circleId, user_id: id, level: a.level, title: a.title.slice(0, 200), body: a.body?.slice(0, 500) || null, link: a.path, email_status, sms_status };
     }));
@@ -175,13 +175,13 @@ export function deliveryText(email: string | null, sms: string | null) {
       default: return null;
     }
   };
-  return [part(email, "Email"), part(sms, "Text")].filter(Boolean).join(" · ") || "In KIN only";
+  return [part(email, "Email"), part(sms, "Text")].filter(Boolean).join(" · ") || "In Many Hands only";
 }
 
 /** Emails someone their invitation link. Returns true if it was sent. */
 export async function sendInviteEmail(to: string, inviter: string, what: string, url: string) {
-  return sendEmail(to, `${inviter} invited you to KIN`,
-    emailHtml({ heading: `${inviter} invited you to KIN`, lines: [`${inviter} is using KIN to ${what}, and would like you to join.`, "The link works once and expires in 14 days."],
-      button: { label: "Join on KIN", href: url }, footer: "If you weren't expecting this, you can ignore this email." }),
-    `${inviter} invited you to KIN to ${what}. Join here: ${url}\n\nThe link works once and expires in 14 days.`);
+  return sendEmail(to, `${inviter} invited you to Many Hands`,
+    emailHtml({ heading: `${inviter} invited you to Many Hands`, lines: [`${inviter} is using Many Hands to ${what}, and would like you to join.`, "The link works once and expires in 14 days."],
+      button: { label: "Join on Many Hands", href: url }, footer: "If you weren't expecting this, you can ignore this email." }),
+    `${inviter} invited you to Many Hands to ${what}. Join here: ${url}\n\nThe link works once and expires in 14 days.`);
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { callTool } from "@/lib/ai";
 
-/** Speech to text uses OpenAI's transcription API; the summary uses Claude like the rest of KIN. */
+/** Speech to text uses OpenAI's transcription API; the summary uses Claude like the rest of Many Hands. */
 export const transcribeOn = () => !!process.env.OPENAI_API_KEY;
 export const MAX_AUDIO_BYTES = 24 * 1024 * 1024; // OpenAI accepts up to 25 MB per file
 

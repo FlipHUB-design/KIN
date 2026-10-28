@@ -16,7 +16,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<R
           <span className="note">At least 10 characters.</span></label>
         <button className="btn primary block">Create account</button>
       </form>
-      <p className="note">By creating an account you agree to how KIN handles your family&apos;s information, described in our <Link href="/privacy">privacy notice</Link>.</p>
+      <p className="note">By creating an account you agree to how Many Hands handles your family&apos;s information, described in our <Link href="/privacy">privacy notice</Link>.</p>
       <p className="small">Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Sign in</Link></p>
     </AuthShell>
   );

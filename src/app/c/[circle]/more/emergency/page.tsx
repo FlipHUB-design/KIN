@@ -29,7 +29,7 @@ export default async function Emergency({ params, searchParams }: { params: Prom
         <label className="fl">Preferred hospital<input name="preferred_hospital" defaultValue={e?.preferred_hospital || ""} /></label>
         <label className="fl">Power of attorney (optional)<textarea name="power_of_attorney" defaultValue={e?.power_of_attorney || ""} placeholder="Who holds it and where the document is kept" /></label>
         <label className="fl">Other notes<textarea name="other_notes" defaultValue={e?.other_notes || ""} /></label>
-        <p className="note">Everything here is shown as entered by the family. KIN doesn&apos;t check it.</p>
+        <p className="note">Everything here is shown as entered by the family. Many Hands doesn&apos;t check it.</p>
         <button className="btn primary block">Save</button>
       </form>
     </main>
@@ -63,7 +63,7 @@ export default async function Emergency({ params, searchParams }: { params: Prom
               <dt>Power of attorney</dt><dd>{e?.power_of_attorney || "Not recorded"}</dd>
               {e?.other_notes && <><dt>Other</dt><dd>{e.other_notes}</dd></>}
             </dl>
-            <p className="note" style={{ padding: "0 14px 12px" }}>Entered by the family{e?.updated_by ? `, last updated by ${nameOf(e.updated_by)} ${when(e.updated_at).toLowerCase()}` : ""}. KIN hasn&apos;t checked it.</p>
+            <p className="note" style={{ padding: "0 14px 12px" }}>Entered by the family{e?.updated_by ? `, last updated by ${nameOf(e.updated_by)} ${when(e.updated_at).toLowerCase()}` : ""}. Many Hands hasn&apos;t checked it.</p>
           </div>
           {canEdit(role) && <Link href={`/c/${id}/more/emergency?edit=1`} className="btn">Edit emergency information</Link>}
         </section>
@@ -114,7 +114,7 @@ async function KidsEmergency({ id }: { id: string }) {
           ))}</div>
         </section>
       )}
-      <p className="note">Entered by the family. KIN hasn&apos;t checked it.</p>
+      <p className="note">Entered by the family. Many Hands hasn&apos;t checked it.</p>
     </main>
   );
 }

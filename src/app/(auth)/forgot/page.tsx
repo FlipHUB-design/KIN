@@ -7,7 +7,7 @@ export default async function Forgot({ searchParams }: { searchParams: Promise<R
   return (
     <AuthShell title="Reset your password">
       {sp.sent ? (
-        <p className="ok">If that email has a KIN account, we&apos;ve sent a link to reset the password. It expires in an hour.</p>
+        <p className="ok">If that email has a Many Hands account, we&apos;ve sent a link to reset the password. It expires in an hour.</p>
       ) : (
         <form action={requestReset} className="form">
           <label className="fl">Email<input name="email" type="email" autoComplete="email" required /></label>

@@ -14,7 +14,7 @@ export default async function Screen({ params }: { params: Promise<{ token: stri
   const sc = admin && /^[0-9a-f]{32,80}$/.test(token)
     ? (await admin.from("child_screens").select("circle_id, child_id, revoked").eq("token", token).maybeSingle()).data : null;
   const child = sc && !sc.revoked ? (await admin!.from("children").select("first_name").eq("id", sc.child_id).maybeSingle()).data : null;
-  if (!admin || !sc || sc.revoked || !child) return <main className="page"><h1>This link isn&apos;t working</h1><p className="muted">Ask a grown-up to make a new one in KIN.</p></main>;
+  if (!admin || !sc || sc.revoked || !child) return <main className="page"><h1>This link isn&apos;t working</h1><p className="muted">Ask a grown-up to make a new one in Many Hands.</p></main>;
   const days = await kidWeek(admin, sc.circle_id, sc.child_id, 7);
   return (
     <main className="page" style={{ maxWidth: 760 }}>

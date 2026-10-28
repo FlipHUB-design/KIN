@@ -54,7 +54,7 @@ export default async function NewCircle({ searchParams }: { searchParams: Promis
     <main className="page">
       <Link href="/circles" className="link">‹ Back</Link>
       <h1>Who are you organising for?</h1>
-      <p className="muted">A few easy questions, then KIN sets everything up for you to check.</p>
+      <p className="muted">A few easy questions, then Many Hands sets everything up for you to check.</p>
       <div className="stack">
         <Link href="/circles/new/guided?kind=care" className="card pad" style={{ textDecoration: "none", color: "inherit" }}>
           <b>An older parent or relative</b><span className="small muted">Visits, lifts to appointments, household jobs, paperwork and who&apos;s doing what.</span></Link>
@@ -116,7 +116,7 @@ export default async function NewCircle({ searchParams }: { searchParams: Promis
         <label className="fl">Their address<textarea name="address" placeholder="Shown to anyone who visits, including helpers" /></label>
         <label className="fl">Does someone usually check in by a certain time?
           <input name="checkin_by" type="time" />
-          <span className="note">Optional. KIN will show when nobody has checked in by then. It never contacts emergency services.</span>
+          <span className="note">Optional. Many Hands will show when nobody has checked in by then. It never contacts emergency services.</span>
         </label>
         <button className="btn primary block">Create Care Circle</button>
       </form>

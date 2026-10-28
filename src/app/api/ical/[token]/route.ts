@@ -40,8 +40,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const rows = (data || []) as Row[];
 
   const now = stamp();
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//KIN//Family calendar//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
-    "X-WR-CALNAME:KIN", "X-WR-TIMEZONE:Europe/London", "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H", ...LONDON];
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Many Hands//Family calendar//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "X-WR-CALNAME:Many Hands", "X-WR-TIMEZONE:Europe/London", "REFRESH-INTERVAL;VALUE=DURATION:PT1H", "X-PUBLISHED-TTL:PT1H", ...LONDON];
   for (const r of rows) {
     const summary = r.kind === "task" ? `${r.title} (${r.circle_name})` : `${r.circle_name}: ${r.title}`;
     lines.push("BEGIN:VEVENT", `UID:${r.kind}-${r.id}@kin`, `DTSTAMP:${now}`, `SUMMARY:${esc(summary)}`);
@@ -55,7 +55,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
       lines.push(`DTSTART;VALUE=DATE:${ymd(r.starts)}`, `DTEND;VALUE=DATE:${ymd(addDays(r.ends && r.ends > r.starts ? r.ends : r.starts, 1))}`);
     }
     if (r.location) lines.push(`LOCATION:${esc(r.location)}`);
-    const desc = [r.detail, r.kind === "task" ? "A job you said you'd do in KIN." : null, "Open in KIN for details and updates."].filter(Boolean).join("\n");
+    const desc = [r.detail, r.kind === "task" ? "A job you said you'd do in Many Hands." : null, "Open in Many Hands for details and updates."].filter(Boolean).join("\n");
     lines.push(`DESCRIPTION:${esc(desc)}`, `URL:${site()}/circles`, "END:VEVENT");
   }
   lines.push("END:VCALENDAR");

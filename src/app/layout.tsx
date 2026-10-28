@@ -7,9 +7,9 @@ import "@fontsource/figtree/800.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KIN",
-  appleWebApp: { capable: true, title: "KIN", statusBarStyle: "default" },
-  description: "Keeping families connected. Making care simple. Shared family admin for children and older parents.",
+  title: "Many Hands",
+  appleWebApp: { capable: true, title: "Many Hands", statusBarStyle: "default" },
+  description: "Many hands make light work. Keeping families connected and making care simple: shared family admin for children and older parents.",
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#2B6A55" };
 

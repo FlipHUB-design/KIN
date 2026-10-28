@@ -26,7 +26,7 @@ export default async function Welcome({ params }: { params: Promise<{ circle: st
         <h2>Send the invitations</h2>
         <p className="muted">Anyone with an email address has been sent theirs. You can also send each link by text or WhatsApp.</p>
         {invites.map((i) => {
-          const msg = `Hi ${i.name.split(" ")[0]}, I've set up KIN to help us ${what}. Join here: ${site()}/invite/${i.token}`;
+          const msg = `Hi ${i.name.split(" ")[0]}, I've set up Many Hands to help us ${what}. Join here: ${site()}/invite/${i.token}`;
           return (
             <div key={i.id} className="card pad">
               <b>{i.name} <span className="small muted">· {roleLabel(i.role, circle.kind)}{i.email ? ` · emailed to ${i.email}` : ""}</span></b>

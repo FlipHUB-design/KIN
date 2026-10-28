@@ -30,7 +30,7 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
         <label className="fl">Add a note (optional)
           <textarea name="note" placeholder={role === "helper" ? "e.g. Kitchen and bathroom done." : "e.g. Had breakfast and is watching television."} />
         </label>
-        <p className="note">This is a note for the family, not a health assessment. KIN never records your location.</p>
+        <p className="note">This is a note for the family, not a health assessment. Many Hands never records your location.</p>
         <button className="btn primary block">Check in</button>
       </form>
     </main>

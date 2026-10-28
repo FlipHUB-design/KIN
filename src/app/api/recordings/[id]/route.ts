@@ -38,7 +38,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const path = `/appointments/${rec.appointment_id}#recordings`;
 
   if (!transcribeOn()) {
-    await notify({ circleId: rec.circle_id, circleName, actor: user.id, to: family, level: "update", title: `${who} recorded ${appt?.title || "an appointment"}`, body: "You can listen to it in KIN.", path });
+    await notify({ circleId: rec.circle_id, circleName, actor: user.id, to: family, level: "update", title: `${who} recorded ${appt?.title || "an appointment"}`, body: "You can listen to it in Many Hands.", path });
     return say("saved", "Saved. Your family can listen to it.");
   }
   if (!(await takeAllowance(user.id, "transcribe"))) return say("saved", "Saved. You've reached today's limit for writing up recordings, so it'll need to be done tomorrow.");
@@ -49,7 +49,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (error || !file) return fail("The recording couldn't be opened. Your family can still try again later.");
   if (file.size > MAX_AUDIO_BYTES) return fail("The recording is too long to write up automatically. Your family can still listen to it.");
   const text = await transcribe(file, rec.mime || file.type || "audio/webm");
-  if (!text) return fail(`KIN couldn't turn the recording into text${T.lastTranscribeError ? ` because ${T.lastTranscribeError}` : ""}. Your family can still listen to it.`);
+  if (!text) return fail(`Many Hands couldn't turn the recording into text${T.lastTranscribeError ? ` because ${T.lastTranscribeError}` : ""}. Your family can still listen to it.`);
 
   const { data: qs } = await admin.from("appointment_questions").select("id, body, answer").eq("appointment_id", rec.appointment_id).order("created_at");
   const summary: ConsultSummary | null = aiOn() ? await summariseConsult(text, name, appt?.title || "Appointment", (qs || []).map((q) => ({ id: q.id, body: q.body }))) : null;

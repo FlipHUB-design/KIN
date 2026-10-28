@@ -24,7 +24,7 @@ async function deleteAccount(formData: FormData) {
   }
   if (user.email?.endsWith("@kin-demo.example.com")) redirect("/account?error=" + encodeURIComponent("Demo accounts can't be deleted."));
   const admin = createAdminClient();
-  if (!admin) redirect("/account?error=" + encodeURIComponent("Account deletion isn't set up on this server yet. Contact the KIN team."));
+  if (!admin) redirect("/account?error=" + encodeURIComponent("Account deletion isn't set up on this server yet. Contact the Many Hands team."));
   // Circles where this user is the only administrator
   const { data: mine } = await supabase.from("memberships").select("circle_id, role").eq("user_id", user.id);
   for (const m of (mine || []).filter((x) => x.role === "admin")) {
@@ -63,9 +63,9 @@ export default async function Account({ searchParams }: { searchParams: Promise<
       </form>
       <div className="card pad">
         <h2>Your data</h2>
-        <p className="small">Download everything you can see in KIN as a file.</p>
+        <p className="small">Download everything you can see in Many Hands as a file.</p>
         <Link href="/account/alerts" className="btn">Email and text alerts</Link>
-        <Link href="/account/calendar" className="btn">Add KIN to my calendar</Link>
+        <Link href="/account/calendar" className="btn">Add Many Hands to my calendar</Link>
         <a href="/account/export" className="btn">Download my data</a>
         <Link href="/account/password" className="btn">Change password</Link>
         <form action={signOut}><button className="btn block">Sign out</button></form>

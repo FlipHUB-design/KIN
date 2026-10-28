@@ -20,8 +20,8 @@ export default async function Ask({ searchParams }: { searchParams: Promise<Reco
   return (
     <main className="page">
       <Link href={cid && circle ? `/c/${cid}` : "/circles"} className="link">‹ Back</Link>
-      <h1>Ask KIN</h1>
-      <p className="muted">Questions about how to do something in KIN.</p>
+      <h1>Ask Many Hands</h1>
+      <p className="muted">Questions about how to do something in Many Hands.</p>
       <Chat circleId={circle ? cid : null} suggestions={suggestions} aiReady={aiOn()} />
     </main>
   );

@@ -37,12 +37,12 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<R
     <main className="page">
       <Link href="/account" className="link">‹ Your account</Link>
       <h1>Alerts</h1>
-      <p className="muted">Choose how KIN tells you about things. Everything also appears on the Alerts page inside each family or Care Circle.</p>
+      <p className="muted">Choose how Many Hands tells you about things. Everything also appears on the Alerts page inside each family or Care Circle.</p>
       {sp.notice && <p className="ok">{sp.notice}</p>}
       {sp.error && <p className="error">{sp.error}</p>}
       {demo && <p className="note">Demo accounts never send real emails or texts. You can still try the settings.</p>}
       {!demo && (!emailOn() || !smsOn()) && (
-        <p className="note">{!emailOn() && !smsOn() ? "Email and text sending aren't switched on for this KIN site yet." : !emailOn() ? "Email sending isn't switched on for this KIN site yet." : "Text sending isn't switched on for this KIN site yet."} Your choices are saved and will apply once they are.</p>
+        <p className="note">{!emailOn() && !smsOn() ? "Email and text sending aren't switched on for this Many Hands site yet." : !emailOn() ? "Email sending isn't switched on for this Many Hands site yet." : "Text sending isn't switched on for this Many Hands site yet."} Your choices are saved and will apply once they are.</p>
       )}
       <form action={save} className="form">
         <div className="card pad">
@@ -65,7 +65,7 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<R
           <label className="fl">No texts after<input type="time" name="quiet_start" defaultValue={String(prefs?.quiet_start || "21:00").slice(0, 5)} /></label>
           <label className="fl">Until<input type="time" name="quiet_end" defaultValue={String(prefs?.quiet_end || "07:00").slice(0, 5)} /></label>
         </div>
-        <p className="note">Urgent alerts are always texted, even in quiet hours, if you&apos;ve turned texts on for them. You still get the email and the alert in KIN.</p>
+        <p className="note">Urgent alerts are always texted, even in quiet hours, if you&apos;ve turned texts on for them. You still get the email and the alert in Many Hands.</p>
         <label className="checkline"><input type="checkbox" name="digest" defaultChecked={prefs?.digest ?? true} /> <span>Morning email: what&apos;s on today, and anything waiting for you</span></label>
         <button className="btn primary block">Save</button>
       </form>

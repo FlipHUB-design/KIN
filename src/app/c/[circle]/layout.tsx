@@ -25,7 +25,7 @@ export default async function CircleLayout({ children, params }: { children: Rea
         </Link>
       )}
       {children}
-      {showHelp && <Link href={`/ask?c=${circle}`} className={`helpfab${fullNav ? "" : " nonav"}`} aria-label="Ask KIN: help with using the app" title="Ask KIN">?</Link>}
+      {showHelp && <Link href={`/ask?c=${circle}`} className={`helpfab${fullNav ? "" : " nonav"}`} aria-label="Ask Many Hands: help with using the app" title="Ask Many Hands">?</Link>}
       {fullNav && <Nav base={`/c/${circle}`} />}
     </>
   );

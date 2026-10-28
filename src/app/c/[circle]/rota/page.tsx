@@ -26,7 +26,7 @@ export default async function Rota({ params, searchParams }: { params: Promise<{
       <Header title="Care rota" sub={`Who's visiting or calling ${circle.preferred_name} in the next two weeks`} initial={(me.profiles?.display_name || "?")[0]} back={{ href: `/c/${id}/more`, label: "More" }} />
       <Notice sp={sp} />
       {!visitDays.length ? (
-        <p className="card pad">Choose the days {circle.preferred_name} should have a visit or call, and KIN will show any day nobody has covered.</p>
+        <p className="card pad">Choose the days {circle.preferred_name} should have a visit or call, and Many Hands will show any day nobody has covered.</p>
       ) : open.length ? (
         <section className="status attn"><div className="sline"><span className="dot" />{open.length === 1 ? "1 day needs someone" : `${open.length} days need someone`}</div>
           <ul>{open.slice(0, 4).map((d) => <li key={d.date}>Nobody&apos;s visiting {dayLabel(d.date) === "Today" || dayLabel(d.date) === "Tomorrow" ? dayLabel(d.date).toLowerCase() : `on ${dayLabel(d.date)}`}</li>)}</ul></section>

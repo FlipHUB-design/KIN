@@ -11,7 +11,7 @@ export default async function Playbooks({ params }: { params: Promise<{ circle: 
     <main className="page">
       <Link href={`/c/${id}/more`} className="link">‹ More</Link>
       <h1>Playbooks</h1>
-      <p className="muted">Step-by-step plans for the UK paperwork and moments families get stuck on{circle.kind === "children" ? ", from passports to school places" : ""}. Start one and KIN adds the steps as tasks, with links to the official guidance.</p>
+      <p className="muted">Step-by-step plans for the UK paperwork and moments families get stuck on{circle.kind === "children" ? ", from passports to school places" : ""}. Start one and Many Hands adds the steps as tasks, with links to the official guidance.</p>
       <div className="card list">
         {playbooksFor(circle.kind).map((p) => {
           const t = started(p.slug);

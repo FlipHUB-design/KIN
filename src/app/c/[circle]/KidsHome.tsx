@@ -229,7 +229,7 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
           {!actR.data?.length && <p className="empty">Nothing yet.</p>}
         </div>
       </section>
-      <p className="disclaimer">KIN helps families organise. It isn&apos;t legal advice. In an emergency call 999. For urgent medical advice call NHS 111.</p>
+      <p className="disclaimer">Many Hands helps families organise. It isn&apos;t legal advice. In an emergency call 999. For urgent medical advice call NHS 111.</p>
     </main>
   );
 }

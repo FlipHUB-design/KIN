@@ -30,7 +30,7 @@ export default function Chat({ circleId, suggestions, aiReady }: { circleId: str
   return (
     <div className="stack">
       <div className="chat" aria-live="polite">
-        <div className="bubble kin">Hi, I can help with how to do things in KIN. What would you like to know?</div>
+        <div className="bubble kin">Hi, I can help with how to do things in Many Hands. What would you like to know?</div>
         {msgs.map((m, i) => (
           <div key={i} className={`bubble ${m.role === "user" ? "me" : "kin"}`}>
             {m.text}
@@ -46,7 +46,7 @@ export default function Chat({ circleId, suggestions, aiReady }: { circleId: str
         <input id="ask" value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. How do I invite Grandma?" maxLength={500} autoComplete="off" />
         <button className="btn primary" disabled={busy || !text.trim()}>Ask</button>
       </form>
-      <p className="note">{aiReady ? "Answers come from KIN's AI helper and can be wrong. It only knows how KIN works, not your family's details." : "Answers come from KIN's help guide."} In an emergency, call 999.</p>
+      <p className="note">{aiReady ? "Answers come from Many Hands' AI helper and can be wrong. It only knows how Many Hands works, not your family's details." : "Answers come from Many Hands' help guide."} In an emergency, call 999.</p>
     </div>
   );
 }

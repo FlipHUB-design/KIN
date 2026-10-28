@@ -36,7 +36,7 @@ export default async function Schedule({ params, searchParams }: { params: Promi
   if (!fam.households.length) return (
     <main className="page">
       <Header title="Schedule" initial={(me.profiles?.display_name || "?")[0]} back={{ href: base, label: "Home" }} />
-      <div className="card pad"><b>Do the children live across two homes?</b><p className="small muted">Add both homes and a regular pattern, and KIN shows everyone where the children are each night, handles swap requests and reminds you what to pack.</p>
+      <div className="card pad"><b>Do the children live across two homes?</b><p className="small muted">Add both homes and a regular pattern, and Many Hands shows everyone where the children are each night, handles swap requests and reminds you what to pack.</p>
         {parent && <Link href={`${base}/schedule/settings`} className="btn primary">Set up two homes</Link>}</div>
     </main>
   );

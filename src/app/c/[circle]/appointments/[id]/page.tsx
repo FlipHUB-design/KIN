@@ -77,7 +77,7 @@ export default async function AppointmentPage({ params, searchParams }: { params
           <Recordings supabase={supabase} circleId={cid} appointmentId={id} nameOf={nameOf} me={user.id} canEdit={canEdit(role)} writeUp={transcribeOn()} />
           <details className="card pad">
             <summary style={{ fontWeight: 700, cursor: "pointer" }}>Record this appointment</summary>
-            <p className="small">Whoever goes can record what the doctor or nurse says, including {circle.preferred_name} if nobody else can be there. {transcribeOn() ? "KIN writes it up for the family." : "The family can listen to it here."}</p>
+            <p className="small">Whoever goes can record what the doctor or nurse says, including {circle.preferred_name} if nobody else can be there. {transcribeOn() ? "Many Hands writes it up for the family." : "The family can listen to it here."}</p>
             <Recorder circleId={cid} appointmentId={id} name={circle.preferred_name} writeUp={transcribeOn()} sample={isDemoEmail(user.email) ? "/demo/sample-gp-appointment.m4a" : undefined} />
           </details>
         </section>

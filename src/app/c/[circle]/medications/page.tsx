@@ -81,7 +81,7 @@ export default async function Medications({ params, searchParams }: { params: Pr
           ))}</div>
         </section>
       )}
-      <p className="note">A shared list for the family. KIN doesn&apos;t give medical advice. Always follow the label and check with the GP or pharmacist.</p>
+      <p className="note">A shared list for the family. Many Hands doesn&apos;t give medical advice. Always follow the label and check with the GP or pharmacist.</p>
     </main>
   );
 }

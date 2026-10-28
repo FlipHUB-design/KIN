@@ -223,8 +223,8 @@ export async function wellbeing(f: FormData) {
 export async function needHelp(f: FormData) {
   const c = await ctx(f);
   await activity(c, 'pressed "I need help"');
-  alert(c, "urgent", parents(c), `${myName(c)} pressed "I need help" in KIN`,
-    `Please call or go to ${myName(c)} now. KIN does not contact emergency services. In an emergency, call 999.`, "");
+  alert(c, "urgent", parents(c), `${myName(c)} pressed "I need help" in Many Hands`,
+    `Please call or go to ${myName(c)} now. Many Hands does not contact emergency services. In an emergency, call 999.`, "");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, "/help");
 }
@@ -379,7 +379,7 @@ async function saveScan(c: Awaited<ReturnType<typeof ctx>>, documentId: string |
   const { data, error } = await c.supabase.from("letter_scans").insert({
     circle_id: c.circleId, document_id: documentId, result, source, created_by: c.user.id,
   }).select("id").single();
-  if (error || !data) fail(c.circleId, "/letters", "Couldn't save what KIN found.");
+  if (error || !data) fail(c.circleId, "/letters", "Couldn't save what Many Hands found.");
   if (documentId) await c.supabase.from("documents").update({ category: result.doc_category, name: `${result.organisation}: ${result.document_type}`.slice(0, 200) }).eq("id", documentId);
   await activity(c, "read a letter from", result.organisation);
   revalidatePath(`/c/${c.circleId}`, "layout");
@@ -394,7 +394,7 @@ export async function scanLetter(f: FormData) {
   const type = s(f, "type");
   const { data: doc, error } = await c.supabase.from("documents").insert({
     circle_id: c.circleId, name: s(f, "name") || "Letter", category: "Other", storage_path: path, access: "family",
-    notes: "Read by KIN", uploaded_by: c.user.id,
+    notes: "Read by Many Hands", uploaded_by: c.user.id,
   }).select("id").single();
   if (error || !doc) { await c.supabase.storage.from("documents").remove([path]); fail(c.circleId, "/letters", "Only family members can add letters."); }
   await c.supabase.from("audit_log").insert({ circle_id: c.circleId, actor: c.user.id, action: "document.upload", detail: { name: s(f, "name") || "Letter" } });
@@ -407,7 +407,7 @@ export async function scanLetter(f: FormData) {
     result = await readLetter(await file.data!.arrayBuffer(), type || file.data!.type, c.circle.kind || "care");
   } catch (e) {
     console.error("letter read failed", e);
-    return fail(c.circleId, "/letters", "KIN couldn't read that letter. It's saved in Documents. Try a clearer, flatter photo.");
+    return fail(c.circleId, "/letters", "Many Hands couldn't read that letter. It's saved in Documents. Try a clearer, flatter photo.");
   }
   await saveScan(c, doc!.id, result, "ai");
 }
@@ -940,7 +940,7 @@ export async function readPastedEmail(f: FormData) {
   if (!(await takeAllowance(c.user.id, "email"))) fail(c.circleId, "/letters", "You've reached today's limit for reading emails. Try again tomorrow.");
   let result: LetterResult;
   try { result = await readLetterText(text, c.circle.kind || "care"); }
-  catch (e) { console.error("email read failed", e); return fail(c.circleId, "/letters", "KIN couldn't read that email. Please try again."); }
+  catch (e) { console.error("email read failed", e); return fail(c.circleId, "/letters", "Many Hands couldn't read that email. Please try again."); }
   await saveScan(c, null, result, "email");
 }
 export async function createInbound(f: FormData) {

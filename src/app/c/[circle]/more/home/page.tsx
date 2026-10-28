@@ -37,7 +37,7 @@ export default async function HomeAssets({ params, searchParams }: { params: Pro
           </div>
           <label className="fl">Notes<textarea name="notes" defaultValue={a.notes || ""} /></label>
           {!editing && <label className="checkline"><input type="checkbox" name="make_task" defaultChecked /> Add a yearly task for the next due date</label>}
-          <p className="note">Dates are set by the family. KIN doesn&apos;t set legal or safety schedules.</p>
+          <p className="note">Dates are set by the family. Many Hands doesn&apos;t set legal or safety schedules.</p>
           <button className="btn primary block">Save</button>
         </form>
         {editing && <form action={deleteAsset}><Hidden circle={id} id={editing.id} /><button className="link" style={{ color: "var(--coral)" }}>Remove</button></form>}

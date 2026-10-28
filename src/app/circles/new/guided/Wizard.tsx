@@ -150,7 +150,7 @@ export default function Wizard({ kind, monday, aiReady }: { kind: Kind; monday: 
             <label className="fl">You are their…<input value={care.relationship} onChange={(e) => setCare({ ...care, relationship: e.target.value })} placeholder="e.g. Daughter" /></label>
           </div>
           <label className="fl">Date of birth (optional)<input type="date" value={care.dob} onChange={(e) => setCare({ ...care, dob: e.target.value })} />
-            <span className="note">Helps KIN suggest guides, such as Attendance Allowance.</span></label>
+            <span className="note">Helps Many Hands suggest guides, such as Attendance Allowance.</span></label>
           <label className="fl">Their address (optional)<textarea value={care.address} onChange={(e) => setCare({ ...care, address: e.target.value })} />
             <span className="note">Shown to anyone who visits, including helpers.</span></label>
         </section>
@@ -159,7 +159,7 @@ export default function Wizard({ kind, monday, aiReady }: { kind: Kind; monday: 
       {!kids && step === 1 && (
         <section className="form">
           <h1>What does {care.preferred || care.person.split(" ")[0] || "they"} need help with?</h1>
-          <p className="muted">Tick everything that applies. KIN sets up the regular jobs for you.</p>
+          <p className="muted">Tick everything that applies. Many Hands sets up the regular jobs for you.</p>
           <div className="grid2">{CARE_NEEDS.map((n) => (
             <label key={n.key} className={`card pad pick${care.needs.includes(n.key) ? " on" : ""}`}>
               <input type="checkbox" checked={care.needs.includes(n.key)} onChange={() => setCare({ ...care, needs: care.needs.includes(n.key) ? care.needs.filter((x) => x !== n.key) : [...care.needs, n.key] })} />
@@ -167,7 +167,7 @@ export default function Wizard({ kind, monday, aiReady }: { kind: Kind; monday: 
             </label>
           ))}</div>
           <label className="fl">Does someone usually check in by a certain time? (optional)<input type="time" value={care.checkin} onChange={(e) => setCare({ ...care, checkin: e.target.value })} />
-            <span className="note">KIN shows when nobody has checked in by then. It never contacts emergency services.</span></label>
+            <span className="note">Many Hands shows when nobody has checked in by then. It never contacts emergency services.</span></label>
         </section>
       )}
 
@@ -182,14 +182,14 @@ export default function Wizard({ kind, monday, aiReady }: { kind: Kind; monday: 
       {step === 3 && (
         <section className="form">
           <h1>{kids ? "What does a normal week look like?" : `What does ${care.preferred ? care.preferred + "'s" : care.person ? care.person.split(" ")[0] + "'s" : "their"} week look like?`}</h1>
-          <p className="muted">Write it how you&apos;d say it. {aiReady ? "KIN's AI helper turns it into jobs, dates and contacts for you to check." : "This helps you set things up later."}</p>
+          <p className="muted">Write it how you&apos;d say it. {aiReady ? "Many Hands' AI helper turns it into jobs, dates and contacts for you to check." : "This helps you set things up later."}</p>
           <label className="fl">Regular things
             <textarea rows={5} value={a.week} onChange={(e) => (kids ? setKid({ ...kid, week: e.target.value }) : setCare({ ...care, week: e.target.value }))}
               placeholder={kids ? "e.g. Alfie has swimming at Mounts Baths on Tuesdays at 4:30. Ruby does drama on Thursdays. Grandma does tea on Wednesdays. Kelly collects Alfie on Mondays and Tuesdays." : "e.g. Helen cleans on Fridays 10 till 12. Anthony does the shopping on Saturdays. I call Mum every evening. Bins go out on Thursday night."} /></label>
           <label className="fl">Anything coming up, or worth knowing?
             <textarea rows={4} value={a.extra} onChange={(e) => (kids ? setKid({ ...kid, extra: e.target.value }) : setCare({ ...care, extra: e.target.value }))}
               placeholder={kids ? "e.g. Ruby's passport runs out in March. School trip to the farm on 16 October. Alfie needs his inhaler at both homes." : "e.g. Hospital appointment on 14 October at 10am, needs a lift. She's hard of hearing. GP is Orchard Lane Surgery."} /></label>
-          <p className="note">Leave these blank if you like. {aiReady ? "What you write here is read by KIN's AI helper to draft your setup." : ""}</p>
+          <p className="note">Leave these blank if you like. {aiReady ? "What you write here is read by Many Hands' AI helper to draft your setup." : ""}</p>
         </section>
       )}
 

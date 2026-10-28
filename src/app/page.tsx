@@ -7,16 +7,17 @@ export default async function Landing() {
   const demo = !!user?.email?.endsWith("@kin-demo.example.com");
   return (
     <main className="page" style={{ paddingBottom: 48, gap: 28 }}>
-      <span className="brand"><Wordmark /></span>
+      <span className="brand" style={{ fontSize: 30 }}><Wordmark /></span>
       <section className="stack" style={{ gap: 14 }}>
-        <h1 style={{ fontSize: 40, lineHeight: 1.1 }}>Keeping families connected.<br /><span style={{ color: "var(--accent)" }}>Making care simple.</span></h1>
+        <h1 style={{ fontSize: 42, lineHeight: 1.08 }}>Many hands make light work.</h1>
+        <p style={{ fontSize: 22, fontWeight: 700, color: "var(--accent)", margin: 0, fontFamily: "var(--font-display), sans-serif" }}>Keeping families connected. Making care simple.</p>
         <p className="muted" style={{ fontSize: 18 }}>
-          KIN is the shared admin app for families. Bring up children across one home or two, or support an older parent,
+          Many Hands is the shared admin app for families. Bring up children across one home or two, or support an older parent,
           with the schedule, school letters, pick-ups, costs and paperwork in one calm place.
         </p>
         {user ? (
           <div className="row">
-            <Link href={demo ? "/demo" : "/circles"} className="btn primary">{demo ? "Back to the demo" : "Open KIN"}</Link>
+            <Link href={demo ? "/demo" : "/circles"} className="btn primary">{demo ? "Back to the demo" : "Open Many Hands"}</Link>
           </div>
         ) : (
           <div className="row">
@@ -48,7 +49,7 @@ export default async function Landing() {
         </div>
       </section>
       <p className="disclaimer">
-        KIN is a family coordination tool. It isn&apos;t a medical service or legal advice.
+        Many Hands is a family coordination tool. It isn&apos;t a medical service or legal advice.
         In an emergency call 999. For urgent medical advice call NHS 111.
       </p>
     </main>

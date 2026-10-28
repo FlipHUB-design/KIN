@@ -18,7 +18,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
     ["../children", "Children", "School, allergies, sizes, passports and where things are", true],
     ["../costs", "Costs", "Shared costs, approvals and child maintenance", parent],
     ["../agreements", "Agreements", "Bedtimes, screens, money and holidays, agreed once", true],
-    ["../letters", "School letters", "Photograph a letter and KIN suggests the tasks", parent],
+    ["../letters", "School letters", "Photograph a letter and Many Hands suggests the tasks", parent],
     ["../playbooks", "Playbooks", "School places, passports, travel abroad, childcare and more", true],
     ["../records", "Records", "A dated history you can download", parent],
     ["contacts", "Contacts", "School, GP, dentist, clubs and who can collect", true],
@@ -32,7 +32,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
     ["../rota", "Care rota", "Who's visiting when, and the days nobody has covered yet", true],
     ["../medications", "Medications", "The medication list and repeat prescription reminders", isInner(role)],
     ["../wellbeing", `How ${circle.preferred_name}'s been`, "The daily check-in answers over recent weeks", isInner(role) && role !== "supported"],
-    ["../letters", "Letters", "Photograph a letter and KIN suggests the tasks", parent],
+    ["../letters", "Letters", "Photograph a letter and Many Hands suggests the tasks", parent],
     ["../playbooks", "Playbooks", "Step-by-step plans: Attendance Allowance, hospital discharge and more", true],
     ["../costs", "Shared costs", "Who paid for what, and who owes whom", parent],
     ["emergency", "Emergency information", "999, NHS 111 and details for responders", true],
@@ -50,13 +50,13 @@ export default async function More({ params }: { params: Promise<{ circle: strin
         {items.filter((i) => i[3]).map(([k, l, s]) => (
           <Link key={k} href={k.startsWith("../") ? `/c/${id}/${k.slice(3)}` : `/c/${id}/more/${k}`} className="item"><span className="main"><span className="t">{l}</span><span className="s">{s}</span></span><span className="muted">›</span></Link>
         ))}
-        <Link href={`/ask?c=${id}`} className="item"><span className="main"><span className="t">Ask KIN</span><span className="s">Help with how to do something</span></span><span className="muted">›</span></Link>
+        <Link href={`/ask?c=${id}`} className="item"><span className="main"><span className="t">Ask Many Hands</span><span className="s">Help with how to do something</span></span><span className="muted">›</span></Link>
         <Link href="/circles" className="item"><span className="main"><span className="t">{kids ? "Switch family" : "People I help"}</span><span className="s">Switch to another family or Care Circle, or start a new one</span></span><span className="muted">›</span></Link>
         <Link href="/account" className="item"><span className="main"><span className="t">Your account</span><span className="s">Name, phone, password, calendar sync, your data</span></span><span className="muted">›</span></Link>
       </div>
       <p className="disclaimer">{kids
-        ? "KIN helps families organise. It isn't legal advice and doesn't replace a court order, mediation or professional support."
-        : "KIN is a coordination tool for families. It isn't a medical service, doesn't monitor health, and doesn't replace the NHS App, a GP or professional care."}</p>
+        ? "Many Hands helps families organise. It isn't legal advice and doesn't replace a court order, mediation or professional support."
+        : "Many Hands is a coordination tool for families. It isn't a medical service, doesn't monitor health, and doesn't replace the NHS App, a GP or professional care."}</p>
     </main>
   );
 }

@@ -41,7 +41,7 @@ function ChildForm({ circle, k }: { circle: string; k?: Child }) {
         <label className="fl">GP surgery<input name="gp" defaultValue={k?.gp || ""} /></label>
         <label className="fl">Dentist<input name="dentist" defaultValue={k?.dentist || ""} /></label>
       </div>
-      <label className="fl">Passport expires<input type="date" name="passport_expiry" defaultValue={k?.passport_expiry || ""} /><span className="note">KIN reminds you six months before. Don&apos;t store the passport number here.</span></label>
+      <label className="fl">Passport expires<input type="date" name="passport_expiry" defaultValue={k?.passport_expiry || ""} /><span className="note">Many Hands reminds you six months before. Don&apos;t store the passport number here.</span></label>
       <button className="btn primary">{k ? "Save" : "Add child"}</button>
     </form>
   );

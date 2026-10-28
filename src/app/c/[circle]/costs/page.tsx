@@ -167,7 +167,7 @@ export default async function Costs({ params, searchParams }: { params: Promise<
       {kidsMode && (
         <section className="stack" id="maintenance">
           <h2>Child maintenance</h2>
-          <p className="small muted">A record of maintenance payments, kept separate from shared costs. KIN doesn&apos;t work out or move any money.</p>
+          <p className="small muted">A record of maintenance payments, kept separate from shared costs. Many Hands doesn&apos;t work out or move any money.</p>
           <div className="card list">
             {maintenance.slice(0, 12).map((m) => (
               <div key={m.id} className="item"><span className="when">{dayLabel(m.paid_on).replace(/^\w+ /, "")}</span>
@@ -195,7 +195,7 @@ export default async function Costs({ params, searchParams }: { params: Promise<
           <a href="https://www.gov.uk/making-child-maintenance-arrangement" target="_blank" rel="noopener" className="link">Child maintenance on GOV.UK ↗</a>
         </section>
       )}
-      <p className="note">{kidsMode ? "Only parents can see money." : "Only administrators and family members can see money."} KIN keeps a record; it doesn&apos;t move any money.{kidsMode ? ` Approvals are dated and kept in Records.` : ""}</p>
+      <p className="note">{kidsMode ? "Only parents can see money." : "Only administrators and family members can see money."} Many Hands keeps a record; it doesn&apos;t move any money.{kidsMode ? ` Approvals are dated and kept in Records.` : ""}</p>
     </main>
   );
 }

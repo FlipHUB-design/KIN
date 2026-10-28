@@ -52,7 +52,7 @@ export default async function Settings({ params, searchParams }: { params: Promi
           <label className="fl">Someone usually checks in by<input type="time" name="checkin_by" defaultValue={hm(circle.checkin_by)} />
             <span className="note">Leave empty for no expected check-in.</span></label>
           <label className="fl">Describe the routine<input name="checkin_note" defaultValue={circle.checkin_note || ""} placeholder="e.g. Someone visits or calls before midday every day." /></label>
-          <p className="note">If nobody checks in, KIN shows it to the family. It never contacts emergency services or judges anyone&apos;s health.</p>
+          <p className="note">If nobody checks in, Many Hands shows it to the family. It never contacts emergency services or judges anyone&apos;s health.</p>
           {admin && <button className="btn primary block">Save</button>}
         </fieldset>
       </form>

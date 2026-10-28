@@ -31,8 +31,8 @@ export default async function CalendarSync({ searchParams }: { searchParams: Pro
   return (
     <main className="page">
       <Link href="/account" className="link">‹ Your account</Link>
-      <h1>Add KIN to your calendar</h1>
-      <p className="muted">KIN&apos;s dates appear in your own Google, Apple or Outlook calendar and stay up to date. You&apos;ll see the appointments and dates your role lets you see in each circle, plus jobs you&apos;ve said you&apos;ll do.</p>
+      <h1>Add Many Hands to your calendar</h1>
+      <p className="muted">Many Hands&apos;s dates appear in your own Google, Apple or Outlook calendar and stay up to date. You&apos;ll see the appointments and dates your role lets you see in each circle, plus jobs you&apos;ve said you&apos;ll do.</p>
       {sp.notice && <p className="ok">{sp.notice}</p>}
       {sp.error && <p className="error">{sp.error}</p>}
 
@@ -65,7 +65,7 @@ export default async function CalendarSync({ searchParams }: { searchParams: Pro
             <h2>Outlook</h2>
             <ol className="small">
               <li>In Outlook on the web, open the calendar and choose <b>Add calendar</b>.</li>
-              <li>Choose <b>Subscribe from web</b>, paste your link and give it the name KIN.</li>
+              <li>Choose <b>Subscribe from web</b>, paste your link and give it the name Many Hands.</li>
             </ol>
           </div>
           <div className="card pad form">

@@ -46,7 +46,7 @@ export default function TaskForm({ circle, members, userId, role, task, action, 
       </select></label>
       <label className="fl">Details<textarea name="description" defaultValue={task?.description || ""} maxLength={2000} /></label>
       {family && <label className="checkline"><input type="checkbox" name="private" defaultChecked={task?.private} /> {kidsMode ? "Parents only (hidden from the children, grandparents and childminders)" : "Family only (hidden from contributors and helpers)"}</label>}
-      {!kidsMode && <p className="note">Medication reminders are for reminding only. KIN never gives medical advice.</p>}
+      {!kidsMode && <p className="note">Medication reminders are for reminding only. Many Hands never gives medical advice.</p>}
       <button className="btn primary block">{submit}</button>
     </form>
   );

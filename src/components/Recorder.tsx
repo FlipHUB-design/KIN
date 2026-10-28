@@ -11,7 +11,7 @@ const TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus", "
 const EXT: Record<string, string> = { "audio/webm": "webm", "audio/mp4": "m4a", "audio/ogg": "ogg", "audio/mpeg": "mp3", "audio/x-m4a": "m4a", "audio/m4a": "m4a", "audio/wav": "wav", "audio/aac": "m4a" };
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-/** Records the appointment on the phone, then uploads it for the family and KIN's write-up. */
+/** Records the appointment on the phone, then uploads it for the family and Many Hands' write-up. */
 export default function Recorder({ circleId, appointmentId, name, writeUp, big, sample }: { circleId: string; appointmentId: string; name: string; writeUp: boolean; big?: boolean; sample?: string }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("idle");
@@ -72,7 +72,7 @@ export default function Recorder({ circleId, appointmentId, name, writeUp, big, 
     setMsg("");
     let stream: MediaStream;
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
-    catch { setStage("error"); setMsg("KIN needs permission to use the microphone. Allow it in your browser settings, then try again."); return; }
+    catch { setStage("error"); setMsg("Many Hands needs permission to use the microphone. Allow it in your browser settings, then try again."); return; }
     const mime = TYPES.find((t) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(t)) || "";
     const r = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 });
     chunks.current = []; secsRef.current = 0; setSecs(0);
@@ -125,7 +125,7 @@ export default function Recorder({ circleId, appointmentId, name, writeUp, big, 
         <p className="note">Don&apos;t lock the phone or switch apps until you press Stop.</p>
       </>}
       {stage === "saving" && <p role="status">Saving the recording…</p>}
-      {stage === "writing" && <p role="status">Saved. KIN is writing up the notes for {name}&apos;s family. This takes about a minute; you can leave this page.</p>}
+      {stage === "writing" && <p role="status">Saved. Many Hands is writing up the notes for {name}&apos;s family. This takes about a minute; you can leave this page.</p>}
       {(stage === "done" || stage === "error") && <p role="status" className={stage === "error" ? "error" : "ok"}>{msg}</p>}
       {stage === "error" && retry.current && <button type="button" className="btn" onClick={() => retry.current?.()}>Try uploading again</button>}
       {stage === "error" && !retry.current && <button type="button" className="btn" onClick={() => { setStage("idle"); setMsg(""); }}>Start again</button>}

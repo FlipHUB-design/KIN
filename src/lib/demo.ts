@@ -6,7 +6,7 @@ import { sampleLetterLines, sampleResult, sampleSchoolLines, sampleSchoolResult 
 import { playbook } from "@/lib/playbooks";
 
 /**
- * Demo mode: a shared, clearly fictional Care Circle for trying KIN.
+ * Demo mode: a shared, clearly fictional Care Circle for trying Many Hands.
  * Everything here runs on the server with the service-role key. Demo users
  * sign in with a one-time link generated server-side, so they have no usable
  * password. Data is rebuilt once a day so dates stay relative to today.
@@ -207,9 +207,9 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
     { circle_id: M, name: "Washing machine", details: "Bosch Serie 4", warranty_expiry: D(230) },
   ]);
   const docs = [
-    { name: "Home insurance schedule", category: "Insurance", access: "family", expiry_date: D(21), by: U.lucy, lines: ["Example document for the KIN demo.", "Policy: Buildings and contents", "Renewal date shown in KIN."] },
-    { name: "Lasting power of attorney (health and welfare)", category: "Legal", access: "admins", expiry_date: null, by: U.sarah, lines: ["Example document for the KIN demo.", "Visible to administrators only."] },
-    { name: "Boiler warranty", category: "Warranties", access: "family", expiry_date: D(160), by: U.sarah, lines: ["Example document for the KIN demo."] },
+    { name: "Home insurance schedule", category: "Insurance", access: "family", expiry_date: D(21), by: U.lucy, lines: ["Example document for the Many Hands demo.", "Policy: Buildings and contents", "Renewal date shown in Many Hands."] },
+    { name: "Lasting power of attorney (health and welfare)", category: "Legal", access: "admins", expiry_date: null, by: U.sarah, lines: ["Example document for the Many Hands demo.", "Visible to administrators only."] },
+    { name: "Boiler warranty", category: "Warranties", access: "family", expiry_date: D(160), by: U.sarah, lines: ["Example document for the Many Hands demo."] },
   ];
   for (const d of docs) {
     const path = `${M}/${crypto.randomUUID()}-${d.name.replace(/[^\w]+/g, "-")}.pdf`;
@@ -235,7 +235,7 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   ]);
   await ins("settlements", { circle_id: M, from_user: U.david, to_user: U.sarah, amount_pence: 4000, paid_on: D(-15), note: "Bank transfer", created_by: U.david });
 
-  // A letter KIN has read, with one suggestion already turned into a task
+  // A letter Many Hands has read, with one suggestion already turned into a task
   const lpath = `${M}/${crypto.randomUUID()}-sample-letter.pdf`;
   await admin.storage.from("documents").upload(lpath, makePdf("Nenebridge District Council", sampleLetterLines("Margaret Hale")), { contentType: "application/pdf" });
   const [ldoc] = await ins("documents", { circle_id: M, name: "Nenebridge District Council: Council tax Single Person Discount review", category: "Property", access: "family", storage_path: lpath, uploaded_by: U.sarah, notes: "Example letter", created_at: ts(-1, "08:40") });
@@ -500,9 +500,9 @@ async function seedKids(admin: Admin, U: Record<Persona, string>) {
   ]);
 
   const docs = [
-    { name: "Alfie's birth certificate (copy)", category: "Legal", access: "admins", lines: ["Example document for the KIN demo."] },
-    { name: "Ruby's Year 8 school report", category: "Other", access: "family", lines: ["Example document for the KIN demo.", "Northfield Academy, summer term."] },
-    { name: "Swimming lessons receipt (autumn term)", category: "Financial", access: "family", lines: ["Example document for the KIN demo.", "Mounts Baths, Stage 5, GBP 96.00"] },
+    { name: "Alfie's birth certificate (copy)", category: "Legal", access: "admins", lines: ["Example document for the Many Hands demo."] },
+    { name: "Ruby's Year 8 school report", category: "Other", access: "family", lines: ["Example document for the Many Hands demo.", "Northfield Academy, summer term."] },
+    { name: "Swimming lessons receipt (autumn term)", category: "Financial", access: "family", lines: ["Example document for the Many Hands demo.", "Mounts Baths, Stage 5, GBP 96.00"] },
   ];
   for (const d of docs) {
     const path = `${K}/${crypto.randomUUID()}-${d.name.replace(/[^\w]+/g, "-")}.pdf`;

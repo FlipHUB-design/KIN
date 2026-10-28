@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false });
   }
   const { data: scan } = await admin.from("letter_scans").insert({ circle_id: circle!.id, result, source: "email", created_by: null }).select("id").single();
-  await admin.from("activity").insert({ circle_id: circle!.id, actor: null, verb: "forwarded an email that KIN read, from", subject: result.organisation });
+  await admin.from("activity").insert({ circle_id: circle!.id, actor: null, verb: "forwarded an email that Many Hands read, from", subject: result.organisation });
   const { data: fam } = await admin.from("memberships").select("user_id").eq("circle_id", circle!.id).eq("status", "active").in("role", ["admin", "family"]);
   if (scan) await notify({
     circleId: circle!.id, circleName: kind === "children" ? circle!.person_name : `${circle!.preferred_name}'s Care Circle`, actor: "00000000-0000-0000-0000-000000000000",
-    to: (fam || []).map((m) => m.user_id), level: "answer", title: `KIN read an email from ${result.organisation}`,
+    to: (fam || []).map((m) => m.user_id), level: "answer", title: `Many Hands read an email from ${result.organisation}`,
     body: `${result.summary} ${result.suggestions.length ? `${result.suggestions.length} suggested ${result.suggestions.length === 1 ? "task" : "tasks"} to review.` : ""}`.trim(), path: `/letters/${scan.id}`,
   });
   return NextResponse.json({ ok: true });

@@ -30,7 +30,7 @@ export default async function Invite({ params, searchParams }: { params: Promise
         </>
       ) : (
         <>
-          <h1>{inv.inviter?.split(" ")[0] || "Someone"} has invited you to {inv.kind === "children" ? "help with the children on KIN" : `help with ${inv.person}`}</h1>
+          <h1>{inv.inviter?.split(" ")[0] || "Someone"} has invited you to {inv.kind === "children" ? "help with the children on Many Hands" : `help with ${inv.person}`}</h1>
           <div className="card pad">
             <span className="label">Your access</span>
             <b>{roleLabel(inv.role, inv.kind)}</b>

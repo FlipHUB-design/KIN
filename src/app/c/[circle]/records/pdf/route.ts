@@ -116,8 +116,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ circ
   }
 
   const childNames = (kids.data || []).map((k) => k.first_name as string);
-  const subtitle = `${childNames.length ? `For ${childNames.join(", ").replace(/, ([^,]*)$/, " and $1")}. ` : ""}Period ${d(from)} to ${d(to)}. Produced by ${me} on ${d(today())}. Every entry was recorded in KIN at the time, with who made it; entries cannot be edited after they are answered.`;
-  const pdf = makeReport(`${circle.person_name}: summary of arrangements`, subtitle, blocks, "KIN summary. A factual record, not legal advice.");
+  const subtitle = `${childNames.length ? `For ${childNames.join(", ").replace(/, ([^,]*)$/, " and $1")}. ` : ""}Period ${d(from)} to ${d(to)}. Produced by ${me} on ${d(today())}. Every entry was recorded in Many Hands at the time, with who made it; entries cannot be edited after they are answered.`;
+  const pdf = makeReport(`${circle.person_name}: summary of arrangements`, subtitle, blocks, "Many Hands summary. A factual record, not legal advice.");
 
   await supabase.from("audit_log").insert({ circle_id: id, actor: user.id, action: "records.pdf", detail: { from, to } });
   return new NextResponse(Buffer.from(pdf), {

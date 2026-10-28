@@ -48,7 +48,7 @@ export default async function AtTheAppointment({ params, searchParams }: { param
       {inner && (
         <section className="stack" id="record">
           <h2>Record the appointment</h2>
-          <p>{self ? "Your family can't be there, so you can record what the doctor says. " : ""}KIN saves the recording for {self ? "your" : `${circle.preferred_name}'s`} family{transcribeOn() ? `, writes out what was said${aiOn() ? ", and answers the questions above from it" : ""}` : ""}.</p>
+          <p>{self ? "Your family can't be there, so you can record what the doctor says. " : ""}Many Hands saves the recording for {self ? "your" : `${circle.preferred_name}'s`} family{transcribeOn() ? `, writes out what was said${aiOn() ? ", and answers the questions above from it" : ""}` : ""}.</p>
           <Recorder circleId={cid} appointmentId={id} name={circle.preferred_name} writeUp={transcribeOn()} big sample={isDemoEmail(user.email) ? "/demo/sample-gp-appointment.m4a" : undefined} />
           <p className="note">In the UK you can record your own appointment. It&apos;s polite to ask first, and most doctors and nurses are happy to help.</p>
         </section>

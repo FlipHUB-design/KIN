@@ -127,7 +127,7 @@ export async function aiPlan(a: Answers, base: Plan): Promise<Plan | null> {
   const pbs = playbooksFor(kind);
   const tool = {
     name: "draft_setup",
-    description: "Record the practical setup KIN should create from what the family told you.",
+    description: "Record the practical setup Many Hands should create from what the family told you.",
     input_schema: {
       type: "object",
       properties: {
@@ -165,7 +165,7 @@ export async function aiPlan(a: Answers, base: Plan): Promise<Plan | null> {
       required: ["summary", "tasks", "contacts", "child_details", "important_notes", "allergies", "packing_extra", "playbooks"],
     },
   };
-  const system = `You help a UK family set up KIN, an app for organising ${kind === "children" ? "family life and children across one or two homes" : "practical support for an older relative"}.
+  const system = `You help a UK family set up Many Hands, an app for organising ${kind === "children" ? "family life and children across one or two homes" : "practical support for an older relative"}.
 Turn what they told you into a practical setup: regular jobs, one-off dates, contacts and details.
 Rules:
 - Only include things they actually said or that follow directly from it. Don't invent people, clubs, appointments, phone numbers or allergies.

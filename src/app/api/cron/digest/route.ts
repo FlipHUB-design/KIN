@@ -105,10 +105,10 @@ export async function GET(req: NextRequest) {
     const email = u.user?.email;
     if (!email || isDemoEmail(email)) continue;
     const lines = sections.flatMap((s) => (sections.length > 1 ? [s[0].toUpperCase(), ...s.slice(1)] : s.slice(1)));
-    const ok = await sendEmail(email, `Today in KIN: ${heads.join(", ")}`,
-      emailHtml({ heading: "Your day in KIN", lines, button: { label: "Open KIN", href: `${site()}/circles` },
+    const ok = await sendEmail(email, `Today in Many Hands: ${heads.join(", ")}`,
+      emailHtml({ heading: "Your day in Many Hands", lines, button: { label: "Open Many Hands", href: `${site()}/circles` },
         footer: `Turn off the morning email at ${site()}/account/alerts` }),
-      `Your day in KIN\n\n${lines.join("\n")}\n\n${site()}/circles\n\nTurn off the morning email: ${site()}/account/alerts`);
+      `Your day in Many Hands\n\n${lines.join("\n")}\n\n${site()}/circles\n\nTurn off the morning email: ${site()}/account/alerts`);
     if (ok) sent++;
   }
   return NextResponse.json({ sent });

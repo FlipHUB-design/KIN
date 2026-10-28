@@ -139,7 +139,7 @@ export function sampleLetterLines(person: string) {
     "and a revised bill issued.",
     "If you need help, call 01632 960 555, Monday to Friday, 9am to 5pm.",
     "Yours sincerely, Council Tax Team",
-    "(Example letter for the KIN demo. Nenebridge District Council is not real.)",
+    "(Example letter for the Many Hands demo. Nenebridge District Council is not real.)",
   ];
 }
 export function sampleResult(person: string): LetterResult {
@@ -174,7 +174,7 @@ export function sampleSchoolLines(child: string) {
     "Children need a packed lunch in a disposable bag, a waterproof coat and wellies.",
     "We are also looking for two parent volunteers. Please tell the office if you can help.",
     "Mrs J Okafor, Year 4 Teacher",
-    "(Example letter for the KIN demo. Orchard Primary and Nene Valley Farm Park are made up.)",
+    "(Example letter for the Many Hands demo. Orchard Primary and Nene Valley Farm Park are made up.)",
   ];
 }
 export function sampleSchoolResult(child: string): LetterResult {

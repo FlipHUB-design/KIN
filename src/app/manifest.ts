@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "KIN",
-    short_name: "KIN",
-    description: "Keeping families connected. Making care simple.",
+    name: "Many Hands",
+    short_name: "Many Hands",
+    description: "Many hands make light work. Keeping families connected. Making care simple.",
     start_url: "/circles",
     display: "standalone",
     background_color: "#F2F4F1",

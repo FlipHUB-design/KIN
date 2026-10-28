@@ -74,7 +74,7 @@ function shortDay(d: string | null) {
 export function Disclaimer() {
   return (
     <p className="disclaimer">
-      KIN helps families coordinate. It isn&apos;t a medical service. In an emergency call 999. For urgent medical advice call NHS 111.
+      Many Hands helps families coordinate. It isn&apos;t a medical service. In an emergency call 999. For urgent medical advice call NHS 111.
     </p>
   );
 }

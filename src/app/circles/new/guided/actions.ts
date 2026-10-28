@@ -14,7 +14,7 @@ export async function draftSetup(a: Answers): Promise<Draft> {
   const { user } = await getUser();
   if (!user) redirect("/login");
   const base = rulesPlan(a);
-  if (!aiOn()) return { plan: base, note: "KIN's AI helper isn't switched on yet, so this is a starting point from your answers. Anything you typed in your own words hasn't been read." };
+  if (!aiOn()) return { plan: base, note: "Many Hands' AI helper isn't switched on yet, so this is a starting point from your answers. Anything you typed in your own words hasn't been read." };
   if (!(await takeAllowance(user.id, "setup"))) return { plan: base, note: "You've used the AI helper a lot today, so this is a starting point from your answers only." };
   const ai = await aiPlan(a, base);
   if (!ai) return { plan: base, note: "The AI helper couldn't respond just now, so this is a starting point from your answers only." };

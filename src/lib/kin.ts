@@ -1,4 +1,4 @@
-// Shared types, labels and date helpers for KIN.
+// Shared types, labels and date helpers for Many Hands.
 
 export type Role = "admin" | "family" | "contributor" | "helper" | "supported";
 export type TaskStatus = "open" | "accepted" | "done" | "cancelled";
@@ -124,7 +124,7 @@ export const DOC_CATEGORIES = ["Medical", "Insurance", "Property", "Utilities", 
 export const CONTACT_CATEGORIES = ["Family", "GP", "Pharmacy", "Hospital", "Care provider", "Neighbour", "Cleaner", "Gardener", "Handyman", "Electrician", "Plumber", "Other"];
 export const KID_CONTACT_CATEGORIES = ["Family", "School", "Authorised to collect", "Childminder", "Club or coach", "GP", "Dentist", "Friend's parent", "Mediator", "Solicitor", "Other"];
 
-// ---- dates (KIN is UK-first: all "today" logic runs in Europe/London)
+// ---- dates (Many Hands is UK-first: all "today" logic runs in Europe/London)
 export const TZ = "Europe/London";
 const ymd = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 export const today = () => ymd(new Date());

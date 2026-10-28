@@ -31,8 +31,8 @@ export default async function LetterPage({ params, searchParams }: { params: Pro
         {scan.document_id && <a className="link" href={`/c/${cid}/more/documents/${scan.document_id}`} target="_blank" rel="noopener">Open the letter</a>}
       </div>
       <section className="stack">
-        <h2>{r.suggestions.length ? "KIN suggests" : "No actions found"}</h2>
-        {!r.suggestions.length && <p className="muted">KIN didn&apos;t find anything this letter asks you to do. It&apos;s saved in Documents.</p>}
+        <h2>{r.suggestions.length ? "Many Hands suggests" : "No actions found"}</h2>
+        {!r.suggestions.length && <p className="muted">Many Hands didn&apos;t find anything this letter asks you to do. It&apos;s saved in Documents.</p>}
         {r.suggestions.map((sg, i) => (
           <div key={i} className="card pad">
             {sg.task_id ? (
@@ -64,7 +64,7 @@ export default async function LetterPage({ params, searchParams }: { params: Pro
           </div>
         ))}
       </section>
-      <p className="note">Check the details against the letter. KIN can misread things, and it never gives legal, financial or medical advice.</p>
+      <p className="note">Check the details against the letter. Many Hands can misread things, and it never gives legal, financial or medical advice.</p>
     </main>
   );
 }

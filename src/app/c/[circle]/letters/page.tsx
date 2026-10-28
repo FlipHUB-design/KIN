@@ -24,7 +24,7 @@ export default async function Letters({ params, searchParams }: { params: Promis
     <main className="page">
       <Link href={`/c/${id}/more`} className="link">‹ More</Link>
       <h1>Letters</h1>
-      <p className="muted">{kidsMode ? "Take a photo of a school letter, party invitation, club newsletter or appointment letter." : "Take a photo of a letter from the council, DWP, NHS, a bank or an insurer."} KIN reads it, pulls out any deadlines and suggests tasks. Nothing is added until you say so.</p>
+      <p className="muted">{kidsMode ? "Take a photo of a school letter, party invitation, club newsletter or appointment letter." : "Take a photo of a letter from the council, DWP, NHS, a bank or an insurer."} Many Hands reads it, pulls out any deadlines and suggests tasks. Nothing is added until you say so.</p>
       <Notice sp={sp} />
       {on ? <LetterUpload circle={id} scan={scanLetter} /> : (
         <div className="card pad">
@@ -43,10 +43,10 @@ export default async function Letters({ params, searchParams }: { params: Promis
         </form>
       </details>
       <section className="card pad stack" id="forward">
-        <b>{kidsMode ? "Forward school emails to KIN" : "Forward emails to KIN"}</b>
-        {!domain ? <p className="small muted">Email forwarding isn&apos;t set up on this KIN site yet. Until it is, paste emails above.</p>
+        <b>{kidsMode ? "Forward school emails to Many Hands" : "Forward emails to Many Hands"}</b>
+        {!domain ? <p className="small muted">Email forwarding isn&apos;t set up on this Many Hands site yet. Until it is, paste emails above.</p>
           : inbound ? <>
-            <p className="small">Forward {kidsMode ? "emails from school, clubs and parties" : "letters and emails"} to this private address. KIN reads each one and adds it here for you to review.</p>
+            <p className="small">Forward {kidsMode ? "emails from school, clubs and parties" : "letters and emails"} to this private address. Many Hands reads each one and adds it here for you to review.</p>
             <div className="copybox">{`kin-${inbound.token}@${domain}`}</div>
             <div className="row"><CopyButton text={`kin-${inbound.token}@${domain}`} />
               <form action={createInbound}><Hidden circle={id} /><input type="hidden" name="reset" value="yes" /><button className="btn sm">Make a new address</button></form></div>
@@ -70,7 +70,7 @@ export default async function Letters({ params, searchParams }: { params: Promis
           {!data?.length && <p className="empty">No letters yet.</p>}
         </div>
       </section>
-      <p className="note">Letters are sent securely to our AI provider, Anthropic, to be read. KIN never gives medical, legal or financial advice.</p>
+      <p className="note">Letters are sent securely to our AI provider, Anthropic, to be read. Many Hands never gives medical, legal or financial advice.</p>
     </main>
   );
 }

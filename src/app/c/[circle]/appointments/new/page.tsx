@@ -35,7 +35,7 @@ export default async function NewAppointment({ params, searchParams }: { params:
             <label><input type="radio" name="needs_transport" value="yes" defaultChecked={!kidsMode} /><span>Yes</span></label>
             <label><input type="radio" name="needs_transport" value="no" defaultChecked={kidsMode} /><span>No</span></label>
           </div>
-          <span className="note">{kidsMode ? "If yes, KIN asks the family who can take them." : <>If yes, KIN adds a &ldquo;Who can drive?&rdquo; task for the family.</>}</span>
+          <span className="note">{kidsMode ? "If yes, Many Hands asks the family who can take them." : <>If yes, Many Hands adds a &ldquo;Who can drive?&rdquo; task for the family.</>}</span>
         </fieldset>
         <label className="fl">Notes<textarea name="notes" placeholder="e.g. Bring the blue folder" /></label>
         {kidsMode && <label className="checkline"><input type="checkbox" name="share_with_helpers" /> Show to childminders too (useful for INSET days and holidays)</label>}

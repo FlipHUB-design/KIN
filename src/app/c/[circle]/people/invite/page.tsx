@@ -15,7 +15,7 @@ export default async function Invite({ params, searchParams }: { params: Promise
     const { data: inv } = await supabase.from("invitations").select("*").eq("id", sp.sent).eq("circle_id", id).maybeSingle();
     if (inv) {
       const url = `${site}/invite/${inv.token}`;
-      const msg = `Hi ${inv.name.split(" ")[0]}, I've set up KIN to help us ${circle.kind === "children" ? "organise things for the children" : `coordinate things for ${circle.preferred_name}`}. Join here: ${url}`;
+      const msg = `Hi ${inv.name.split(" ")[0]}, I've set up Many Hands to help us ${circle.kind === "children" ? "organise things for the children" : `coordinate things for ${circle.preferred_name}`}. Join here: ${url}`;
       return (
         <main className="page">
           <Link href={`/c/${id}/people`} className="link">‹ Care Circle</Link>
