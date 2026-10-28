@@ -160,6 +160,12 @@ export const DOCS: Doc[] = [
     a: "Yes. Open School letters to find your family's private forwarding address. Forward school emails to it and KIN reads them and suggests tasks and dates for you to check. You can also paste an email in instead." },
   { id: "mediation", q: "Can I get a summary for a mediator or solicitor?", words: "mediation mediator solicitor court pdf summary report export agreements swaps costs", kinds: ["children"], roles: PARENTS, pages: ["records"],
     a: "Yes. Open Records, choose the dates and press Download the PDF summary. It lists agreements, schedule swaps, costs with totals, payments and a full dated log of who did what and when. It's a factual record, not legal advice." },
+  { id: "alone", q: "What if they have to go to an appointment on their own?", words: "on her own alone appointment questions ask doctor record recording transcribe transcript what the doctor said",
+    kinds: ["care"],
+    a: "Add the family's questions to the appointment under Questions to ask. On the day, they open the appointment (it's on their home screen) and see the questions in large text, tick each one off and can jot down the answers. They can also press Start recording, once the doctor or nurse has agreed. KIN saves it for the family, writes out what was said, answers the questions from it and adds a short summary. Only the family can see recordings, not helpers or contributors, and the audio is deleted after 30 days." },
+  { id: "record", q: "How do I record an appointment?", words: "record recording microphone transcript summary doctor consultant nurse audio voice memo upload",
+    kinds: ["care"],
+    a: "Open the appointment and press At the appointment, or open Recordings and choose Record this appointment. Ask the doctor or nurse first and tick the box, then press Start recording. Keep the screen on until you press Stop and save. If you recorded it another way, such as a voice memo, you can upload that instead. KIN's write-up may mishear things, so check anything important with the surgery." },
 ];
 
 export function docsFor(kind?: Kind | null, role?: Role | null) {

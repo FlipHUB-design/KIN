@@ -238,11 +238,13 @@ async function SupportedHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string>
   const { supabase, circle, nameOf, user } = ctx;
   const base = `/c/${circle.id}`;
   const t = today();
-  const [{ data: tasks }, { data: appts }, { data: said }] = await Promise.all([
+  const [{ data: tasks }, { data: appts }, { data: said }, { data: nextAppt }] = await Promise.all([
     supabase.from("tasks").select("*").eq("circle_id", circle.id).in("due_date", [t, addDays(t, 1)]).in("status", ["open", "accepted"]),
     supabase.from("appointments").select("*").eq("circle_id", circle.id).in("date", [t, addDays(t, 1)]),
     supabase.from("activity").select("id").eq("circle_id", circle.id).eq("actor", user.id).like("verb", "said they're feeling%").gte("created_at", t),
+    supabase.from("appointments").select("id, title, date, time, location, driver").eq("circle_id", circle.id).gte("date", t).lte("date", addDays(t, 14)).order("date").order("time").limit(1).maybeSingle(),
   ]);
+  const { data: qs } = nextAppt ? await supabase.from("appointment_questions").select("id, asked").eq("appointment_id", nextAppt.id) : { data: null };
   const describe = (x: Task) => x.category === "Visit" && x.assignee ? `${nameOf(x.assignee)} is ${/call/i.test(x.title) ? "calling" : "visiting"}` : x.assignee ? `${nameOf(x.assignee)}: ${x.title}` : x.title;
   const on = (day: string) => [
     ...((appts || []) as Appointment[]).filter((a) => a.date === day).map((a) => ({ time: hm(a.time), text: `${a.title}${a.driver ? `. ${nameOf(a.driver)} is driving you` : ""}` })),
@@ -257,6 +259,16 @@ async function SupportedHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string>
         {today_.length ? today_.map((r, i) => <div key={i} className="trow"><div><b>{r.time}</b><div>{r.text}</div></div></div>)
           : <div className="trow"><div>Nothing planned today.</div></div>}
       </div>
+      {nextAppt && (
+        <Link href={`${base}/appointments/${nextAppt.id}/go`} className="card pad apptcard">
+          <span className="label">{nextAppt.date === t ? "Your appointment today" : nextAppt.date === addDays(t, 1) ? "Your appointment tomorrow" : "Your next appointment"}</span>
+          <b style={{ fontSize: 24 }}>{nextAppt.title}</b>
+          <span>{longDate(nextAppt.date)}{nextAppt.time ? ` at ${hm(nextAppt.time)}` : ""}{nextAppt.location ? `, ${nextAppt.location}` : ""}</span>
+          {nextAppt.driver ? <span>{nameOf(nextAppt.driver)} is taking you</span> : null}
+          {qs && qs.length > 0 && <span><b>Your family has {qs.length === 1 ? "1 question" : `${qs.length} questions`} for you to ask</b>{qs.some((q) => q.asked) ? ` (${qs.filter((q) => q.asked).length} asked)` : ""}</span>}
+          <span className="btn primary block" style={{ marginTop: 8 }}>Open</span>
+        </Link>
+      )}
       {tomorrow.length > 0 && (
         <div className="card pad"><span className="label">Tomorrow</span>{tomorrow.map((r, i) => <p key={i}>{r.time && <b>{r.time} </b>}{r.text}</p>)}</div>
       )}

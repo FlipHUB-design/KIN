@@ -29,6 +29,12 @@ export async function GET(req: NextRequest) {
   if (!admin) return NextResponse.json({ sent: 0, reason: "database not set up" });
   // Touch the database every day so the free Supabase plan doesn't pause the project for inactivity
   await admin.from("care_circles").select("id", { count: "exact", head: true });
+  // Appointment recordings: delete the audio after 30 days, keeping the written notes
+  const { data: oldRecs } = await admin.from("appointment_recordings").select("id, storage_path").not("storage_path", "is", null).lt("created_at", new Date(Date.now() - 30 * 86400000).toISOString()).limit(200);
+  if (oldRecs?.length) {
+    await admin.storage.from("recordings").remove(oldRecs.map((r) => r.storage_path as string));
+    await admin.from("appointment_recordings").update({ storage_path: null, audio_deleted_at: new Date().toISOString() }).in("id", oldRecs.map((r) => r.id));
+  }
   if (!emailOn()) return NextResponse.json({ sent: 0, reason: "email not set up", kept_alive: true });
   const t = today(), y = addDays(t, -1);
 

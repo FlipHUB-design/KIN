@@ -130,6 +130,12 @@ Run `supabase/migrations/0006_family_support.sql` in the Supabase SQL editor. It
 
 Until 0006 is run, the rest of KIN carries on working and these screens show nothing.
 
+### 8. Appointment questions and recordings (migration 0007)
+
+Run `supabase/migrations/0007_appointment_questions_recordings.sql`. Families add questions to an appointment; whoever goes (including the person on their own) opens **At the appointment** to see them in large text, tick them off and note answers, and can record the consultation. Recordings are visible to administrators, family and the person themselves only, and the audio is deleted after 30 days by the daily job.
+
+To turn recordings into a transcript and summary, add `OPENAI_API_KEY` (speech to text, about £0.005 a minute) in Vercel. `ANTHROPIC_API_KEY` writes the summary and answers the family's questions. Without the OpenAI key, recordings are still saved for the family to listen to.
+
 ---
 
 ## Before real families use it

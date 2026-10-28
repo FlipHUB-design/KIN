@@ -82,13 +82,13 @@ export async function ensureDemo(admin: Admin, force = false): Promise<{ care: s
   const ids = await ensureUsers(admin);
   const { data: s } = await admin.auth.admin.getUserById(ids.sarah);
   const meta = (s.user?.user_metadata || {}) as { demo_seeded_on?: string; demo_circle?: string; demo_kids_circle?: string; demo_version?: number };
-  if (!force && meta.demo_seeded_on === today() && meta.demo_circle && meta.demo_kids_circle && meta.demo_version === 4) {
+  if (!force && meta.demo_seeded_on === today() && meta.demo_circle && meta.demo_kids_circle && meta.demo_version === 5) {
     const { data: still } = await admin.from("care_circles").select("id").in("id", [meta.demo_circle, meta.demo_kids_circle]);
     if (still?.length === 2) return { care: meta.demo_circle, kids: meta.demo_kids_circle };
   }
   const care = await seed(admin, ids);
   const kids = await seedKids(admin, ids);
-  await admin.auth.admin.updateUserById(ids.sarah, { user_metadata: { ...meta, demo_seeded_on: today(), demo_circle: care, demo_kids_circle: kids, demo_version: 4 } });
+  await admin.auth.admin.updateUserById(ids.sarah, { user_metadata: { ...meta, demo_seeded_on: today(), demo_circle: care, demo_kids_circle: kids, demo_version: 5 } });
   return { care, kids };
 }
 
@@ -144,8 +144,8 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
   const [hosp] = await ins<{ id: string }>("appointments", [
     { circle_id: M, title: "Outpatient appointment", date: D(1), time: "14:30", location: "Northampton General Hospital", attending: "Margaret and Sarah", needs_transport: true, notes: "Bring the blue folder and current tablets list.", created_by: U.sarah },
   ]);
+  const [gp] = await ins<{ id: string }>("appointments", { circle_id: M, title: "GP review", date: D(2), time: "10:10", location: "Orchard Lane Surgery", attending: "Margaret on her own (everyone's at work)", needs_transport: false, notes: "Margaret is walking there. She'll record it on her phone.", created_by: U.sarah });
   await ins("appointments", [
-    { circle_id: M, title: "GP review", date: D(9), time: "10:10", location: "Orchard Lane Surgery", attending: "Margaret", needs_transport: false, created_by: U.sarah },
     { circle_id: M, title: "Eye test", date: D(13), time: "11:00", location: "Duston opticians", attending: "Margaret and Lucy", needs_transport: false, notes: "Lucy is walking Gran there.", created_by: U.sarah },
   ]);
 
@@ -259,11 +259,24 @@ async function seed(admin: Admin, U: Record<Persona, string>) {
 
   // ---------------------------------------------------------------- newer features (migration 0006)
   await softUpdate(admin, "appointments", {
-    pack_questions: "Is the new tablet helping with her breathing?\nDoes she still need the follow-up scan?\nWho do we call if she gets worse before the next appointment?",
     pack_bring: "Blue folder, medication list, glasses and hearing aid, a snack and a bottle of water.",
     pack_parking: "Multi-storey car park off Cliftonville Road. Blue badge spaces on level 1. Outpatients is through the main entrance, then left.",
   }, hosp.id);
   const [bloods] = await ins<{ id: string }>("appointments", { circle_id: M, title: "Blood test", date: D(-7), time: "09:20", location: "Orchard Lane Surgery", attending: "Margaret and Anthony", needs_transport: true, driver: U.anthony, created_by: U.sarah });
+  await soft(admin, "appointment_questions", [
+    { circle_id: M, appointment_id: hosp.id, body: "Is the new tablet helping with her breathing?", added_by: U.sarah, created_at: ts(-2, "19:00") },
+    { circle_id: M, appointment_id: hosp.id, body: "Does she still need the follow-up scan?", added_by: U.david, created_at: ts(-1, "20:05") },
+    { circle_id: M, appointment_id: hosp.id, body: "Who do we call if she gets worse before the next appointment?", added_by: U.sarah, created_at: ts(-2, "19:01") },
+    { circle_id: M, appointment_id: gp.id, body: "Can the knee pain be looked at while you're there?", added_by: U.sarah, created_at: ts(-1, "18:30") },
+    { circle_id: M, appointment_id: gp.id, body: "Ask if the Amlodipine could be why your ankles are swelling.", added_by: U.anthony, created_at: ts(-1, "19:10") },
+    { circle_id: M, appointment_id: gp.id, body: "Could you have the flu jab at the same time?", added_by: U.lucy, created_at: ts(0, "08:15") },
+    { circle_id: M, appointment_id: bloods.id, body: "When will the results be back?", added_by: U.sarah, created_at: ts(-8, "19:00"), asked: true, answer: "About a week. The surgery texts if anything needs a follow-up.", answered_at: ts(-7, "10:15") },
+  ]);
+  await soft(admin, "appointment_recordings", {
+    circle_id: M, appointment_id: bloods.id, storage_path: null, mime: "audio/mp4", seconds: 274, consent_confirmed: true, status: "done", recorded_by: U.anthony, created_at: ts(-7, "09:31"),
+    transcript: "Nurse: Morning Margaret, take a seat. This is just your routine bloods for the blood pressure and cholesterol tablets.\nMargaret: My son's recording this for my daughter, is that all right?\nNurse: Of course. Left arm or right?\nMargaret: Left please, I'm right-handed.\nAnthony: When will the results be back?\nNurse: About a week. If anything needs following up, the surgery will text you, and if not, you won't hear anything.\nMargaret: And I keep taking everything as normal?\nNurse: Yes, carry on as normal. The GP will look at the results at your review.",
+    summary: { summary: "Routine blood tests for Margaret's blood pressure and cholesterol tablets. The nurse said results take about a week, and the surgery will text if anything needs following up. Margaret should carry on with her tablets as normal; the GP will go through the results at her review.", answers: [], medicines: ["No changes. Carry on as normal."], next_steps: ["The surgery will text if the results need a follow-up", "The GP will go through the results at the review"], follow_up: "GP review (already booked)" },
+  });
   await soft(admin, "discussions", [
     { circle_id: M, subject_type: "appointment", subject_id: hosp.id, author: U.david, body: "Can someone ask about the follow-up scan? Last time they said it might not be needed.", created_at: ts(-1, "20:05") },
     { circle_id: M, subject_type: "appointment", subject_id: hosp.id, author: U.sarah, body: "Added it to the questions. I'll write up what they say afterwards.", created_at: ts(-1, "20:30") },

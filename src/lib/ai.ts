@@ -5,7 +5,7 @@ import { today } from "@/lib/kin";
 export const AI_MODEL = process.env.KIN_AI_MODEL || process.env.KIN_LETTER_MODEL || "claude-haiku-4-5-20251001";
 export const aiOn = () => !!process.env.ANTHROPIC_API_KEY;
 
-export const LIMITS = { setup: 6, help: 40, letter: 30, tone: 30, email: 40 } as const;
+export const LIMITS = { setup: 6, help: 40, letter: 30, tone: 30, email: 40, transcribe: 8 } as const;
 
 /** Counts one use and says whether the person is still within today's limit. */
 export async function takeAllowance(userId: string, kind: keyof typeof LIMITS) {

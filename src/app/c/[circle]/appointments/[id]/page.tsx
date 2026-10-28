@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCircle } from "@/lib/data";
-import { canEdit, hm, longDate, type Appointment } from "@/lib/kin";
+import { canEdit, hm, isInner, longDate, today, type Appointment } from "@/lib/kin";
+import Questions from "@/components/Questions";
+import Recordings from "@/components/Recordings";
+import Recorder from "@/components/Recorder";
+import { transcribeOn } from "@/lib/transcribe";
 import { Hidden, Notice } from "@/components/ui";
 import { claimTask, deleteAppointment, savePack } from "../../actions";
 import Thread from "@/components/Thread";
@@ -9,12 +13,13 @@ import Thread from "@/components/Thread";
 export default async function AppointmentPage({ params, searchParams }: { params: Promise<{ circle: string; id: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: cid, id } = await params;
   const sp = await searchParams;
-  const { supabase, role, nameOf, circle } = await getCircle(cid);
+  const { supabase, role, nameOf, circle, user } = await getCircle(cid);
   const kidsMode = circle.kind === "children";
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await supabase.from("appointments").select("*").eq("id", id).eq("circle_id", cid).maybeSingle();
   if (!data) notFound();
   const a = data as Appointment;
+  const inner = isInner(role, circle.kind) && !kidsMode;
   const { data: tr } = await supabase.from("tasks").select("id, assignee, status").eq("appointment_id", id).maybeSingle();
   return (
     <main className="page">
@@ -34,23 +39,25 @@ export default async function AppointmentPage({ params, searchParams }: { params
         <form action={claimTask}><Hidden circle={cid} id={tr.id} ret={`/appointments/${id}`} /><button className="btn primary block">{kidsMode ? "I'll take them" : "I'll drive"}</button></form>
       )}
       {tr && <Link href={`/c/${cid}/tasks/${tr.id}`} className="link">{kidsMode ? "Pick-up task" : "Transport task"}</Link>}
+      {role !== "helper" && a.date >= today() && (
+        <Link href={`/c/${cid}/appointments/${id}/go`} className="btn block">{kidsMode ? "Open the questions to take with you" : `At the appointment: questions${inner ? " and recording" : ""} in large text`}</Link>
+      )}
 
       <section className="stack" id="pack">
         <h2>{kidsMode ? "Before you go" : "Appointment pack"}</h2>
-        {(a.pack_questions || a.pack_bring || a.pack_parking) ? (
+        {(a.pack_bring || a.pack_parking) ? (
           <div className="card"><dl className="kv">
             <dt>{kidsMode ? "Taking them" : "Who's taking " + (circle.preferred_name || "them")}</dt><dd>{a.needs_transport ? (a.driver ? nameOf(a.driver) : "No one yet") : a.attending || "Not set"}</dd>
-            {a.pack_questions && <><dt>Questions to ask</dt><dd style={{ whiteSpace: "pre-wrap" }}>{a.pack_questions}</dd></>}
             {a.pack_bring && <><dt>What to bring</dt><dd style={{ whiteSpace: "pre-wrap" }}>{a.pack_bring}</dd></>}
             {a.pack_parking && <><dt>Parking and getting there</dt><dd style={{ whiteSpace: "pre-wrap" }}>{a.pack_parking}</dd></>}
           </dl></div>
-        ) : <p className="muted small">Nothing added yet. Add the questions to ask, what to bring and where to park, so whoever goes has it all.</p>}
+        ) : <p className="muted small">Nothing added yet. Add what to bring and where to park, so whoever goes has it all.</p>}
         {canEdit(role) && (
           <details className="card pad">
-            <summary style={{ fontWeight: 700, cursor: "pointer" }}>{a.pack_questions || a.pack_bring || a.pack_parking ? "Edit the pack" : "Add to the pack"}</summary>
+            <summary style={{ fontWeight: 700, cursor: "pointer" }}>{a.pack_bring || a.pack_parking ? "Edit the pack" : "Add to the pack"}</summary>
             <form action={savePack} className="form" style={{ marginTop: 12 }}>
               <Hidden circle={cid} id={id} />
-              <label className="fl">Questions to ask<textarea name="pack_questions" rows={4} defaultValue={a.pack_questions || ""} placeholder={kidsMode ? "e.g. How is she getting on with reading?" : "e.g. Can the new tablets be taken with her blood pressure ones?"} /></label>
+              {a.pack_questions && <label className="fl">Earlier questions<textarea name="pack_questions" rows={3} defaultValue={a.pack_questions} /><span className="note">New questions go in Questions to ask below, where they can be ticked off.</span></label>}
               <label className="fl">What to bring<textarea name="pack_bring" rows={2} defaultValue={a.pack_bring || ""} placeholder="e.g. Appointment letter, medication list, glasses" /></label>
               <label className="fl">Parking and getting there<textarea name="pack_parking" rows={2} defaultValue={a.pack_parking || ""} placeholder="e.g. Car park B, pay at the machine. Drop-off by main entrance." /></label>
               <span className="note">Everyone who can see this {kidsMode ? "event" : "appointment"} can read the pack.</span>
@@ -59,6 +66,21 @@ export default async function AppointmentPage({ params, searchParams }: { params
           </details>
         )}
       </section>
+
+      {role !== "helper" && <Questions supabase={supabase} circleId={cid} appointmentId={id} nameOf={nameOf} legacy={a.pack_questions} ret={`/appointments/${id}`}
+        canAdd me={user.id} canEdit={canEdit(role)} past={a.date < today()} />}
+
+      {inner && (
+        <section className="stack" id="recordings">
+          <h2>Recordings</h2>
+          <Recordings supabase={supabase} circleId={cid} appointmentId={id} nameOf={nameOf} me={user.id} canEdit={canEdit(role)} />
+          <details className="card pad">
+            <summary style={{ fontWeight: 700, cursor: "pointer" }}>Record this appointment</summary>
+            <p className="small">Whoever goes, including {circle.preferred_name} on their own, can record what the doctor or nurse says. {transcribeOn() ? "KIN writes it up for the family." : "The family can listen to it here."}</p>
+            <Recorder circleId={cid} appointmentId={id} name={circle.preferred_name} writeUp={transcribeOn()} />
+          </details>
+        </section>
+      )}
 
       {role !== "helper" && <Thread supabase={supabase} circleId={cid} type="appointment" subjectId={id} nameOf={nameOf} canPost kind="outcome" filter="outcome"
         title={kidsMode ? "Notes afterwards" : "What was said"} empty={kidsMode ? "No notes yet." : "No notes yet. Afterwards, anyone can add what was said, so the family isn't relying on one person's memory."}

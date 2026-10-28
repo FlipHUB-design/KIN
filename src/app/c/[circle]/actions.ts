@@ -791,12 +791,52 @@ export async function savePack(f: FormData) {
   const c = await ctx(f);
   const id = s(f, "id");
   const { error } = await c.supabase.from("appointments").update({
-    pack_questions: n(f, "pack_questions")?.slice(0, 2000) ?? null, pack_bring: n(f, "pack_bring")?.slice(0, 1000) ?? null,
+    ...(f.has("pack_questions") ? { pack_questions: n(f, "pack_questions")?.slice(0, 2000) ?? null } : {}),
+    pack_bring: n(f, "pack_bring")?.slice(0, 1000) ?? null,
     pack_parking: n(f, "pack_parking")?.slice(0, 1000) ?? null,
   }).eq("id", id).eq("circle_id", c.circleId);
   if (error) fail(c.circleId, `/appointments/${id}`, "Only family members can change the appointment pack.");
   revalidatePath(`/c/${c.circleId}`, "layout");
   back(c.circleId, `/appointments/${id}`, "Appointment pack saved");
+}
+
+// ---------------------------------------------------------------- questions for an appointment
+const apptRet = (f: FormData, id: string) => { const r = s(f, "ret"); return /^\/appointments\/[0-9a-f-]{36}(\/go)?(#[a-z]+)?$/i.test(r) ? r : `/appointments/${id}`; };
+
+export async function addQuestion(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id"), ret = apptRet(f, id);
+  const lines = s(f, "body").split(/\n+/).map((l) => l.replace(/^[-•*\d.)\s]+/, "").trim()).filter(Boolean).slice(0, 10);
+  if (!lines.length) back(c.circleId, ret);
+  const { error } = await c.supabase.from("appointment_questions").insert(lines.map((body) => ({ circle_id: c.circleId, appointment_id: id, body: body.slice(0, 300), added_by: c.user.id })));
+  if (error) fail(c.circleId, ret, "You can't add questions to this appointment.");
+  const { data: a } = await c.supabase.from("appointments").select("title, driver").eq("id", id).maybeSingle();
+  const supported = c.members.filter((m) => m.role === "supported" && m.status === "active").map((m) => m.user_id);
+  alert(c, "update", [a?.driver, ...supported], `${myName(c)} added ${lines.length === 1 ? "a question" : `${lines.length} questions`} for ${a?.title || "an appointment"}`, lines.join("\n").slice(0, 300), `/appointments/${id}/go`);
+  await activity(c, lines.length === 1 ? "added a question for" : `added ${lines.length} questions for`, a?.title || null);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, ret, lines.length === 1 ? "Question added" : "Questions added");
+}
+
+export async function answerQuestion(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id"), qid = s(f, "question"), ret = apptRet(f, id);
+  const answer = n(f, "answer")?.slice(0, 2000) ?? null;
+  const asked = f.get("asked") === "on" || !!answer || s(f, "asked") === "yes";
+  const { error } = await c.supabase.from("appointment_questions").update({
+    asked, ...(f.has("answer") ? { answer, answered_by: answer ? c.user.id : null, answered_at: answer ? new Date().toISOString() : null } : {}),
+  }).eq("id", qid).eq("appointment_id", id);
+  if (error) fail(c.circleId, ret, "Couldn't save that.");
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, `${ret}${ret.includes("#") ? "" : "#questions"}`);
+}
+
+export async function removeQuestion(f: FormData) {
+  const c = await ctx(f);
+  const id = s(f, "id"), ret = apptRet(f, id);
+  await c.supabase.from("appointment_questions").delete().eq("id", s(f, "question")).eq("appointment_id", id);
+  revalidatePath(`/c/${c.circleId}`, "layout");
+  back(c.circleId, ret, "Question removed");
 }
 
 // ---------------------------------------------------------------- medications

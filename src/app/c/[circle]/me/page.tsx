@@ -23,11 +23,12 @@ export default async function Me({ params }: { params: Promise<{ circle: string 
       <h2 id="appointments">My appointments</h2>
       <div className="stack">
         {((appts || []) as Appointment[]).map((a) => (
-          <div key={a.id} className="card pad">
+          <Link key={a.id} href={`/c/${id}/appointments/${a.id}/go`} className="card pad" style={{ display: "block", color: "inherit", textDecoration: "none" }}>
             <b>{dayLabel(a.date)}{a.time ? `, ${hm(a.time)}` : ""}</b>
             <div>{a.title}{a.location ? `, ${a.location}` : ""}</div>
             {a.driver && <div className="muted">{nameOf(a.driver)} is driving you</div>}
-          </div>
+            <div className="link">Questions and recording ›</div>
+          </Link>
         ))}
         {!appts?.length && <p className="muted">No appointments booked.</p>}
       </div>

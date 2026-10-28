@@ -26,6 +26,7 @@ await db.exec(`alter default privileges in schema public grant all on tables to 
 await db.exec(fs.readFileSync(new URL("../migrations/0004_notifications.sql", import.meta.url), "utf8"));
 await db.exec(fs.readFileSync(new URL("../migrations/0005_ai_usage.sql", import.meta.url), "utf8"));
 try { await db.exec(fs.readFileSync(new URL("../migrations/0006_family_support.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0006 ERROR:", e.message); process.exit(1); }
+try { await db.exec(fs.readFileSync(new URL("../migrations/0007_appointment_questions_recordings.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0007 ERROR:", e.message); process.exit(1); }
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -195,6 +196,31 @@ ok((await feed(U.helen)).some(r=>r.title==='Cleaning'), "a helper's calendar sho
 const jeanFeed = (await feed(K.jean)).map(r=>r.title);
 ok(jeanFeed.includes('Parents evening') && !jeanFeed.includes('Mediation session'), "grandparent's calendar leaves out parents-only events");
 ok((await db.query(`select * from calendar_feed('nope')`)).rows.length===0, "an unknown calendar link shows nothing");
+
+// ---------------------------------------------------------------- appointment questions and recordings (0007)
+await as(U.lucy, `insert into appointment_questions (circle_id,appointment_id,body,added_by) values ($1,$2,'Is the new tablet helping?',$3)`, [circle, hosp, U.lucy]);
+ok((await as(U.anthony, `select * from appointment_questions`)).rows.length===1, "family can read questions a contributor added");
+ok((await as(U.helen, `select * from appointment_questions`)).rows.length===0, "helper can't read appointment questions");
+let helperQ=true; try { await as(U.helen, `insert into appointment_questions (circle_id,appointment_id,body,added_by) values ($1,$2,'x',$3)`, [circle, hosp, U.helen]) } catch { helperQ=false }
+ok(!helperQ, "helper can't add questions");
+const ticked = await as(U.anthony, `update appointment_questions set asked=true, answer='Yes, keep going' returning id`);
+ok(ticked.rows.length===1, "whoever goes can tick off a question and write the answer");
+ok((await as(U.eve, `update appointment_questions set asked=false returning id`)).rows.length===0, "outsider can't change questions");
+await as(U.anthony, `insert into appointment_recordings (circle_id,appointment_id,storage_path,consent_confirmed,recorded_by) values ($1,$2,$3,true,$4)`, [circle, hosp, circle+'/rec1.webm', U.anthony]);
+await db.exec(`insert into storage.objects (bucket_id,name) values ('recordings','${circle}/rec1.webm')`);
+ok((await as(U.sarah, `select * from appointment_recordings`)).rows.length===1, "administrator can see a recording");
+ok((await as(U.lucy, `select * from appointment_recordings`)).rows.length===0 && (await as(U.helen, `select * from appointment_recordings`)).rows.length===0, "contributors and helpers can't see recordings");
+ok((await as(U.lucy, `select * from storage.objects where bucket_id='recordings'`)).rows.length===0, "contributor can't download the audio");
+ok((await as(U.sarah, `select * from storage.objects where bucket_id='recordings'`)).rows.length===1, "family can listen to the audio");
+let noConsent=true; try { await as(U.sarah, `insert into appointment_recordings (circle_id,appointment_id,storage_path,consent_confirmed,recorded_by) values ($1,$2,$3,false,$4)`, [circle, hosp, circle+'/rec2.webm', U.sarah]) } catch { noConsent=false }
+ok(!noConsent, "a recording can't be saved without confirming the clinician agreed");
+let fakeSummary=true; try { await as(U.sarah, `insert into appointment_recordings (circle_id,appointment_id,storage_path,consent_confirmed,recorded_by,summary) values ($1,$2,$3,true,$4,'{"summary":"made up"}')`, [circle, hosp, circle+'/rec3.webm', U.sarah]) } catch { fakeSummary=false }
+ok(!fakeSummary, "people can't write a summary themselves");
+ok((await as(U.sarah, `update appointment_recordings set transcript='edited' returning id`)).rows.length===0, "transcripts can't be edited");
+let otherCircle=true; try { await as(U.sarah, `insert into appointment_recordings (circle_id,appointment_id,storage_path,consent_confirmed,recorded_by) values ($1,$2,$3,true,$4)`, [circle, hosp, fam+'/x.webm', U.sarah]) } catch { otherCircle=false }
+ok(!otherCircle, "recordings must be filed under their own circle");
+let lucyUp=true; try { await as(U.lucy, `insert into storage.objects (bucket_id,name) values ('recordings',$1)`, [circle+'/lucy.webm']) } catch { lucyUp=false }
+ok(!lucyUp, "contributor can't upload recordings");
 
 // ---------------------------------------------------------------- alerts
 await db.query(`insert into notifications (circle_id,user_id,level,title) values ($1,$2,'answer','Dan asked to change the schedule'),($1,$3,'update','Leah agreed')`, [fam, K.leah, K.dan]);
