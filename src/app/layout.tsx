@@ -9,7 +9,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "KIN",
   appleWebApp: { capable: true, title: "KIN", statusBarStyle: "default" },
-  description: "Everyone who cares, in one place. Shared family admin for children and older parents.",
+  description: "Keeping families connected. Making care simple. Shared family admin for children and older parents.",
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#2B6A55" };
 

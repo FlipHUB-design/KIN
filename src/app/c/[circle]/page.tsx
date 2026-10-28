@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
+import HomeLogo from "@/components/HomeLogo";
 import {
   addDays, balances, canEdit, circleStatus, dateOf, dayLabel, dayWord, hm, isOverdue, longDate, missedCheckin, money, timeOf, today, when,
   type Activity, type Appointment, type Checkin, type Expense, type Settlement, type Task,
@@ -7,7 +8,6 @@ import {
 import { Disclaimer, Header, Hidden, Notice, Rows, taskRow, type Row } from "@/components/ui";
 import { askFamily, checkOut, dismissMissed, needHelp, wellbeing } from "./actions";
 import { KidsFamilyHome, KidsHelperHome, YoungPersonHome } from "./KidsHome";
-import Wordmark from "@/components/Wordmark";
 import { gaps, rota } from "@/lib/support";
 import { trend, type Entry } from "@/lib/wellbeing";
 
@@ -253,7 +253,7 @@ async function SupportedHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string>
   const today_ = on(t), tomorrow = on(addDays(t, 1));
   return (
     <main className="page sp">
-      <div><span className="brand"><Wordmark /></span><h1>Today</h1><p className="muted">{longDate(t)}</p></div>
+      <div><HomeLogo /><h1>Today</h1><p className="muted">{longDate(t)}</p></div>
       <Notice sp={sp} />
       <div className="stack">
         {today_.length ? today_.map((r, i) => <div key={i} className="trow"><div><b>{r.time}</b><div>{r.text}</div></div></div>)

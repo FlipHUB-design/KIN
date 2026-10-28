@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { getCircle } from "@/lib/data";
+import HomeLogo from "@/components/HomeLogo";
 import { loadFamily, type Family } from "@/lib/family";
 import {
   addDays, ageOn, balances, canEdit, childNames, dayLabel, dayWord, hm, isLift, isOverdue, kidsLabel, kindOf, longDate, money, nextHandover, sharesOf, timeOf, today, when,
@@ -7,7 +8,6 @@ import {
 } from "@/lib/kin";
 import { Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
 import { checkOut, agreeChange, declineChange, youngPersonAsk } from "./actions";
-import Wordmark from "@/components/Wordmark";
 import ToneCheck from "@/components/ToneCheck";
 import KidWeek, { House } from "@/components/KidWeek";
 import PackList from "@/components/PackList";
@@ -340,7 +340,7 @@ export async function YoungPersonHome({ ctx, sp }: { ctx: Ctx; sp: Record<string
   const when12 = (d: string, time?: string | null) => `${dayLabel(d)}${time ? ` at ${clock12(time)}` : ""}`;
   return (
     <main className="page sp yp" style={{ fontSize: 18 }}>
-      <div className="top"><div><span className="brand"><Wordmark /></span><h1>Hi {name}</h1><p className="muted">{longDate(t)}</p></div></div>
+      <div className="top"><div><HomeLogo /><h1>Hi {name}</h1><p className="muted">{longDate(t)}</p></div></div>
       <Notice sp={sp} />
       {tonight ? (
         <section className={`yp-tonight col-${tonight.colour}`}>

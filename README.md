@@ -1,6 +1,6 @@
 # KIN
 
-**Everyone who cares, in one place.**
+**Keeping families connected. Making care simple.**
 
 KIN is a private family coordination app for supporting an ageing parent or relative. A family creates a Care Circle around one person, invites relatives and helpers with the right level of access, and shares visits, lifts to appointments, household jobs, contacts and documents in one place.
 
