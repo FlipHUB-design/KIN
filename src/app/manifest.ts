@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "KIN",
     short_name: "KIN",
-    description: "Family admin, shared. Know what's happening, what needs doing and who's doing it.",
+    description: "Family admin, shared. Everyone who cares, in one place.",
     start_url: "/circles",
     display: "standalone",
     background_color: "#F2F4F1",

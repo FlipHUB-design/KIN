@@ -10,7 +10,7 @@ export default async function Landing() {
     <main className="page" style={{ paddingBottom: 48, gap: 28 }}>
       <span className="brand"><Wordmark /></span>
       <section className="stack" style={{ gap: 14 }}>
-        <h1 style={{ fontSize: 34, lineHeight: 1.15 }}>Know what&apos;s happening. Know what needs doing. Know who&apos;s doing it.</h1>
+        <h1 style={{ fontSize: 38, lineHeight: 1.1 }}>Everyone who cares, in one place.</h1>
         <p className="muted" style={{ fontSize: 18 }}>
           KIN is the shared admin app for families. Bring up children across one home or two, or support an older parent,
           with the schedule, school letters, pick-ups, costs and paperwork in one calm place.
