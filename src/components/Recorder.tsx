@@ -99,7 +99,7 @@ export default function Recorder({ circleId, appointmentId, name, writeUp, big }
 
   const cls = big ? "btn primary block bigbtn" : "btn primary";
   return (
-    <div className={`recorder${big ? " big" : ""}`}>
+    <div className={`recorder${big ? " large" : ""}`}>
       {stage === "idle" && <>
         <label className="consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
           <span>I&apos;ve asked the doctor or nurse, and they&apos;re happy for me to record this for my family.</span></label>

@@ -268,12 +268,12 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .questions .qcard.asked { background: var(--accent-soft, var(--sunk)); }
 .questions .qbody { margin: 0; font-weight: 700; flex: 1; }
 .questions .qanswer { margin: 4px 0 0; white-space: pre-wrap; }
-.questions.big .qbody { font-size: 22px; line-height: 1.35; }
-.questions.big .qcard.asked .qbody { text-decoration: line-through; text-decoration-thickness: 2px; opacity: .75; }
+.questions.large .qbody { font-size: 22px; line-height: 1.35; }
+.questions.large .qcard.asked .qbody { text-decoration: line-through; text-decoration-thickness: 2px; opacity: .75; }
 .recorder { display: flex; flex-direction: column; gap: 12px; }
 .recorder .consent { display: flex; gap: 12px; align-items: flex-start; font-weight: 600; }
 .recorder .consent input { width: 24px; height: 24px; flex: none; margin-top: 2px; }
-.recorder.big .consent input { width: 30px; height: 30px; }
+.recorder.large .consent input { width: 30px; height: 30px; }
 .recorder .bigbtn { min-height: 64px; font-size: 20px; }
 .recnow { display: flex; align-items: center; gap: 10px; font: 800 26px var(--font-display), sans-serif; font-variant-numeric: tabular-nums; }
 .recdot { width: 16px; height: 16px; border-radius: 50%; background: var(--coral); animation: recpulse 1.2s ease-in-out infinite; }

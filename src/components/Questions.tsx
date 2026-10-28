@@ -14,7 +14,7 @@ export default async function Questions({ supabase, circleId, appointmentId, nam
   const qs = (data || []) as Q[];
   const done = qs.filter((q) => q.asked).length;
   return (
-    <section className={`stack questions${big ? " big" : ""}`} id="questions">
+    <section className={`stack questions${big ? " large" : ""}`} id="questions">
       <div className="row between"><h2>Questions to ask</h2>{qs.length > 0 && <span className="tag">{done} of {qs.length} asked</span>}</div>
       {legacy && <div className="card pad"><p className="small muted">From the appointment pack</p><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{legacy}</p></div>}
       {!qs.length && !legacy && <p className="muted small">No questions yet. Add anything the family wants asked, so whoever goes, even on their own, has them all in one place.</p>}
