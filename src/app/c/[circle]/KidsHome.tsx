@@ -9,6 +9,10 @@ import { Header, Hidden, Notice, Rows, type Row } from "@/components/ui";
 import { checkOut, agreeChange, declineChange, youngPersonAsk } from "./actions";
 import Wordmark from "@/components/Wordmark";
 import ToneCheck from "@/components/ToneCheck";
+import KidWeek, { House } from "@/components/KidWeek";
+import PackList from "@/components/PackList";
+import { kidWeek } from "@/lib/kidweek";
+import { childCalls, clock12, houseName } from "@/lib/support";
 
 type Ctx = Awaited<ReturnType<typeof getCircle>>;
 
@@ -314,66 +318,89 @@ export async function YoungPersonHome({ ctx, sp }: { ctx: Ctx; sp: Record<string
   const t = today();
   const fam = await loadFamily(supabase, circle.id, { from: addDays(t, -1), days: 15 });
   const me = fam.children.find((k) => k.user_id === user.id);
-  const [{ data: tasks }, { data: appts }, { data: rules }, { data: items }] = await Promise.all([
-    supabase.from("tasks").select("*").eq("circle_id", circle.id).in("status", ["open", "accepted"]).lte("due_date", addDays(t, 7)).order("due_date"),
-    supabase.from("appointments").select("*").eq("circle_id", circle.id).gte("date", addDays(t, -14)).lte("date", addDays(t, 14)).order("date"),
+  const [{ data: tasks }, { data: appts }, { data: rules }, { data: items }, week] = await Promise.all([
+    supabase.from("tasks").select("*").eq("circle_id", circle.id).eq("assignee", user.id).in("status", ["open", "accepted"]).lte("due_date", addDays(t, 14)).order("due_date"),
+    supabase.from("appointments").select("*").eq("circle_id", circle.id).gte("date", addDays(t, -14)).lte("date", addDays(t, 21)).order("date"),
     supabase.from("agreements").select("*").eq("circle_id", circle.id).eq("status", "agreed"),
     supabase.from("child_items").select("*").eq("circle_id", circle.id),
+    me && fam.twoHomes ? kidWeek(supabase, circle.id, me.id, 7, ctx.nameOf) : Promise.resolve(null),
   ]);
   const tonight = fam.home(fam.nightOf(t)?.household_id);
   const next = nextHandover(fam.nights);
   const nextHome = fam.home(next?.to);
   const mine = ((items || []) as ChildItem[]).filter((i) => !i.child_id || i.child_id === me?.id);
-  const myAppts = ((appts || []) as Appointment[]).filter((a) => (a.end_date || a.date) >= t && (!a.child_ids?.length || (me && a.child_ids.includes(me.id))));
+  const myAppts = ((appts || []) as Appointment[]).filter((a) => (a.end_date || a.date) >= t && (!a.child_ids?.length || (me && a.child_ids.includes(me.id)))).slice(0, 6);
   const name = me?.first_name || (members.find((m) => m.user_id === user.id)?.profiles?.display_name || "").split(" ")[0];
   const parents = members.filter((m) => ["admin", "family"].includes(m.role) && m.status === "active");
+  // Only this child's things to pack: drop a brother's or sister's items, and say "your" for theirs
+  const siblings = fam.children.filter((k) => k.id !== me?.id).map((k) => k.first_name.toLowerCase());
+  const pack = (circle.packing_list || [])
+    .filter((p) => !siblings.some((sib) => p.toLowerCase().startsWith(sib + "'s ")))
+    .map((p) => (name && p.toLowerCase().startsWith(name.toLowerCase() + "'s ") ? "Your " + p.slice(name.length + 3) : p));
+  const when12 = (d: string, time?: string | null) => `${dayLabel(d)}${time ? ` at ${clock12(time)}` : ""}`;
   return (
-    <main className="page sp" style={{ fontSize: 18 }}>
+    <main className="page sp yp" style={{ fontSize: 18 }}>
       <div className="top"><div><span className="brand"><Wordmark /></span><h1>Hi {name}</h1><p className="muted">{longDate(t)}</p></div></div>
       <Notice sp={sp} />
       {tonight ? (
         <section className={`yp-tonight col-${tonight.colour}`}>
-          <span className="label">Tonight you&apos;re at</span><b>{tonight.name}</b>
-          {next && nextHome && <span>Then {nextHome.name} from <strong>{["Today", "Tomorrow"].includes(dayLabel(next.date)) ? dayWord(next.date) : dayLabel(next.date)}</strong>{circle.handover_note ? ` (${circle.handover_note.toLowerCase()})` : ""}</span>}
+          <House colour={tonight.colour} />
+          <span className="label">Tonight you&apos;re at</span><b>{houseName(tonight.name)}</b>
+          {next && nextHome && <span>Then <strong>{houseName(nextHome.name)}</strong> from {["Today", "Tomorrow"].includes(dayLabel(next.date)) ? dayWord(next.date) : dayLabel(next.date)}</span>}
         </section>
       ) : null}
-      {fam.twoHomes && <Strip fam={fam} days={14} />}
-      {next && nextHome && (circle.packing_list || []).length > 0 && (
+
+      {week && <section className="stack"><h2>Your week</h2><KidWeek name={name} days={week} /></section>}
+
+      {next && nextHome && pack.length > 0 && (
         <section className="card pad">
-          <h2>Pack for {nextHome.name}, {dayWord(next.date)}</h2>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>{(circle.packing_list || []).map((p) => <li key={p}>{p}</li>)}</ul>
+          <h2>Pack for {houseName(nextHome.name)}</h2>
+          <p className="small muted" style={{ marginTop: -6 }}>{dayWord(next.date) === dayLabel(next.date) ? `On ${dayLabel(next.date)}` : dayLabel(next.date)}{circle.handover_note ? ` · ${circle.handover_note}` : ""}</p>
+          <PackList items={pack} storeKey={`kin-pack-${circle.id}-${next.date}`} />
         </section>
       )}
-      <section className="stack"><h2>Coming up for you</h2>
-        <div className="card list">
-          {myAppts.map((a) => <div key={a.id} className="item k-appointment"><span className="bar" /><span className="main"><span className="t">{a.title}</span><span className="s">{a.end_date ? `${dayLabel(a.date)} to ${dayLabel(a.end_date)}` : `${dayLabel(a.date)}${a.time ? ` at ${hm(a.time)}` : ""}`}{a.location ? ` · ${a.location}` : ""}</span></span></div>)}
-          {((tasks || []) as Task[]).map((x) => <div key={x.id} className="item k-task"><span className="bar" /><span className="main"><span className="t">{x.title}</span><span className="s">{dayLabel(x.due_date)}{x.due_time ? ` at ${hm(x.due_time)}` : ""}{x.assignee && x.assignee !== user.id ? ` · ${ctx.nameOf(x.assignee)}` : ""}</span></span></div>)}
-          {!myAppts.length && !tasks?.length && <p className="empty">Nothing this week.</p>}
-        </div>
-      </section>
+
+      {(myAppts.length > 0 || (tasks || []).length > 0) && (
+        <section className="stack"><h2>Coming up</h2>
+          <div className="card list">
+            {myAppts.map((a) => <div key={a.id} className="item k-appointment"><span className="bar" /><span className="main"><span className="t">{a.title}</span><span className="s">{a.end_date ? `${dayLabel(a.date)} to ${dayLabel(a.end_date)}` : when12(a.date, a.time)}{a.location ? ` · ${a.location}` : ""}</span></span></div>)}
+            {((tasks || []) as Task[]).map((x) => <div key={x.id} className="item k-task"><span className="bar" /><span className="main"><span className="t">{x.title}</span><span className="s">Your job · {x.due_date ? when12(x.due_date, x.due_time) : "No date"}</span></span></div>)}
+          </div>
+        </section>
+      )}
+
       {mine.length > 0 && (
         <section className="stack"><h2>Where is it?</h2>
-          <div className="card list">{mine.map((i) => <div key={i.id} className="item"><span className="main"><span className="t">{i.name}</span><span className="s">{fam.home(i.household_id)?.name || "Somewhere else"}{i.location_note ? ` · ${i.location_note}` : ""}</span></span></div>)}</div>
+          <div className="card list">{mine.map((i) => <div key={i.id} className="item"><span className="main"><span className="t">{i.name}</span><span className="s">At {houseName(fam.home(i.household_id)?.name || "somewhere else")}{i.location_note ? ` · ${i.location_note}` : ""}</span></span></div>)}</div>
         </section>
       )}
-      {(rules || []).length > 0 && (
-        <section className="stack"><h2>Rules in both homes</h2>
-          <div className="card list">{((rules || []) as Agreement[]).map((r) => <div key={r.id} className="item"><span className="main"><span className="t">{r.title}</span>{r.detail && <span className="s">{r.detail}</span>}</span></div>)}</div>
-        </section>
-      )}
+
       <form action={youngPersonAsk} className="card pad form">
         <Hidden circle={circle.id} />
         <h2>Need something?</h2>
-        <label className="fl" style={{ fontSize: 16 }}>Tell your parents<input name="message" maxLength={200} placeholder="e.g. £3 for non-uniform day on Friday" /></label>
+        <label className="fl" style={{ fontSize: 16 }}>Tell {parents.length > 1 ? "both your parents" : "your parent"}<input name="message" maxLength={200} placeholder="e.g. £3 for non-uniform day on Friday" /></label>
         <button className="btn primary">Send</button>
       </form>
-      <section className="card pad">
-        <b>Your parents</b>
-        {parents.map((m) => <p key={m.user_id}>{m.profiles?.display_name}: <span className="phone">{m.profiles?.phone || "no number added"}</span></p>)}
+
+      <section className="yp-call">
+        {parents.map((m) => {
+          const who = childCalls(m.relationship, m.profiles?.display_name);
+          return m.profiles?.phone
+            ? <a key={m.user_id} href={`tel:${m.profiles.phone.replace(/\s+/g, "")}`} className="btn block">Call {who}</a>
+            : <span key={m.user_id} className="btn block" aria-disabled="true">{who}: no number yet</span>;
+        })}
       </section>
+
+      {(rules || []).length > 0 && (
+        <details className="card pad">
+          <summary style={{ fontWeight: 700, cursor: "pointer" }}>Rules in both homes</summary>
+          <ul style={{ margin: "10px 0 0", paddingLeft: 20 }}>{((rules || []) as Agreement[]).map((r) => <li key={r.id}>{r.title}</li>)}</ul>
+        </details>
+      )}
+
       <section className="card pad">
         <b>Want to talk to someone?</b>
-        <p className="small">Childline is free and confidential, for anyone under 19. Call <span className="phone">0800 1111</span> or visit childline.org.uk.</p>
+        <p className="small">Childline is free and confidential, for anyone under 19. Call <a href="tel:08001111" className="phone">0800 1111</a> or visit childline.org.uk.</p>
       </section>
       <p className="disclaimer">In an emergency, call 999.</p>
     </main>

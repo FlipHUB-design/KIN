@@ -1,12 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, today } from "@/lib/kin";
-import { homeOn, type Change, type Pattern } from "@/lib/support";
+import { childCalls, clock12 as clock, homeOn, type Change, type Pattern } from "@/lib/support";
 import type { KidDay } from "@/components/KidWeek";
 
-const FAMILY = /^(mum|mom|mummy|dad|daddy|grandma|grandad|grandpa|granny|gran|nan|nana|nanny|grandmother|grandfather|auntie|aunty|aunt|uncle|step-?mum|step-?dad)$/i;
-/** "5:30pm" rather than "17:30", for children. */
-const clock = (t: string) => { const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, "0")}` : ""}${h < 12 ? "am" : "pm"}`; };
 
 /**
  * One child's next `n` days: where they sleep, who collects them, and what's on.
@@ -32,9 +29,8 @@ export async function kidWeek(db: SupabaseClient, circleId: string, childId: str
   ]) : [{ data: [] }, { data: [] }];
   const names = (id: string | null) => {
     const rel = (rels || []).find((r) => r.user_id === id)?.relationship as string | undefined;
-    if (rel && FAMILY.test(rel.trim())) return rel.trim().replace(/^./, (c) => c.toUpperCase());
-    const first = (profs || []).find((p) => p.id === id)?.display_name?.split(" ")[0];
-    return first || (nameOf && nameOf(id) !== "You" ? nameOf(id) : "Someone");
+    const full = (profs || []).find((p) => p.id === id)?.display_name || (nameOf && nameOf(id) !== "You" ? nameOf(id) : null);
+    return childCalls(rel, full);
   };
   const out: KidDay[] = [];
   for (let i = 0; i < n; i++) {

@@ -3,7 +3,7 @@ import { WEEKDAYS, weekdayOf } from "@/lib/support";
 
 export type KidDay = { date: string; home: string | null; colour: string | null; lines: string[] };
 
-const House = ({ colour }: { colour: string }) => (
+export const House = ({ colour }: { colour: string }) => (
   <svg viewBox="0 0 64 64" aria-hidden="true">
     <path d="M8 30 L32 9 L56 30" fill="none" stroke={`var(--${colour})`} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
     <rect x="15" y="28" width="34" height="27" rx="4" fill={`var(--${colour})`} />

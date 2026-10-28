@@ -113,3 +113,20 @@ export function specialDays(children: { first_name: string; date_of_birth: strin
   }
   return out.filter((d) => d.end >= from && d.start <= to).sort((a, b) => a.start.localeCompare(b.start));
 }
+
+// ---------------------------------------------------------------- child-friendly wording
+const FAMILY_WORD = /^(mum|mom|mummy|dad|daddy|grandma|grandad|grandpa|granny|gran|nan|nana|nanny|grandmother|grandfather|auntie|aunty|aunt|uncle|step-?mum|step-?dad)$/i;
+/** What a child calls someone: "Dad" or "Grandma" where the family has said so, else their first name. */
+export const childCalls = (relationship: string | null | undefined, displayName: string | null | undefined) => {
+  const rel = (relationship || "").trim();
+  if (FAMILY_WORD.test(rel)) return rel.replace(/^./, (c) => c.toUpperCase());
+  return (displayName || "").split(" ")[0] || "Someone";
+};
+/** "5:30pm" rather than "17:30", for children. */
+export const clock12 = (t: string | null | undefined) => {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, "0")}` : ""}${h < 12 ? "am" : "pm"}`;
+};
+/** "Mum's" -> "Mum's house". */
+export const houseName = (n: string) => n.replace(/'s$/, "'s house");
