@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { aiOn, takeAllowance } from "@/lib/ai";
 import { notify } from "@/lib/notify";
+import * as T from "@/lib/transcribe";
 import { MAX_AUDIO_BYTES, summariseConsult, transcribe, transcribeOn, type ConsultSummary } from "@/lib/transcribe";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   // Reading through the person's own access proves they're allowed to see it
   const { data: rec } = await supabase.from("appointment_recordings").select("*").eq("id", id).maybeSingle();
   if (!rec) return say("failed", "Not found", 404);
-  if (rec.status === "done" || rec.status === "transcribing") return say(rec.status, "Already done");
+  if (rec.status === "done") return say(rec.status, "Already done");
+  if (rec.status === "transcribing" && Date.now() - Date.parse(rec.created_at) < 5 * 60000) return say(rec.status, "Already being written up");
 
   const admin = createAdminClient();
   if (!admin) return say("saved", "Saved. Transcription isn't set up on this server.");
@@ -47,7 +49,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (error || !file) return fail("The recording couldn't be opened. Your family can still try again later.");
   if (file.size > MAX_AUDIO_BYTES) return fail("The recording is too long to write up automatically. Your family can still listen to it.");
   const text = await transcribe(file, rec.mime || file.type || "audio/webm");
-  if (!text) return fail("KIN couldn't turn the recording into text. Your family can still listen to it.");
+  if (!text) return fail(`KIN couldn't turn the recording into text${T.lastTranscribeError ? ` because ${T.lastTranscribeError}` : ""}. Your family can still listen to it.`);
 
   const { data: qs } = await admin.from("appointment_questions").select("id, body, answer").eq("appointment_id", rec.appointment_id).order("created_at");
   const summary: ConsultSummary | null = aiOn() ? await summariseConsult(text, name, appt?.title || "Appointment", (qs || []).map((q) => ({ id: q.id, body: q.body }))) : null;

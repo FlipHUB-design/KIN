@@ -8,9 +8,20 @@ export const MAX_AUDIO_BYTES = 24 * 1024 * 1024; // OpenAI accepts up to 25 MB p
 const EXT: Record<string, string> = { "audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "m4a", "audio/x-m4a": "m4a", "audio/m4a": "m4a", "audio/aac": "m4a", "audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/wav": "wav", "audio/x-wav": "wav", "video/mp4": "mp4", "video/webm": "webm" };
 export const audioExt = (mime: string) => EXT[mime.split(";")[0].trim().toLowerCase()] || "webm";
 
+/** Why the last transcription failed, in plain words (for the person and the logs). */
+export let lastTranscribeError = "";
+const explain = (status: number, body: string) => {
+  if (status === 401) return "the OpenAI key isn't valid";
+  if (status === 429 && /quota|billing/i.test(body)) return "the OpenAI account has no credit left";
+  if (status === 429) return "OpenAI is busy, try again in a minute";
+  if (status === 400 || status === 415) return `OpenAI couldn't read this audio (${body.slice(0, 120)})`;
+  return `OpenAI returned an error (${status})`;
+};
+
 /** Turns an appointment recording into text. Returns null if it couldn't. */
 export async function transcribe(audio: Blob, mime: string): Promise<string | null> {
-  const key = process.env.OPENAI_API_KEY;
+  const key = process.env.OPENAI_API_KEY?.trim();
+  lastTranscribeError = "";
   if (!key) return null;
   const form = new FormData();
   form.append("file", new File([audio], `appointment.${audioExt(mime)}`, { type: mime.split(";")[0] }));
@@ -22,10 +33,10 @@ export async function transcribe(audio: Blob, mime: string): Promise<string | nu
     const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST", headers: { authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(240000),
     });
-    if (!res.ok) { console.error("transcribe failed", res.status, await res.text().catch(() => "")); return null; }
+    if (!res.ok) { const body = await res.text().catch(() => ""); console.error("transcribe failed", res.status, body); lastTranscribeError = explain(res.status, body); return null; }
     const text = (await res.text()).trim();
     return text || null;
-  } catch (e) { console.error("transcribe failed", e); return null; }
+  } catch (e) { console.error("transcribe failed", e); lastTranscribeError = "couldn't reach OpenAI"; return null; }
 }
 
 export type ConsultSummary = {

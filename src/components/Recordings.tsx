@@ -2,13 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { when } from "@/lib/kin";
 import { deleteRecording } from "@/app/c/[circle]/recordings";
 import type { ConsultSummary } from "@/lib/transcribe";
+import RetryWriteUp from "@/components/RetryWriteUp";
 
 type Rec = { id: string; storage_path: string | null; seconds: number | null; status: string; transcript: string | null; summary: ConsultSummary | null; recorded_by: string | null; created_at: string; audio_deleted_at: string | null };
 const length = (s: number | null) => (s ? (s >= 60 ? `${Math.round(s / 60)} min` : `${s} sec`) : "");
 
 /** Recordings of an appointment with KIN's write-up, for the inner family only (enforced by the database). */
-export default async function Recordings({ supabase, circleId, appointmentId, nameOf, me, canEdit }: {
-  supabase: SupabaseClient; circleId: string; appointmentId: string; nameOf: (id: string | null) => string; me: string; canEdit: boolean;
+export default async function Recordings({ supabase, circleId, appointmentId, nameOf, me, canEdit, writeUp }: {
+  supabase: SupabaseClient; circleId: string; appointmentId: string; nameOf: (id: string | null) => string; me: string; canEdit: boolean; writeUp?: boolean;
 }) {
   const { data, error } = await supabase.from("appointment_recordings").select("id, storage_path, seconds, status, transcript, summary, recorded_by, created_at, audio_deleted_at").eq("appointment_id", appointmentId).order("created_at", { ascending: false });
   if (error || !data?.length) return null;
@@ -28,7 +29,10 @@ export default async function Recordings({ supabase, circleId, appointmentId, na
             <div className="row between"><b>Recording{r.seconds ? ` · ${length(r.seconds)}` : ""}</b>
               <span className="small muted">{mine ? "You" : nameOf(r.recorded_by)} · {when(r.created_at)}</span></div>
             {r.status === "transcribing" && <p className="small">KIN is writing this up. Refresh in a minute.</p>}
-            {r.status === "failed" && <p className="small">KIN couldn&apos;t write this one up{r.storage_path ? ", but you can listen to it below" : ""}.</p>}
+            {(r.status === "failed" || r.status === "saved") && r.storage_path && writeUp && <>
+              {r.status === "failed" && <p className="small">KIN couldn&apos;t write this one up, but you can listen to it below.</p>}
+              <RetryWriteUp id={r.id} />
+            </>}
             {s && <>
               <p style={{ margin: 0 }}>{s.summary}</p>
               {s.medicines.length > 0 && <div><b className="small">Medicines mentioned</b><ul className="small">{s.medicines.map((m, i) => <li key={i}>{m}</li>)}</ul></div>}
