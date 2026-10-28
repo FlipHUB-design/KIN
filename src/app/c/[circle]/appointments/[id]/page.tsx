@@ -6,6 +6,7 @@ import Questions from "@/components/Questions";
 import Recordings from "@/components/Recordings";
 import Recorder from "@/components/Recorder";
 import { transcribeOn } from "@/lib/transcribe";
+import { isDemoEmail } from "@/lib/notify";
 import { Hidden, Notice } from "@/components/ui";
 import { claimTask, deleteAppointment, savePack } from "../../actions";
 import Thread from "@/components/Thread";
@@ -77,7 +78,7 @@ export default async function AppointmentPage({ params, searchParams }: { params
           <details className="card pad">
             <summary style={{ fontWeight: 700, cursor: "pointer" }}>Record this appointment</summary>
             <p className="small">Whoever goes, including {circle.preferred_name} on their own, can record what the doctor or nurse says. {transcribeOn() ? "KIN writes it up for the family." : "The family can listen to it here."}</p>
-            <Recorder circleId={cid} appointmentId={id} name={circle.preferred_name} writeUp={transcribeOn()} />
+            <Recorder circleId={cid} appointmentId={id} name={circle.preferred_name} writeUp={transcribeOn()} sample={isDemoEmail(user.email) ? "/demo/sample-gp-appointment.m4a" : undefined} />
           </details>
         </section>
       )}

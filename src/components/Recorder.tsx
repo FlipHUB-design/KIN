@@ -12,7 +12,7 @@ const EXT: Record<string, string> = { "audio/webm": "webm", "audio/mp4": "m4a", 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 /** Records the appointment on the phone, then uploads it for the family and KIN's write-up. */
-export default function Recorder({ circleId, appointmentId, name, writeUp, big }: { circleId: string; appointmentId: string; name: string; writeUp: boolean; big?: boolean }) {
+export default function Recorder({ circleId, appointmentId, name, writeUp, big, sample }: { circleId: string; appointmentId: string; name: string; writeUp: boolean; big?: boolean; sample?: string }) {
   const router = useRouter();
   const [stage, setStage] = useState<Stage>("idle");
   const [consent, setConsent] = useState(false);
@@ -105,6 +105,10 @@ export default function Recorder({ circleId, appointmentId, name, writeUp, big }
           <span>I&apos;ve asked the doctor or nurse, and they&apos;re happy for me to record this for my family.</span></label>
         <button type="button" className={cls} disabled={!consent} onClick={start}>● Start recording</button>
         <p className="note">Keep this screen open while you record. Put the phone on the desk between you. It records for up to an hour.</p>
+        {sample && <button type="button" className="btn" onClick={async () => {
+          const res = await fetch(sample); const blob = await res.blob();
+          upload(new File([blob], "sample.m4a", { type: "audio/mp4" }), "audio/mp4", 76);
+        }}>Demo: use a sample GP appointment instead</button>}
         <details className="small"><summary>Recorded it another way?</summary>
           <p className="note">Upload a voice memo from your phone instead (up to 24 MB).</p>
           <input type="file" accept="audio/*,.m4a,.mp3,.wav,.webm" onChange={(e) => chooseFile(e.target.files?.[0])} />
