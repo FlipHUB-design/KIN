@@ -21,7 +21,7 @@ export default async function Landing() {
           </div>
         ) : (
           <div className="row">
-            <Link href="/signup" className="btn primary">Get started</Link>
+            <Link href="/waitlist" className="btn primary">Join the waiting list</Link>
             <Link href="/login" className="btn">Sign in</Link>
           </div>
         )}

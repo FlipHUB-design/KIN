@@ -168,3 +168,7 @@ Useful commands: `npm run build` (check everything compiles), `npm run lint`, `n
 - `src/app/c/[circle]/actions.ts`: everything that changes data
 - `src/lib/kin.ts`: shared labels, dates (UK time) and the dashboard status rules
 - `src/app/globals.css`: colours, type and layout
+
+### 9. Waiting list (migration 0008)
+
+Run `supabase/migrations/0008_waitlist.sql`. The public sign-up page is `/waitlist` (add `?from=instagram` to see where people came from). To see sign-ups, add `ADMIN_EMAILS` (your email, comma-separate several) in Vercel, sign in with that email and open `/waitlist/admin`, which also downloads the list as a CSV. With email set up, each person gets a short confirmation email.

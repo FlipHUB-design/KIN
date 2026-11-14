@@ -289,3 +289,14 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .packlist label.packed span { text-decoration: line-through; opacity: .6; }
 .yp-call { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .yp-call .btn { min-height: 56px; }
+/* waiting list */
+.wl-points { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.5; }
+.wl-kinds { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.wl-kinds legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.wl-kinds label { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface, #fff); cursor: pointer; }
+.wl-kinds label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft, #DCEBE3); }
+.wl-kinds input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.wl-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.wl-stats .card { display: flex; flex-direction: column; gap: 2px; }
+.wl-stats b { font: 800 32px/1 var(--font-display), sans-serif; color: var(--accent); }

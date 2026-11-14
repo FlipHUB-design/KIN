@@ -27,6 +27,7 @@ await db.exec(fs.readFileSync(new URL("../migrations/0004_notifications.sql", im
 await db.exec(fs.readFileSync(new URL("../migrations/0005_ai_usage.sql", import.meta.url), "utf8"));
 try { await db.exec(fs.readFileSync(new URL("../migrations/0006_family_support.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0006 ERROR:", e.message); process.exit(1); }
 try { await db.exec(fs.readFileSync(new URL("../migrations/0007_appointment_questions_recordings.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0007 ERROR:", e.message); process.exit(1); }
+try { await db.exec(fs.readFileSync(new URL("../migrations/0008_waitlist.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0008 ERROR:", e.message); process.exit(1); }
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -189,6 +190,8 @@ ok((await as(U.helen, `select * from calendar_feeds`)).rows.length===1, "people 
 const tok = async (u) => (await db.query(`select token from calendar_feeds where user_id=$1`, [u])).rows[0].token;
 let anonFeed=true; try { await as(U.eve, `select * from calendar_feed($1)`, [await tok(U.sarah)]) } catch { anonFeed=false }
 ok(!anonFeed, "the feed function can't be called from the app directly");
+// the feed covers the last 30 days onwards, so keep these fixtures current whenever the tests run
+await db.exec(`update appointments set date = current_date + 1 where title in ('Hospital','Parents evening','Mediation session'); update tasks set due_date = current_date + 1 where title = 'Cleaning'`);
 const feed = async (u) => (await db.query(`select kind, title from calendar_feed($1)`, [await tok(u)])).rows;
 ok((await feed(U.sarah)).some(r=>r.title==='Hospital'), "administrator's calendar shows appointments");
 ok(!(await feed(U.helen)).some(r=>r.kind==='appointment'), "a helper's calendar shows no appointments");
@@ -221,6 +224,14 @@ let otherCircle=true; try { await as(U.sarah, `insert into appointment_recording
 ok(!otherCircle, "recordings must be filed under their own circle");
 let lucyUp=true; try { await as(U.lucy, `insert into storage.objects (bucket_id,name) values ('recordings',$1)`, [circle+'/lucy.webm']) } catch { lucyUp=false }
 ok(!lucyUp, "contributor can't upload recordings");
+
+// ---------------------------------------------------------------- waiting list (0008)
+await db.exec(`insert into waitlist (email, kind) values ('someone@example.com','carer')`);
+ok((await as(U.sarah, `select * from waitlist`)).rows.length===0, "signed-in users can't read the waiting list");
+let wlIns=true; try { await as(U.sarah, `insert into waitlist (email) values ('x@example.com')`) } catch { wlIns=false }
+ok(!wlIns, "nobody can add to the waiting list except the server");
+let dup=true; try { await db.exec(`insert into waitlist (email) values ('SOMEONE@example.com')`) } catch { dup=false }
+ok(!dup, "the same email can't join twice");
 
 // ---------------------------------------------------------------- alerts
 await db.query(`insert into notifications (circle_id,user_id,level,title) values ($1,$2,'answer','Dan asked to change the schedule'),($1,$3,'update','Leah agreed')`, [fam, K.leah, K.dan]);
