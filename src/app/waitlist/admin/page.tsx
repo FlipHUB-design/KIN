@@ -3,12 +3,14 @@ import { redirect } from "next/navigation";
 import { KIND_LABEL, ownerOnly, type WaitRow } from "@/lib/owner";
 import { site } from "@/lib/notify";
 import CopyLink from "../CopyLink";
+import { resendWelcome, sendTestWelcome } from "./actions";
 
 export const dynamic = "force-dynamic";
 const day = (s: string) => new Date(s).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" });
 
 /** The owner's view of who has joined the waiting list. */
-export default async function WaitlistAdmin() {
+export default async function WaitlistAdmin({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  const sp = await searchParams;
   const { user, ok, configured, admin } = await ownerOnly();
   if (!user) redirect("/login?next=/waitlist/admin");
   if (!ok) return (
@@ -38,6 +40,16 @@ export default async function WaitlistAdmin() {
         {["instagram", "facebook", "tiktok", "linkedin"].map((s) => <CopyLink key={s} url={`${site()}/waitlist?from=${s}`} />)}
         {sources.length > 0 && <p className="small" style={{ margin: 0 }}>Where people came from: {sources.map(([s, n]) => `${s} ${n}`).join(" · ")}</p>}
       </div>
+      {sp.notice && <p className="ok">{sp.notice}</p>}
+      {sp.error && <p className="error" role="alert">{sp.error}</p>}
+      <div className="card pad stack" style={{ gap: 10 }}>
+        <b>Welcome email</b>
+        <p className="small muted" style={{ margin: 0 }}>Everyone who joins gets a branded welcome email that explains Many Hands. Send yourself a test to check it&apos;s working, or send it to anyone who missed it.</p>
+        <div className="row">
+          <form action={sendTestWelcome}><button className="btn">Send me a test</button></form>
+          <form action={resendWelcome}><button className="btn">Send to everyone on the list</button></form>
+        </div>
+      </div>
       <div className="row"><a href="/waitlist/admin/export" className="btn">Download as a spreadsheet (CSV)</a></div>
       <div className="card list">
         {rows.map((r) => (
@@ -45,7 +57,8 @@ export default async function WaitlistAdmin() {
             <span className="t">{r.name ? `${r.name} · ` : ""}{r.email}</span>
             <span className="s">{KIND_LABEL[r.kind] || r.kind} · {day(r.created_at)}{r.source ? ` · from ${r.source}` : ""}</span>
             {r.note && <span className="s" style={{ fontStyle: "italic" }}>&ldquo;{r.note}&rdquo;</span>}
-          </span></div>
+          </span>
+          <form action={resendWelcome}><input type="hidden" name="id" value={r.id} /><button className="btn sm">Send welcome</button></form></div>
         ))}
         {!rows.length && !error && <p className="pad muted" style={{ margin: 0 }}>Nobody yet. Share your link to get the first sign-ups.</p>}
       </div>

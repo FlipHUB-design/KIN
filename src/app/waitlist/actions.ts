@@ -1,7 +1,8 @@
 "use server";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { emailHtml, emailOn, sendEmail, site } from "@/lib/notify";
+import { emailOn, sendEmailDetailed, site } from "@/lib/notify";
+import { waitlistWelcome } from "@/lib/welcome";
 
 const KINDS = ["coparent", "carer", "both", "other"] as const;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -28,15 +29,9 @@ export async function joinWaitlist(f: FormData) {
   }
 
   if (emailOn()) {
-    const first = name?.split(" ")[0];
-    const lines = [
-      `${first ? `Thanks, ${first}` : "Thanks"}. You're on the Many Hands waiting list.`,
-      "Many Hands keeps everyone who helps a family in one place: the calendar, who's doing what, appointments, costs and the children's two-home schedule.",
-      "We'll email you when we open to our first families. Nothing else, and you can ask us to remove you at any time by replying to this email.",
-    ];
-    await sendEmail(email, "You're on the Many Hands waiting list",
-      emailHtml({ heading: "You're on the list", lines, button: { label: "Try the demo", href: `${site()}/demo` }, footer: "Many hands make light work." }),
-      lines.join("\n\n") + `\n\nTry the demo: ${site()}/demo`);
+    const w = waitlistWelcome(name, kind, site());
+    const sent = await sendEmailDetailed(email, w.subject, w.html, w.text);
+    if (!sent.ok) console.error("waitlist welcome email not sent:", sent.error);
   }
   back("joined=1");
 }

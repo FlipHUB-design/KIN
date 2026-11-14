@@ -69,19 +69,32 @@ ${opts.button ? `<p style="margin:18px 0 4px"><a href="${esc(opts.button.href)}"
 </div></body></html>`;
 }
 
-export async function sendEmail(to: string, subject: string, html: string, text: string) {
+/** Sends an email through Resend. Returns why it failed, in plain words, when it does. */
+export async function sendEmailDetailed(to: string, subject: string, html: string, text: string): Promise<{ ok: boolean; error?: string }> {
   const key = process.env.RESEND_API_KEY;
-  if (!key) return false;
+  if (!key) return { ok: false, error: "Email isn't set up: RESEND_API_KEY is missing in Vercel." };
+  const from = process.env.KIN_EMAIL_FROM || "Many Hands <onboarding@resend.dev>";
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.KIN_EMAIL_FROM || "Many Hands <onboarding@resend.dev>", to: [to], subject, html, text }),
+      body: JSON.stringify({ from, to: [to], subject, html, text }),
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) console.error("Email failed", res.status, await res.text().catch(() => ""));
-    return res.ok;
-  } catch (e) { console.error("Email failed", e); return false; }
+    if (res.ok) return { ok: true };
+    const body = await res.text().catch(() => "");
+    console.error("Email failed", res.status, body);
+    let msg = ""; try { msg = JSON.parse(body).message || ""; } catch { msg = body.slice(0, 200); }
+    if (/resend\.dev/.test(from) || /testing emails|own email address|verify a domain/i.test(msg))
+      return { ok: false, error: `Resend will only send to your own address until you verify a domain and send from it (KIN_EMAIL_FROM is "${from}"). Resend said: ${msg}` };
+    if (/domain is not verified|not verified/i.test(msg)) return { ok: false, error: `The domain in KIN_EMAIL_FROM ("${from}") isn't verified in Resend yet. Resend said: ${msg}` };
+    if (res.status === 401 || res.status === 403) return { ok: false, error: `Resend refused the request (${res.status}): ${msg || "check the API key"}` };
+    return { ok: false, error: `Resend returned ${res.status}: ${msg}` };
+  } catch (e) { console.error("Email failed", e); return { ok: false, error: "Couldn't reach Resend." }; }
+}
+
+export async function sendEmail(to: string, subject: string, html: string, text: string) {
+  return (await sendEmailDetailed(to, subject, html, text)).ok;
 }
 
 export async function sendText(to: string, body: string) {
