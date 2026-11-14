@@ -171,4 +171,4 @@ Useful commands: `npm run build` (check everything compiles), `npm run lint`, `n
 
 ### 9. Waiting list (migration 0008)
 
-Run `supabase/migrations/0008_waitlist.sql`. The public sign-up page is `/waitlist` (add `?from=instagram` to see where people came from). To see sign-ups, add `ADMIN_EMAILS` (your email, comma-separate several) in Vercel, sign in with that email and open `/waitlist/admin`, which also downloads the list as a CSV. With email set up, each person gets a short confirmation email.
+Run `supabase/migrations/0008_waitlist.sql`. The public sign-up page is `/waitlist` (add `?from=instagram` to see where people came from). To see sign-ups, add `ADMIN_EMAILS` (your email, comma-separate several) in Vercel, sign in with that email and open `/waitlist/admin`, which also downloads the list as a CSV. The same `ADMIN_EMAILS` opens the owner dashboard at `/admin` (also linked from Your account): accounts, families, activity, estimated running costs and the waiting list, with the demo families left out and no family's own content shown. With email set up, each person gets a short confirmation email.

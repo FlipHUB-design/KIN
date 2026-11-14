@@ -8,6 +8,7 @@ async function saveProfile(formData: FormData) {
   "use server";
   const { supabase, user } = await getUser();
   if (!user) redirect("/login");
+  const isOwner = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).includes((user.email || "").toLowerCase());
   await supabase.from("profiles").update({
     display_name: String(formData.get("name")).trim(),
     phone: String(formData.get("phone")).trim() || null,
@@ -48,6 +49,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
   const { supabase, user } = await getUser();
   if (!user) redirect("/login");
   const { data: me } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const isOwner = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).includes((user.email || "").toLowerCase());
   return (
     <main className="page">
       <Link href="/circles" className="link">‹ People I help</Link>
@@ -66,6 +68,7 @@ export default async function Account({ searchParams }: { searchParams: Promise<
         <p className="small">Download everything you can see in Many Hands as a file.</p>
         <Link href="/account/alerts" className="btn">Email and text alerts</Link>
         <Link href="/account/calendar" className="btn">Add Many Hands to my calendar</Link>
+        {isOwner && <Link href="/admin" className="btn primary">Owner dashboard</Link>}
         <a href="/account/export" className="btn">Download my data</a>
         <Link href="/account/password" className="btn">Change password</Link>
         <form action={signOut}><button className="btn block">Sign out</button></form>
