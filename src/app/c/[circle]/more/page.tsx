@@ -2,12 +2,14 @@ import Link from "next/link";
 import { getCircle } from "@/lib/data";
 import { canEdit, isInner } from "@/lib/kin";
 import { Header } from "@/components/ui";
+import { helpfulOn } from "@/lib/helpful-server";
 
 export default async function More({ params }: { params: Promise<{ circle: string }> }) {
   const { circle: id } = await params;
   const { circle, role, me } = await getCircle(id);
   const kids = circle.kind === "children";
   const parent = canEdit(role);
+  const helpful = parent && (await helpfulOn());
   const items: [string, string, string, boolean][] = kids ? [
     ["../alerts", "Alerts", "Requests and news for you, and how you get them by email or text", true],
     ["../schedule", "Schedule", "Where the children sleep each night, and swap requests", true],
@@ -20,6 +22,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
     ["../agreements", "Agreements", "Bedtimes, screens, money and holidays, agreed once", true],
     ["../letters", "School letters", "Photograph a letter and Many Hands suggests the tasks", parent],
     ["../playbooks", "Playbooks", "School places, passports, travel abroad, childcare and more", true],
+    ["../helpful", "Helpful things", "Two-home essentials and back-to-school ideas", helpful],
     ["../records", "Records", "A dated history you can download", parent],
     ["contacts", "Contacts", "School, GP, dentist, clubs and who can collect", true],
     ["emergency", "Emergency information", "999, NHS 111, allergies and who to call", true],
@@ -34,6 +37,7 @@ export default async function More({ params }: { params: Promise<{ circle: strin
     ["../wellbeing", `How ${circle.preferred_name}'s been`, "The daily check-in answers over recent weeks", isInner(role) && role !== "supported"],
     ["../letters", "Letters", "Photograph a letter and Many Hands suggests the tasks", parent],
     ["../playbooks", "Playbooks", "Step-by-step plans: Attendance Allowance, hospital discharge and more", true],
+    ["../helpful", "Helpful things", "Practical things for coming home from hospital and staying safe at home", helpful],
     ["../costs", "Shared costs", "Who paid for what, and who owes whom", parent],
     ["emergency", "Emergency information", "999, NHS 111 and details for responders", true],
     ["contacts", "Important contacts", "GP, pharmacy, neighbours and trades", true],

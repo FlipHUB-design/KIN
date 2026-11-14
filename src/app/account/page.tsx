@@ -8,7 +8,6 @@ async function saveProfile(formData: FormData) {
   "use server";
   const { supabase, user } = await getUser();
   if (!user) redirect("/login");
-  const isOwner = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).includes((user.email || "").toLowerCase());
   await supabase.from("profiles").update({
     display_name: String(formData.get("name")).trim(),
     phone: String(formData.get("phone")).trim() || null,

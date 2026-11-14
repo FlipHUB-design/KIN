@@ -2,6 +2,17 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { KIND_LABEL, ownerOnly, type WaitRow } from "@/lib/owner";
 import { site } from "@/lib/notify";
+import { revalidatePath } from "next/cache";
+import { affiliateOn, helpfulItem } from "@/lib/helpful";
+
+async function setHelpful(f: FormData) {
+  "use server";
+  const { ok, admin } = await ownerOnly();
+  if (!ok || !admin) return;
+  await admin.from("app_settings").upsert({ key: "helpful", value: { on: f.get("on") === "1" }, updated_at: new Date().toISOString() });
+  revalidatePath("/", "layout");
+  redirect("/admin#helpful");
+}
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Owner dashboard · Many Hands" };
@@ -70,7 +81,7 @@ export default async function OwnerDashboard() {
     if (batch.length < 1000) break;
   }
   const since30 = new Date(Date.now() - 30 * DAY).toISOString();
-  const [circlesQ, membersQ, activityQ, notifQ, aiQ, waitQ, recQ, tasksQ, apptsQ, lettersQ] = await Promise.all([
+  const [circlesQ, membersQ, activityQ, notifQ, aiQ, waitQ, recQ, tasksQ, apptsQ, lettersQ, clicksQ, settingQ] = await Promise.all([
     admin.from("care_circles").select("id, kind, created_by, created_at"),
     admin.from("memberships").select("circle_id, user_id, role, status"),
     admin.from("activity").select("circle_id, actor, verb, created_at").gte("created_at", since30).limit(50000),
@@ -81,7 +92,13 @@ export default async function OwnerDashboard() {
     admin.from("tasks").select("circle_id, created_at").gte("created_at", since30).limit(50000),
     admin.from("appointments").select("circle_id, created_at").gte("created_at", since30).limit(50000),
     admin.from("letter_scans").select("circle_id, created_at").gte("created_at", since30).limit(50000),
+    admin.from("helpful_clicks").select("item, place, created_at").gte("created_at", since30).limit(50000),
+    admin.from("app_settings").select("value").eq("key", "helpful").maybeSingle(),
   ]);
+  const helpfulIsOn = settingQ.data?.value?.on !== false;
+  const clicks = (clicksQ.data || []) as { item: string; place: string | null; created_at: string }[];
+  const clickItems = Object.entries(clicks.reduce<Record<string, number>>((acc, c) => { acc[c.item] = (acc[c.item] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const clickPlaces = Object.entries(clicks.reduce<Record<string, number>>((acc, c) => { const k = c.place || "page"; acc[k] = (acc[k] || 0) + 1; return acc; }, {})).sort((a, b) => b[1] - a[1]);
 
   // Leave the demo families out of everything
   const demoIds = new Set(users.filter((u) => isDemo(u.email)).map((u) => u.id));
@@ -206,6 +223,23 @@ export default async function OwnerDashboard() {
           <Stat n={circles.length ? gbp((aiPence + textPence) / Math.max(1, circles.length)) : "£0.00"} label="per family" sub="AI and texts only" />
         </div>
         <p className="note">Estimates from usage counts, to watch the trend. Your OpenAI, Anthropic, Twilio and Vercel bills are the real figures.</p>
+      </section>
+
+      <section className="stack" id="helpful"><h2>Helpful things (last 30 days)</h2>
+        <div className="ad-two">
+          <div className="card pad stack" style={{ gap: 10 }}>
+            <b>Suggestions are {helpfulIsOn ? "on" : "off"}</b>
+            <p className="small muted" style={{ margin: 0 }}>Shown to parents and organisers only, never to children, helpers or the person being cared for. Anyone can hide them for themselves.</p>
+            <p className="small" style={{ margin: 0 }}>{affiliateOn() ? "Your Amazon Associates tag is set, so links earn commission." : "No Amazon Associates tag yet: links work but don't earn. Add AMAZON_TAG in Vercel once Amazon approves you."}</p>
+            <form action={setHelpful}><input type="hidden" name="on" value={helpfulIsOn ? "0" : "1"} />
+              <button className={`btn ${helpfulIsOn ? "" : "primary"}`}>{helpfulIsOn ? "Switch suggestions off" : "Switch suggestions on"}</button></form>
+          </div>
+          <div className="card pad stack" style={{ gap: 8 }}><b>{clicks.length} clicks to Amazon</b>
+            {clickItems.map(([i, n]) => <div key={i} className="ad-row"><span>{helpfulItem(i)?.item.name || i}</span><b>{n}</b></div>)}
+            {clickPlaces.length > 0 && <p className="note" style={{ margin: 0 }}>Clicked from: {clickPlaces.map(([p, n]) => `${p} ${n}`).join(" · ")}</p>}
+            {!clicks.length && <p className="muted small" style={{ margin: 0 }}>No clicks yet. Amazon&apos;s own reports show what was actually bought.</p>}
+          </div>
+        </div>
       </section>
 
       <section className="stack"><h2>Waiting list</h2>

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getCircle } from "@/lib/data";
 import { canEdit, hm, isInner, longDate, today, type Appointment } from "@/lib/kin";
 import Questions from "@/components/Questions";
+import Helpful from "@/components/Helpful";
+import { showHelpful } from "@/lib/helpful-server";
 import Recordings from "@/components/Recordings";
 import Recorder from "@/components/Recorder";
 import { transcribeOn } from "@/lib/transcribe";
@@ -15,6 +17,7 @@ export default async function AppointmentPage({ params, searchParams }: { params
   const { circle: cid, id } = await params;
   const sp = await searchParams;
   const { supabase, role, nameOf, circle, user } = await getCircle(cid);
+  const hf = circle.kind !== "children" && (await showHelpful(supabase, user.id, role));
   const kidsMode = circle.kind === "children";
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { data } = await supabase.from("appointments").select("*").eq("id", id).eq("circle_id", cid).maybeSingle();
@@ -91,6 +94,7 @@ export default async function AppointmentPage({ params, searchParams }: { params
       {canEdit(role) && (
         <form action={deleteAppointment}><Hidden circle={cid} id={id} /><button className="link" style={{ color: "var(--coral)" }}>{kidsMode ? "Remove event" : "Remove appointment"}</button></form>
       )}
+      {hf && <Helpful list="appointments" place="appointment" circleId={cid} max={2} />}
     </main>
   );
 }

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getCircle } from "@/lib/data";
+import Helpful from "@/components/Helpful";
+import { showHelpful } from "@/lib/helpful-server";
 import { loadFamily } from "@/lib/family";
 import { canEdit, dayLabel, kidsLabel, nextHandover, today, when, type ChildItem, type Handover } from "@/lib/kin";
 import { Header, Hidden, Notice } from "@/components/ui";
@@ -9,6 +11,7 @@ export default async function HandoverPage({ params, searchParams }: { params: P
   const { circle: id } = await params;
   const sp = await searchParams;
   const { supabase, circle, role, nameOf, me } = await getCircle(id);
+  const hf = await showHelpful(supabase, me.user_id, role);
   const base = `/c/${id}`;
   const fam = await loadFamily(supabase, id, { days: 16 });
   const [{ data: hist }, { data: items }] = await Promise.all([
@@ -70,6 +73,7 @@ export default async function HandoverPage({ params, searchParams }: { params: P
           {!H.length && <p className="empty">No handovers recorded yet.</p>}
         </div>
       </section>
+      {hf && <Helpful list="two-homes" place="handover" circleId={id} />}
     </main>
   );
 }

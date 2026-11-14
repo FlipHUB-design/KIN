@@ -321,3 +321,10 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .ad-track { height: 12px; background: var(--sunk); border-radius: 6px; overflow: hidden; }
 .ad-track span { display: block; height: 100%; background: var(--accent); border-radius: 6px; }
 @media (max-width: 520px) { .ad-x { font-size: 9px; } .ad-bars { gap: 3px; } }
+/* helpful things */
+.helpful h2 { font-size: 18px; }
+.hf-list { list-style: none; margin: 10px 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.hf-list li { display: flex; flex-direction: column; gap: 2px; }
+.hf-list a { font-weight: 700; color: var(--accent); text-decoration: none; }
+.hf-list a:hover { text-decoration: underline; }
+.hf-note { font-style: italic; }

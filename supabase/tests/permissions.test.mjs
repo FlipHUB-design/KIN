@@ -28,6 +28,7 @@ await db.exec(fs.readFileSync(new URL("../migrations/0005_ai_usage.sql", import.
 try { await db.exec(fs.readFileSync(new URL("../migrations/0006_family_support.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0006 ERROR:", e.message); process.exit(1); }
 try { await db.exec(fs.readFileSync(new URL("../migrations/0007_appointment_questions_recordings.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0007 ERROR:", e.message); process.exit(1); }
 try { await db.exec(fs.readFileSync(new URL("../migrations/0008_waitlist.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0008 ERROR:", e.message); process.exit(1); }
+try { await db.exec(fs.readFileSync(new URL("../migrations/0009_helpful_things.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0009 ERROR:", e.message); process.exit(1); }
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -232,6 +233,15 @@ let wlIns=true; try { await as(U.sarah, `insert into waitlist (email) values ('x
 ok(!wlIns, "nobody can add to the waiting list except the server");
 let dup=true; try { await db.exec(`insert into waitlist (email) values ('SOMEONE@example.com')`) } catch { dup=false }
 ok(!dup, "the same email can't join twice");
+
+// ---------------------------------------------------------------- helpful things (0009)
+await db.exec(`insert into app_settings (key, value) values ('helpful','{"on":true}'); insert into helpful_clicks (item, place, kind) values ('key-safe','page','care')`);
+ok((await as(U.sarah, `select * from app_settings`)).rows.length===0, "people can't read the owner's settings");
+let setSw=true; try { await as(U.sarah, `insert into app_settings (key, value) values ('x','{}')`) } catch { setSw=false }
+ok(!setSw, "people can't change the owner's settings");
+ok((await as(U.sarah, `select * from helpful_clicks`)).rows.length===0, "people can't read click counts");
+ok((await as(U.lucy, `update profiles set hide_helpful=true where id=$1 returning id`, [U.lucy])).rows.length===1, "anyone can hide suggestions for themselves");
+ok((await as(U.lucy, `update profiles set hide_helpful=true where id=$1 returning id`, [U.sarah])).rows.length===0, "nobody can change someone else's setting");
 
 // ---------------------------------------------------------------- alerts
 await db.query(`insert into notifications (circle_id,user_id,level,title) values ($1,$2,'answer','Dan asked to change the schedule'),($1,$3,'update','Leah agreed')`, [fam, K.leah, K.dan]);

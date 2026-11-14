@@ -166,6 +166,8 @@ export const DOCS: Doc[] = [
   { id: "record", q: "How do I record an appointment?", words: "record recording microphone transcript summary doctor consultant nurse audio voice memo upload",
     kinds: ["care"],
     a: "Open the appointment and press At the appointment, or open Recordings and choose Record this appointment. Ask the doctor or nurse first and tick the box, then press Start recording. Keep the screen on until you press Stop and save. If you recorded it another way, such as a voice memo, you can upload that instead. Many Hands' write-up may mishear things, so check anything important with the surgery." },
+  { id: "helpfulthings", q: "What are the Helpful things suggestions?", words: "helpful things products amazon suggestions shop buy key safe pill organiser name labels hide adverts",
+    a: "Short lists of practical things other families find useful, like a key safe after a hospital stay or name labels for school. They open Amazon, and Many Hands may earn a small commission if you buy. Only parents and organisers see them. To hide them, open More, then Helpful things, then Hide suggestions around the app." },
 ];
 
 export function docsFor(kind?: Kind | null, role?: Role | null) {

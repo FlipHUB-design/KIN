@@ -172,3 +172,7 @@ Useful commands: `npm run build` (check everything compiles), `npm run lint`, `n
 ### 9. Waiting list (migration 0008)
 
 Run `supabase/migrations/0008_waitlist.sql`. The public sign-up page is `/waitlist` (add `?from=instagram` to see where people came from). To see sign-ups, add `ADMIN_EMAILS` (your email, comma-separate several) in Vercel, sign in with that email and open `/waitlist/admin`, which also downloads the list as a CSV. The same `ADMIN_EMAILS` opens the owner dashboard at `/admin` (also linked from Your account): accounts, families, activity, estimated running costs and the waiting list, with the demo families left out and no family's own content shown. With email set up, each person gets a short confirmation email.
+
+### 10. Helpful things (migration 0009)
+
+Run `supabase/migrations/0009_helpful_things.sql`. Parents and organisers see short product suggestions where they help (coming home from hospital, appointments, handovers, school, separating), plus a full list under More → Helpful things. The lists live in `src/lib/helpful.ts`. Links go to Amazon UK; once you're accepted into Amazon Associates, add `AMAZON_TAG` (your tracking ID, e.g. `manyhands-21`) in Vercel so they earn commission. Switch suggestions off or on, and see which ones people click, on the owner dashboard. Children, helpers and the person being cared for never see them, and anyone can hide them.

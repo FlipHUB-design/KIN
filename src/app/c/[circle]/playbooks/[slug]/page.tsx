@@ -5,13 +5,19 @@ import { addDays, canEdit, dayLabel, today } from "@/lib/kin";
 import { playbook } from "@/lib/playbooks";
 import { Hidden, Notice } from "@/components/ui";
 import { startPlaybook } from "../../actions";
+import Helpful from "@/components/Helpful";
+import { showHelpful } from "@/lib/helpful-server";
+
+const PLAYBOOK_LISTS: Record<string, string> = { "hospital-discharge": "home-from-hospital", "separating": "two-homes", "school-place": "back-to-school" };
 
 export default async function PlaybookPage({ params, searchParams }: { params: Promise<{ circle: string; slug: string }>; searchParams: Promise<Record<string, string>> }) {
   const { circle: id, slug } = await params;
   const sp = await searchParams;
   const pb = playbook(slug);
   if (!pb) notFound();
-  const { role, members, user } = await getCircle(id);
+  const { role, members, user, supabase } = await getCircle(id);
+  const hfList = PLAYBOOK_LISTS[pb.slug];
+  const hf = hfList && (await showHelpful(supabase, user.id, role));
   const who = members.filter((m) => ["admin", "family", "contributor"].includes(m.role) && m.status === "active");
   const start = today();
   return (
@@ -48,6 +54,7 @@ export default async function PlaybookPage({ params, searchParams }: { params: P
           </>
         ) : <p className="note">Family members can start playbooks.</p>}
       </form>
+      {hf && <Helpful list={hfList} place="playbook" circleId={id} />}
     </main>
   );
 }
