@@ -1,6 +1,7 @@
 import Link from "next/link";
 import AuthShell from "../AuthShell";
 import { signIn } from "../actions";
+import { canRegister, registerHref } from "@/lib/signups";
 
 export default async function Login({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
@@ -16,7 +17,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<Re
         <button className="btn primary block">Sign in</button>
       </form>
       <div className="row between small">
-        <Link href={`/signup?next=${encodeURIComponent(next)}`}>Create an account</Link>
+        <Link href={registerHref(sp.next, "login")}>{canRegister(sp.next) ? "Create an account" : "New here? Join the waiting list"}</Link>
         <Link href="/forgot">Forgotten your password?</Link>
       </div>
     </AuthShell>

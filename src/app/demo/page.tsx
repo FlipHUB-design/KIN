@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DEMO_ENABLED, KIDS_PICKABLE, PERSONAS, PICKABLE, ensureDemo, type Persona } from "@/lib/demo";
 import Wordmark from "@/components/Wordmark";
+import { registerHref, signupsOpen } from "@/lib/signups";
 
 async function reset() {
   "use server";
@@ -31,7 +32,13 @@ export default async function Demo({ searchParams }: { searchParams: Promise<Rec
   if (!DEMO_ENABLED) return <main className="page"><Link href="/" className="brand"><Wordmark /></Link><h1>The demo is switched off</h1></main>;
   return (
     <main className="page" style={{ paddingBottom: 48 }}>
-      <Link href="/" className="brand"><Wordmark /></Link>
+      <div className="row between demo-top">
+        <Link href="/" className="brand"><Wordmark /></Link>
+        <div className="row" style={{ gap: 8 }}>
+          <Link href="/login" className="btn">Log in</Link>
+          <Link href={registerHref(null, "demo")} className="btn primary">Register</Link>
+        </div>
+      </div>
       <h1>Try Many Hands</h1>
       <p className="muted">Two made-up families. Pick who you&apos;d like to be. Each person sees only what their role allows.</p>
       {sp.error && <p className="error">{sp.error}</p>}
@@ -47,6 +54,14 @@ export default async function Demo({ searchParams }: { searchParams: Promise<Rec
         <People list={PICKABLE} />
       </section>
       <p className="note">Everyone here is made up, and the demo is shared with other visitors. Don&apos;t enter real personal information. The example data resets every day. Opening the demo signs you out of any real Many Hands account in this browser.</p>
+      <div className="card pad stack" style={{ gap: 10 }}>
+        <h2 style={{ margin: 0 }}>Like what you see?</h2>
+        <p className="small" style={{ margin: 0 }}>{signupsOpen() ? "Create an account and set up your own family in a couple of minutes." : "We're opening to a small group of families first. Join the waiting list and we'll email you when your place is ready."}</p>
+        <div className="row" style={{ gap: 8 }}>
+          <Link href={registerHref(null, "demo")} className="btn primary">{signupsOpen() ? "Register" : "Join the waiting list"}</Link>
+          <Link href="/login" className="btn">Log in</Link>
+        </div>
+      </div>
       <form action={reset}><button className="link">Reset the demo data now</button></form>
     </main>
   );

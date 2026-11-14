@@ -29,6 +29,7 @@ try { await db.exec(fs.readFileSync(new URL("../migrations/0006_family_support.s
 try { await db.exec(fs.readFileSync(new URL("../migrations/0007_appointment_questions_recordings.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0007 ERROR:", e.message); process.exit(1); }
 try { await db.exec(fs.readFileSync(new URL("../migrations/0008_waitlist.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0008 ERROR:", e.message); process.exit(1); }
 try { await db.exec(fs.readFileSync(new URL("../migrations/0009_helpful_things.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0009 ERROR:", e.message); process.exit(1); }
+try { await db.exec(fs.readFileSync(new URL("../migrations/0010_marketing_consent.sql", import.meta.url), "utf8")); } catch (e) { console.log("MIGRATION 0010 ERROR:", e.message); process.exit(1); }
 const U = { sarah:'00000000-0000-0000-0000-00000000000a', anthony:'00000000-0000-0000-0000-00000000000b', helen:'00000000-0000-0000-0000-00000000000c', lucy:'00000000-0000-0000-0000-00000000000d', eve:'00000000-0000-0000-0000-00000000000e' };
 for (const [n,id] of Object.entries(U)) await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,$2,$3)`, [id, n+'@x.test', {display_name:n}]);
 async function as(user, sql, params=[]) {
@@ -266,3 +267,15 @@ let readUsage=true; try { await as(U.sarah, `select * from ai_usage`) } catch { 
 ok(!readUsage, "people can't read the AI usage counters");
 let resetUsage=true; try { await as(U.sarah, `delete from ai_usage`) } catch { resetUsage=false }
 ok(!resetUsage, "people can't reset their own AI limit");
+
+// ---------------------------------------------------------------- stay in the loop (0010)
+ok((await db.query(`select marketing_opt_in from profiles where id=$1`, [U.sarah])).rows[0].marketing_opt_in===false, "news and updates are off unless someone says yes");
+const optId='00000000-0000-0000-0000-0000000000f1', noId='00000000-0000-0000-0000-0000000000f2';
+await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,'yes@x.test',$2)`, [optId, {display_name:'Yes', marketing_opt_in:true}]);
+await db.query(`insert into auth.users (id,email,raw_user_meta_data) values ($1,'no@x.test',$2)`, [noId, {display_name:'No', marketing_opt_in:false}]);
+const optRow=(await db.query(`select marketing_opt_in, marketing_opt_in_at, display_name from profiles where id=$1`, [optId])).rows[0];
+ok(optRow.marketing_opt_in===true && optRow.marketing_opt_in_at && optRow.display_name==='Yes', "ticking the box at sign-up is saved with the time");
+const noRow=(await db.query(`select marketing_opt_in, marketing_opt_in_at from profiles where id=$1`, [noId])).rows[0];
+ok(noRow.marketing_opt_in===false && noRow.marketing_opt_in_at===null, "leaving the box unticked saves no");
+ok((await as(U.sarah, `update profiles set marketing_opt_in=true, marketing_opt_in_at=now() where id=$1 returning id`, [U.sarah])).rows.length===1, "people can change their own news and updates choice");
+ok((await as(U.sarah, `update profiles set marketing_opt_in=true where id=$1 returning id`, [U.anthony])).rows.length===0, "people can't change someone else's choice");

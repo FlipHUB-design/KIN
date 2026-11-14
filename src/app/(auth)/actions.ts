@@ -1,6 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { canRegister } from "@/lib/signups";
 
 const site = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const safeNext = (n: FormDataEntryValue | null) => {
@@ -22,13 +23,14 @@ export async function signIn(formData: FormData) {
 export async function signUp(formData: FormData) {
   const supabase = await createClient();
   const next = safeNext(formData.get("next"));
+  if (!canRegister(String(formData.get("next") || ""))) redirect("/waitlist?from=signup");
   const name = String(formData.get("name")).trim();
   const password = String(formData.get("password"));
   if (password.length < 10) redirect(`/signup?error=${encodeURIComponent("Use at least 10 characters for your password.")}&next=${encodeURIComponent(next)}`);
   const { data, error } = await supabase.auth.signUp({
     email: String(formData.get("email")).trim(),
     password,
-    options: { data: { display_name: name }, emailRedirectTo: `${site()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { data: { display_name: name, marketing_opt_in: formData.get("marketing") === "1" }, emailRedirectTo: `${site()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error) redirect(`/signup?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`);
   if (data.session) redirect(next);

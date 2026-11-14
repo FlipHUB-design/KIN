@@ -81,7 +81,7 @@ export default async function OwnerDashboard() {
     if (batch.length < 1000) break;
   }
   const since30 = new Date(Date.now() - 30 * DAY).toISOString();
-  const [circlesQ, membersQ, activityQ, notifQ, aiQ, waitQ, recQ, tasksQ, apptsQ, lettersQ, clicksQ, settingQ] = await Promise.all([
+  const [circlesQ, membersQ, activityQ, notifQ, aiQ, waitQ, recQ, tasksQ, apptsQ, lettersQ, clicksQ, settingQ, optQ] = await Promise.all([
     admin.from("care_circles").select("id, kind, created_by, created_at"),
     admin.from("memberships").select("circle_id, user_id, role, status"),
     admin.from("activity").select("circle_id, actor, verb, created_at").gte("created_at", since30).limit(50000),
@@ -94,6 +94,7 @@ export default async function OwnerDashboard() {
     admin.from("letter_scans").select("circle_id, created_at").gte("created_at", since30).limit(50000),
     admin.from("helpful_clicks").select("item, place, created_at").gte("created_at", since30).limit(50000),
     admin.from("app_settings").select("value").eq("key", "helpful").maybeSingle(),
+    admin.from("profiles").select("id").eq("marketing_opt_in", true),
   ]);
   const helpfulIsOn = settingQ.data?.value?.on !== false;
   const clicks = (clicksQ.data || []) as { item: string; place: string | null; created_at: string }[];
@@ -112,6 +113,8 @@ export default async function OwnerDashboard() {
   const notifs = ((notifQ.data || []) as { user_id: string; email_status: string | null; sms_status: string | null; created_at: string }[]).filter((n) => realIds.has(n.user_id));
   const ai = ((aiQ.data || []) as { user_id: string; kind: string; count: number }[]).filter((a) => realIds.has(a.user_id));
   const wait = (waitQ.data || []) as WaitRow[];
+  const optUsers = (optQ.data || []).filter((p: { id: string }) => realIds.has(p.id)).length;
+  const optWait = wait.filter((w) => w.marketing_opt_in).length;
   const recs = inReal(recQ.data as { circle_id: string; status: string; created_at: string }[]);
 
   // Accounts
@@ -252,6 +255,12 @@ export default async function OwnerDashboard() {
             {waitSources.map(([s, n]) => <div key={s} className="ad-row"><span>{s}</span><b>{n}</b></div>)}
             <p className="note" style={{ margin: 0 }}>Share {site().replace(/^https?:\/\//, "")}/waitlist?from=instagram (or facebook, tiktok…) to see this.</p>
           </div>
+        </div>
+        <div className="card pad stack" style={{ gap: 8 }}><b>Kept in the loop (said yes to news and updates)</b>
+          <div className="ad-row"><span>Accounts</span><b>{optQ.error ? "run update 0010" : optUsers}</b></div>
+          <div className="ad-row"><span>Waiting list</span><b>{optWait}</b></div>
+          <p className="note" style={{ margin: 0 }}>Only email news and offers to these people. Everyone on the waiting list can still hear when you launch.</p>
+          <div className="row"><a href="/admin/marketing-export" className="btn">Download their emails (CSV)</a></div>
         </div>
         <div className="row"><Link href="/waitlist/admin" className="btn">Everyone on the waiting list</Link><a href="/waitlist/admin/export" className="btn">Download (CSV)</a></div>
       </section>

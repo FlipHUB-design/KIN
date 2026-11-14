@@ -21,7 +21,12 @@ export async function joinWaitlist(f: FormData) {
 
   const admin = createAdminClient();
   if (!admin) back("error=" + encodeURIComponent("Sorry, the waiting list isn't open yet. Please try again soon."));
-  const { error } = await admin!.from("waitlist").insert({ email, name, kind, note, source });
+  const marketing = f.get("marketing") === "1";
+  const row = { email, name, kind, note, source, ...(marketing ? { marketing_opt_in: true, marketing_opt_in_at: new Date().toISOString() } : {}) };
+  let { error } = await admin!.from("waitlist").insert(row);
+  // Before the consent update (0010) is run the columns don't exist: save the sign-up anyway
+  if (error && marketing && /marketing_opt_in/.test(error.message)) ({ error } = await admin!.from("waitlist").insert({ email, name, kind, note, source }));
+  if (error?.code === "23505" && marketing) await admin!.from("waitlist").update({ marketing_opt_in: true, marketing_opt_in_at: new Date().toISOString() }).ilike("email", email);
   if (error?.code === "23505") back("joined=1&already=1");
   if (error) {
     console.error("waitlist insert failed", error.message);

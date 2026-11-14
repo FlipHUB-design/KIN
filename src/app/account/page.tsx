@@ -15,6 +15,16 @@ async function saveProfile(formData: FormData) {
   redirect("/account?notice=" + encodeURIComponent("Saved"));
 }
 
+async function setMarketing(formData: FormData) {
+  "use server";
+  const { supabase, user } = await getUser();
+  if (!user) redirect("/login");
+  const on = formData.get("on") === "1";
+  const { error } = await supabase.from("profiles").update({ marketing_opt_in: on, marketing_opt_in_at: on ? new Date().toISOString() : null }).eq("id", user.id);
+  if (error) redirect("/account?error=" + encodeURIComponent("Couldn't save that just now. Please try again."));
+  redirect("/account?notice=" + encodeURIComponent(on ? "You're in the loop" : "You won't get news and updates from us"));
+}
+
 async function deleteAccount(formData: FormData) {
   "use server";
   const { supabase, user } = await getUser();
@@ -61,6 +71,14 @@ export default async function Account({ searchParams }: { searchParams: Promise<
           <span className="note">Shown to people in your Care Circles so they can reach you.</span></label>
         <p className="small muted">Signed in as {user.email}</p>
         <button className="btn primary">Save</button>
+      </form>
+      <form action={setMarketing} className="card pad stack" style={{ gap: 10 }}>
+        <h2 style={{ margin: 0 }}>Stay in the loop</h2>
+        <input type="hidden" name="on" value={me?.marketing_opt_in ? "0" : "1"} />
+        <p className="small" style={{ margin: 0 }}>{me?.marketing_opt_in
+          ? `You get occasional news, tips and updates from Many Hands${me?.marketing_opt_in_at ? ` (you said yes on ${new Date(me.marketing_opt_in_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })})` : ""}.`
+          : "You don't get news and updates from us. You'll still get the alerts you've chosen about your family."}</p>
+        <button className={`btn ${me?.marketing_opt_in ? "" : "primary"}`}>{me?.marketing_opt_in ? "Stop news and updates" : "Keep me in the loop"}</button>
       </form>
       <div className="card pad">
         <h2>Your data</h2>

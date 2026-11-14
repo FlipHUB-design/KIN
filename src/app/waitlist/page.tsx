@@ -74,8 +74,9 @@ export default async function Waitlist({ searchParams }: { searchParams: Promise
             <label className="fl">What would make life easier for your family? <span className="muted">(optional)</span>
               <textarea name="note" rows={3} maxLength={500} placeholder="e.g. Knowing who's taking Mum to her appointments" />
             </label>
+            <label className="optin"><input type="checkbox" name="marketing" value="1" /><span><b>Keep me in the loop.</b> As well as hearing when we launch, send me occasional news, tips and updates. You can unsubscribe at any time.</span></label>
             <button className="btn primary block" style={{ minHeight: 52, fontSize: 18 }}>Join the waiting list</button>
-            <p className="note" style={{ margin: 0 }}>We&apos;ll only email you about Many Hands launching, and you can ask to be removed at any time. See our <Link href="/privacy" className="link">privacy notice</Link>.</p>
+            <p className="note" style={{ margin: 0 }}>Unless you tick the box above, we&apos;ll only email you about Many Hands launching. You can ask to be removed at any time. See our <Link href="/privacy" className="link">privacy notice</Link>.</p>
           </form>
         )}
       </section>

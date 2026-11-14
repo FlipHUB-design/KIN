@@ -10,5 +10,5 @@ export async function ownerOnly() {
   return { user, ok, configured: allowed.length > 0, admin: ok ? createAdminClient() : null };
 }
 
-export type WaitRow = { id: string; email: string; name: string | null; kind: string; note: string | null; source: string | null; created_at: string };
+export type WaitRow = { id: string; email: string; name: string | null; kind: string; note: string | null; source: string | null; created_at: string; marketing_opt_in?: boolean | null; marketing_opt_in_at?: string | null };
 export const KIND_LABEL: Record<string, string> = { coparent: "Co-parent", carer: "Caring for someone older", both: "Both", other: "Just interested" };

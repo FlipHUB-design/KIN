@@ -1,10 +1,13 @@
 import Link from "next/link";
 import AuthShell from "../AuthShell";
+import { redirect } from "next/navigation";
 import { signUp } from "../actions";
+import { canRegister } from "@/lib/signups";
 
 export default async function Signup({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const sp = await searchParams;
   const next = sp.next || "/circles";
+  if (!canRegister(sp.next)) redirect("/waitlist?from=signup");
   return (
     <AuthShell title="Create your account">
       {sp.error && <p className="error">{sp.error}</p>}
@@ -14,6 +17,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<R
         <label className="fl">Email<input name="email" type="email" autoComplete="email" required /></label>
         <label className="fl">Password<input name="password" type="password" autoComplete="new-password" minLength={10} required />
           <span className="note">At least 10 characters.</span></label>
+        <label className="optin"><input type="checkbox" name="marketing" value="1" /><span><b>Keep me in the loop.</b> Send me occasional news, tips and updates about Many Hands. You can unsubscribe at any time.</span></label>
         <button className="btn primary block">Create account</button>
       </form>
       <p className="note">By creating an account you agree to how Many Hands handles your family&apos;s information, described in our <Link href="/privacy">privacy notice</Link>.</p>

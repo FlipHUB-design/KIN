@@ -176,3 +176,10 @@ Run `supabase/migrations/0008_waitlist.sql`. The public sign-up page is `/waitli
 ### 10. Helpful things (migration 0009)
 
 Run `supabase/migrations/0009_helpful_things.sql`. Parents and organisers see short product suggestions where they help (coming home from hospital, appointments, handovers, school, separating), plus a full list under More → Helpful things. The lists live in `src/lib/helpful.ts`. Links go to Amazon UK; once you're accepted into Amazon Associates, add `AMAZON_TAG` (your tracking ID, e.g. `manyhands-21`) in Vercel so they earn commission. Switch suggestions off or on, and see which ones people click, on the owner dashboard. Children, helpers and the person being cared for never see them, and anyone can hide them.
+
+## 11. Waiting list first, and "Keep me in the loop"
+
+- Registration is closed before launch: the Register buttons (demo page, sign-in page) and /signup send people to the waiting list. Family members invited to an existing circle can still create an account.
+- To open registration to everyone, add `SIGNUPS_OPEN=true` in Vercel and redeploy.
+- Run `supabase/migrations/0010_marketing_consent.sql` in the Supabase SQL editor. It adds the "Keep me in the loop" consent (off unless ticked, with the time recorded) to accounts and the waiting list.
+- People can change their choice on their Account page. The owner dashboard shows how many said yes and downloads their emails (`/admin/marketing-export`). Only send news and offers to that list.
