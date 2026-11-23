@@ -165,28 +165,31 @@ export const canEdit = (r: Role | null) => r === "admin" || r === "family";
 export function circleStatus(opts: { tasks: Task[]; appts: Appointment[]; checkins: Checkin[]; circle: Circle; dismissedToday?: boolean }) {
   const t = today();
   const reasons: string[] = [];
+  /** Where to tap to sort each reason out, relative to the circle (e.g. "/tasks/<id>"). */
+  const links: Record<string, string> = {};
+  const add = (r: string, href?: string) => { reasons.push(r); if (href) links[r] = href; };
   let level = 0;
   for (const a of opts.appts) {
     if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) {
       level = 2;
-      reasons.push(`No driver yet for ${a.title} ${dayWord(a.date)}${a.time ? ` at ${hm(a.time)}` : ""}`);
+      add(`No driver yet for ${a.title} ${dayWord(a.date)}${a.time ? ` at ${hm(a.time)}` : ""}`, `/appointments/${a.id}`);
     }
   }
   if (missedCheckin(opts.circle, opts.checkins) && !opts.dismissedToday) {
     level = 2;
-    reasons.push(`No recorded check-in today (usually by ${hm(opts.circle.checkin_by)})`);
+    add(`No recorded check-in today (usually by ${hm(opts.circle.checkin_by)})`, "/checkin");
   }
   for (const x of opts.tasks) {
     if (isOverdue(x)) {
       level = Math.max(level, 1);
-      reasons.push(`${x.title} is overdue`);
+      add(`${x.title} is overdue`, `/tasks/${x.id}`);
     } else if (!x.assignee && x.status === "open" && !x.appointment_id && x.due_date && x.due_date <= addDays(t, 3)) {
       level = Math.max(level, 1);
-      reasons.push(`${x.title} needs someone`);
+      add(`${x.title} needs someone`, `/tasks/${x.id}`);
     }
   }
   const labels = ["All good", "Attention needed", "Urgent family action"] as const;
-  return { level, reasons, label: labels[level], cls: ["good", "attn", "urgent"][level] };
+  return { level, reasons, links, label: labels[level], cls: ["good", "attn", "urgent"][level] };
 }
 
 export function missedCheckin(circle: Circle, checkins: Checkin[]) {

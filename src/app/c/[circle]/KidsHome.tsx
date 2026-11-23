@@ -114,15 +114,17 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
 
   // Status: coordination only
   const reasons: string[] = [];
+  const links: Record<string, string> = {};
+  const add = (r: string, href: string) => { reasons.push(r); links[r] = href; };
   let level = 0;
-  for (const a of appts) if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) { level = 2; reasons.push(`No one is taking ${childNames(a.child_ids, kids) || "them"} to ${a.title} ${["Today", "Tomorrow"].includes(dayLabel(a.date)) ? dayWord(a.date) : `on ${dayLabel(a.date)}`}`); }
+  for (const a of appts) if (a.needs_transport && !a.driver && a.date >= t && a.date <= addDays(t, 2)) { level = 2; add(`No one is taking ${childNames(a.child_ids, kids) || "them"} to ${a.title} ${["Today", "Tomorrow"].includes(dayLabel(a.date)) ? dayWord(a.date) : `on ${dayLabel(a.date)}`}`, `/appointments/${a.id}`); }
   const waiting = forMe.changes.length + forMe.expenses.length + forMe.agreements.length;
-  if (waiting) { level = Math.max(level, 1); reasons.push(`${waiting} thing${waiting === 1 ? "" : "s"} waiting for your answer`); }
+  if (waiting) { level = Math.max(level, 1); add(`${waiting} thing${waiting === 1 ? "" : "s"} waiting for your answer`, "#waiting"); }
   for (const x of tasks) {
-    if (isOverdue(x)) { level = Math.max(level, 1); reasons.push(`${x.title} is overdue`); }
-    else if (!x.assignee && x.due_date && x.due_date <= addDays(t, 3) && !x.appointment_id) { level = Math.max(level, 1); reasons.push(`${x.title} needs someone`); }
+    if (isOverdue(x)) { level = Math.max(level, 1); add(`${x.title} is overdue`, `/tasks/${x.id}`); }
+    else if (!x.assignee && x.due_date && x.due_date <= addDays(t, 3) && !x.appointment_id) { level = Math.max(level, 1); add(`${x.title} needs someone`, `/tasks/${x.id}`); }
   }
-  if (parent) for (const k of kids) if (k.passport_expiry && k.passport_expiry <= addDays(t, 183)) { level = Math.max(level, 1); reasons.push(`${k.first_name}'s passport ${k.passport_expiry < t ? "has expired" : `expires ${new Date(k.passport_expiry + "T12:00:00Z").toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" })}`}`); }
+  if (parent) for (const k of kids) if (k.passport_expiry && k.passport_expiry <= addDays(t, 183)) { level = Math.max(level, 1); add(`${k.first_name}'s passport ${k.passport_expiry < t ? "has expired" : `expires ${new Date(k.passport_expiry + "T12:00:00Z").toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" })}`}`, "/children"); }
   const labels = ["All good", "Attention needed", "Urgent family action"];
   const cls = ["good", "attn", "urgent"][level];
 
@@ -153,11 +155,11 @@ export async function KidsFamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string,
 
       <section className={`status ${cls}`} aria-live="polite">
         <div className="sline"><span className="dot" />{labels[level]}</div>
-        {reasons.length ? <ul>{reasons.slice(0, 5).map((r) => <li key={r}>{r}</li>)}</ul> : <p style={{ color: "var(--ink)" }}>Everything coming up has someone looking after it.</p>}
+        {reasons.length ? <ul>{reasons.slice(0, 5).map((r) => <li key={r}><Link href={links[r].startsWith("#") ? links[r] : base + links[r]}>{r} ›</Link></li>)}{reasons.length > 5 && <li className="muted">and {reasons.length - 5} more</li>}</ul> : <p style={{ color: "var(--ink)" }}>Everything coming up has someone looking after it.</p>}
       </section>
 
       {parent && waiting > 0 && (
-        <section className="stack">
+        <section className="stack" id="waiting">
           <h2>Waiting for your answer</h2>
           {forMe.changes.map((c) => (
             <div key={c.id} className="card pad reqcard">

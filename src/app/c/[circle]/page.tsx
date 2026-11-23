@@ -83,6 +83,9 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
     ...(meds || []).map((m) => `Repeat prescription for ${m.name} ${m.next_order! < t ? "is overdue" : "is due " + dayWord(m.next_order)}`),
     ...(mood.rising ? [`${circle.preferred_name} has said "Not great" ${mood.recent} times in two weeks`] : []),
   ];
+  rotaGaps.slice(0, 2).forEach((g) => (s.links[`Nobody's visiting ${["Today", "Tomorrow"].includes(dayLabel(g.date)) ? dayWord(g.date) : "on " + dayLabel(g.date)}`] = "/rota"));
+  (meds || []).forEach((m) => (s.links[`Repeat prescription for ${m.name} ${m.next_order! < t ? "is overdue" : "is due " + dayWord(m.next_order)}`] = "/medications"));
+  if (mood.rising) s.links[`${circle.preferred_name} has said "Not great" ${mood.recent} times in two weeks`] = "/wellbeing";
   if (extra.length) { s.reasons.push(...extra); if (s.level === 0) Object.assign(s, { level: 1, label: "Attention needed", cls: "attn" }); }
   const myOpen = d.checkins.find((c) => c.user_id === user.id && !c.checked_out_at && dateOf(c.checked_in_at) === t);
   const todays = d.checkins.filter((c) => dateOf(c.checked_in_at) === t);
@@ -111,7 +114,7 @@ async function FamilyHome({ ctx, sp }: { ctx: Ctx; sp: Record<string, string> })
       <Notice sp={sp} />
       <section className={`status ${s.cls}`} aria-live="polite">
         <div className="sline"><span className="dot" />{s.label}</div>
-        {s.reasons.length ? <ul>{s.reasons.slice(0, 7).map((r) => <li key={r}>{r}</li>)}{s.reasons.length > 7 && <li className="muted">and {s.reasons.length - 7} more</li>}</ul>
+        {s.reasons.length ? <ul>{s.reasons.slice(0, 7).map((r) => <li key={r}>{s.links[r] ? <Link href={base + s.links[r]}>{r} ›</Link> : r}</li>)}{s.reasons.length > 7 && <li className="muted">and {s.reasons.length - 7} more</li>}</ul>
           : <p style={{ color: "var(--ink)" }}>Everything coming up has someone looking after it.</p>}
         <p className="small muted">Family coordination status only. It isn&apos;t a health or safety assessment.</p>
       </section>

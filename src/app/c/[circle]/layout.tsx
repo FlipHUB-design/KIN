@@ -1,15 +1,18 @@
 import Link from "next/link";
 import Nav from "@/components/Nav";
-import { getCircle } from "@/lib/data";
+import { getCircle, getUser } from "@/lib/data";
 
 export default async function CircleLayout({ children, params }: { children: React.ReactNode; params: Promise<{ circle: string }> }) {
   const { circle } = await params;
-  const { role, user, me, supabase } = await getCircle(circle);
-  const { count: unread } = await supabase.from("notifications").select("id", { count: "exact", head: true }).eq("circle_id", circle).eq("user_id", user.id).is("read_at", null);
+  const { supabase, user } = await getUser();
+  // The alert count and the circle load at the same time rather than one after the other
+  const [{ role, me, circle: c }, { count: unread }] = await Promise.all([
+    getCircle(circle),
+    user ? supabase.from("notifications").select("id", { count: "exact", head: true }).eq("circle_id", circle).eq("user_id", user.id).is("read_at", null) : Promise.resolve({ count: 0 }),
+  ]);
   const fullNav = role === "admin" || role === "family" || role === "contributor";
-  const { circle: c } = await getCircle(circle);
   const showHelp = !(role === "supported" && c.kind === "care");
-  const demo = user.email?.endsWith("@kin-demo.example.com");
+  const demo = user?.email?.endsWith("@kin-demo.example.com");
   return (
     <>
       {demo && (

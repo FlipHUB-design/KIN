@@ -332,3 +332,12 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .optin input { width: 22px; height: 22px; flex: none; margin-top: 1px; accent-color: var(--accent); }
 .demo-top { flex-wrap: wrap; gap: 12px; align-items: center; }
 .demo-top .btn { min-height: 40px; padding: 8px 16px; }
+.skel { border-radius: 8px; background: linear-gradient(90deg, var(--sunk) 25%, var(--line) 50%, var(--sunk) 75%); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; }
+.skel-title { height: 30px; width: 55%; }
+.skel-line { height: 14px; }
+@keyframes skel { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+.status li a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; display: inline-block; padding: 3px 0; }
+.emergency-link { border-color: #E5A5A0; background: #FBEDEB; border-radius: 14px; }
+.emergency-link .t { color: #A32D23; }
+@media (prefers-color-scheme: dark) { .emergency-link { background: #3A1F1C; border-color: #7A3A33; } .emergency-link .t { color: #FFB4AB; } }
