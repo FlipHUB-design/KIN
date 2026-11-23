@@ -341,3 +341,5 @@ nav.tabs a[aria-current="page"] { color: var(--accent); }
 .emergency-link { border-color: #E5A5A0; background: #FBEDEB; border-radius: 14px; }
 .emergency-link .t { color: #A32D23; }
 @media (prefers-color-scheme: dark) { .emergency-link { background: #3A1F1C; border-color: #7A3A33; } .emergency-link .t { color: #FFB4AB; } }
+.spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }

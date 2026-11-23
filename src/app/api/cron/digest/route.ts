@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emailHtml, emailOn, isDemoEmail, sendEmail, site } from "@/lib/notify";
 import { addDays, today } from "@/lib/kin";
 import { occurrences } from "@/lib/support";
+import { DEMO_ENABLED, ensureDemo } from "@/lib/demo";
 
 // Morning email: today's jobs, anything waiting for an answer, and where the children sleep tonight.
 // Vercel Cron calls this once a day with "Authorization: Bearer <CRON_SECRET>".
@@ -29,6 +30,8 @@ export async function GET(req: NextRequest) {
   if (!admin) return NextResponse.json({ sent: 0, reason: "database not set up" });
   // Touch the database every day so the free Supabase plan doesn't pause the project for inactivity
   await admin.from("care_circles").select("id", { count: "exact", head: true });
+  // Rebuild the demo early each morning, so the first visitor of the day doesn't wait for it
+  if (DEMO_ENABLED) { try { await ensureDemo(admin); } catch (e) { console.error("demo rebuild failed", e); } }
   // Appointment recordings: delete the audio after 30 days, keeping the written notes
   const { data: oldRecs } = await admin.from("appointment_recordings").select("id, storage_path").not("storage_path", "is", null).lt("created_at", new Date(Date.now() - 30 * 86400000).toISOString()).limit(200);
   if (oldRecs?.length) {

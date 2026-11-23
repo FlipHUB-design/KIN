@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DEMO_ENABLED, KIDS_PICKABLE, PERSONAS, PICKABLE, ensureDemo, type Persona } from "@/lib/demo";
 import Wordmark from "@/components/Wordmark";
+import PersonLink from "./PersonLink";
 import { registerHref, signupsOpen } from "@/lib/signups";
 
 async function reset() {
@@ -17,11 +18,7 @@ function People({ list }: { list: Persona[] }) {
   return (
     <div className="card list">
       {list.map((p) => (
-        <a key={p} href={`/demo/${p}`} className="item">
-          <span className="avatar">{PERSONAS[p].name[0]}</span>
-          <span className="main"><span className="t">{PERSONAS[p].name} <span className="muted">· {PERSONAS[p].role}</span></span><span className="s">{PERSONAS[p].blurb}</span></span>
-          <span className="muted">›</span>
-        </a>
+        <PersonLink key={p} href={`/demo/${p}`} initial={PERSONAS[p].name[0]} name={PERSONAS[p].name} role={PERSONAS[p].role} blurb={PERSONAS[p].blurb} />
       ))}
     </div>
   );

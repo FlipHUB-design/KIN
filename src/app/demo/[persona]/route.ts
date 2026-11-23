@@ -19,10 +19,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ pers
     console.error("demo seed failed", e);
     return fail("The demo couldn't be prepared. Please try again in a minute.");
   }
-  const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email: demoEmail(persona as Persona) });
+  const [{ data, error }, supabase] = await Promise.all([
+    admin.auth.admin.generateLink({ type: "magiclink", email: demoEmail(persona as Persona) }),
+    createClient(),
+  ]);
   if (error || !data.properties?.hashed_token) return fail("Couldn't sign you in to the demo.");
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  // Clear any earlier session in this browser only: no need to wait for the sign-in server
+  await supabase.auth.signOut({ scope: "local" });
   const v = await supabase.auth.verifyOtp({ type: "magiclink", token_hash: data.properties.hashed_token });
   if (v.error) return fail("Couldn't sign you in to the demo.");
   return NextResponse.redirect(new URL(`/c/${isKidsPersona(persona as Persona) ? circles.kids : circles.care}`, req.url));

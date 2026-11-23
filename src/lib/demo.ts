@@ -71,14 +71,28 @@ async function ensureUsers(admin: Admin) {
     if (created.error || !created.data.user) throw created.error || new Error("Could not create demo user");
     ids[p] = created.data.user.id;
   }
-  for (const p of Object.keys(PERSONAS) as Persona[]) {
-    await admin.from("profiles").upsert({ id: ids[p], display_name: PERSONAS[p].name, phone: PERSONAS[p].phone });
-  }
+  // One call for every demo profile, rather than one each
+  await admin.from("profiles").upsert((Object.keys(PERSONAS) as Persona[]).map((p) => ({ id: ids[p], display_name: PERSONAS[p].name, phone: PERSONAS[p].phone })));
   return ids;
 }
 
 /** Makes sure demo users exist and the data was built today. Returns both demo circle ids. */
+// Remembered by this server between visitors, so picking a person is quick once the day's demo exists
+let warm: { day: string; care: string; kids: string } | null = null;
+
 export async function ensureDemo(admin: Admin, force = false): Promise<{ care: string; kids: string }> {
+  if (!force && warm?.day === today()) {
+    // One quick check that nobody has reset the demo since (a reset makes new families)
+    const { data: still } = await admin.from("care_circles").select("id").in("id", [warm.care, warm.kids]);
+    if (still?.length === 2) return { care: warm.care, kids: warm.kids };
+    warm = null;
+  }
+  const r = await prepareDemo(admin, force);
+  warm = { day: today(), ...r };
+  return r;
+}
+
+async function prepareDemo(admin: Admin, force: boolean): Promise<{ care: string; kids: string }> {
   const ids = await ensureUsers(admin);
   const { data: s } = await admin.auth.admin.getUserById(ids.sarah);
   const meta = (s.user?.user_metadata || {}) as { demo_seeded_on?: string; demo_circle?: string; demo_kids_circle?: string; demo_version?: number };
